@@ -2,12 +2,17 @@ import json
 import os
 import re
 import oracledb
+import json
 
-# Database connection details
-user = 'ADMIN'
-password = 'AISC1FinQA@2025'
-dsn = 'finqadb_medium'
-wallet_location = r"C:\Users\user\Downloads\Wallet_FinQADB"
+# Load configuration
+with open("config.json", "r") as config_file:
+    config = json.load(config_file)
+
+# Access credentials
+user = config["user"]
+password = config["password"]
+dsn = config["dsn"]
+wallet_location = config["wallet_location"]
 
 # Directory containing the cleaned JSON files
 data_directory = r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\cleaned_data_new"
