@@ -10,7 +10,7 @@ dsn = 'finqadb_medium'
 wallet_location = r"C:\Users\user\Downloads\Wallet_FinQADB"
 
 # Directory containing the cleaned JSON files
-data_directory = r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\cleaned_data"
+data_directory = r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\cleaned_data_new"
 
 # Establish database connection
 connection = oracledb.connect(
@@ -43,8 +43,7 @@ def sanitize_column_name(name):
 
     return name.upper()
 
-
-# **Ensure `company_year_metadata` table exists**
+# **Ensure company_year_metadata table exists**
 def ensure_metadata_table():
     cursor.execute("""
         SELECT COUNT(*)
@@ -85,7 +84,6 @@ def create_company_year_table(table_name, columns):
     print(f"Table {table_name} created with columns: {sanitized_columns}")
     return sanitized_columns
 
-
 # **Ensure the company-year table exists or update it dynamically**
 def verify_and_update_table(table_name, required_columns):
     cursor.execute(f"""
@@ -105,7 +103,6 @@ def verify_and_update_table(table_name, required_columns):
             cursor.execute(f'ALTER TABLE {table_name} ADD "{col}" VARCHAR2(255)')
 
     return list(sanitized_required_columns)
-
 
 # **Insert data into company-year table**
 def insert_into_company_year_table(table_name, table_ori, record_id, filename):
@@ -138,8 +135,7 @@ def insert_into_company_year_table(table_name, table_ori, record_id, filename):
 
     print(f"Data inserted into {table_name}.")
 
-
-# **Insert metadata into `company_year_metadata`**
+# **Insert metadata into company_year_metadata**
 def insert_metadata(metadata):
     ensure_metadata_table()
     insert_query = """
@@ -148,7 +144,6 @@ def insert_metadata(metadata):
     """
     cursor.execute(insert_query, metadata)
     print(f"Metadata inserted for {metadata['table_name']}.")
-
 
 # **Main function to process files and insert data**
 def process_files(data_directory):
