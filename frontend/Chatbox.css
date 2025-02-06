@@ -1,0 +1,563 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f7fc;
+}
+
+.dashboard {
+  display: flex;
+  height: 100vh;
+  background-color:lightgray;
+}
+
+.sidebar {
+  width: 230px;
+  background-color: #2c3e50;
+  color: white;
+  padding: 20px;
+  position: fixed;
+  height: 100%;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.sidebar h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #ecf0f1;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+ 
+.sidebar ul li {
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.sidebar ul li:hover {
+  background-color: #34495e;
+}
+
+.fav {
+  background-color: #3498db;
+
+}
+
+/* Dialog Content */
+.MuiDialogContent-root {
+  padding: 20px;
+}
+
+/* Company List Styling */
+.company-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  
+}
+
+.company-item {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #333;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.company-item label {
+  margin-left: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.company-item:hover {
+  transform: scale(1.05);
+  color: darkcyan;  /* Green color for hover effect */
+  
+}
+
+.company-item input {
+  width: 20px;
+  height: 30px;
+  accent-color: lightskyblue; /* Custom accent color for checkboxes */
+  cursor: pointer;
+}
+
+/* Dialog Title Styling */
+.MuiDialogTitle-root {
+  background-color: darkcyan;
+  height:50px;
+
+  color: white;
+  text-align: center;
+  padding: 10px;
+}
+
+/* Dialog Actions Styling */
+.MuiDialogActions-root {
+  padding: 10px;
+  text-align: center;
+  background-color: #f4f6f8;
+}
+
+
+.chat-section {
+  flex-grow: 1;
+  padding: 40px;
+  margin-left: 250px;
+  overflow-y: auto;
+}
+
+.chat-box-container {
+  display: flex;
+  justify-content: center;
+  margin-left:-200px;
+  align-items: center;
+  height: 100%; /* Full viewport height */
+  background: white /* Light background for better contrast */
+}
+
+.chat-box {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%; /* Makes it responsive */
+}
+
+
+.response-container {
+  margin-bottom: 20px;
+  padding: 15px;
+  
+  border-radius: 8px;
+  
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.bot-response {
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+ 
+}
+
+.chat-input input {
+  flex-grow: 1;
+  padding: 12px 15px;
+  border: 2px solid #ddd;  /* A solid border for the input */
+  border-radius: 10px;  /* Rounded corners for a softer look */
+  font-size: 16px;
+  color: #333;  /* Dark color for the text */
+  background: #f9f9f9;  /* Subtle background for the input */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);  /* Soft shadow for depth */
+  transition: all 0.3s ease;  /* Smooth transition for focus and hover effects */
+}
+
+/* Focus state with glowing border */
+.chat-input input:focus {
+  outline: none;
+  border-color: #3498db;  /* Blue border on focus */
+  background: #ffffff;  /* Light background on focus */
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);  /* Glowing effect */
+}
+
+/* Hover effect */
+.chat-input input:hover {
+  border-color: #3498db;  /* Blue border on hover */
+}
+
+/* Adding placeholder styling */
+.chat-input input::placeholder {
+  color: #aaa;  /* Light gray color for placeholder */
+  font-style: italic;  /* Italic style for placeholder */
+}
+
+.chat-input button {
+  background: transparent;  /* No background color */
+  color: #3498db;  /* Icon color */
+  padding: 0;  /* No padding */
+  border: none;  /* Remove border */
+  font-size: 24px;  /* Icon size */
+  cursor: pointer;  /* Pointer on hover */
+  display: flex;
+  justify-content: center;
+  align-items: center;  /* Center the icon inside the button */
+  width: auto;  /* Let the width fit the icon size */
+  height: auto;  /* Let the height fit the icon size */
+}
+
+.chat-input button:hover {
+  color: #2980b9;  /* Change icon color on hover */
+}
+
+.chat-input button:active {
+  transform: translateY(2px);  /* Slight effect when clicked */
+}
+
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.quick-topics {
+  width: 200px;
+  padding: 20px;
+  background: #ecf0f1;
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100%;
+  overflow-y: auto;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.quick-topics h3 {
+  font-size: 20px;
+  color: #2c3e50;
+}
+
+.quick-topics ul {
+  list-style: none;
+  padding: 0;
+}
+/* LOGIN PAGE */
+
+body {
+  font-family: "Arial", sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+  padding: 0;
+}
+
+.login-container {
+  display: flex;
+  height: 100vh;
+}
+
+.login-left {
+  flex: 1;
+  background-color: #eef2f6;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.balance-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.balance-amount {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.transaction-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.new-transaction-btn {
+  background-color: #4f46e5;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.file-upload {
+  color: #4f46e5;
+  font-weight: bold;
+}
+
+.login-right {
+  flex: 1;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 400px;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: 10px;
+}
+
+.login-divider {
+  margin: 20px 0;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.social-login {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.google-btn, .facebook-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.google-btn .icon, .facebook-btn .icon {
+  margin-right: 5px;
+}
+
+.signup-text {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+/* Signup.css */
+
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #f4f7f6;
+  padding: 0 20px;
+}
+
+
+.signup-form {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.signup-form h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.signup-form input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.sub {
+  background-color: #45a049;
+}
+.sub:hover {
+  background-color: #3e8e41; /* Darker green when hovered */
+  
+}
+
+.signup-form button {
+  width: 100%;
+  padding: 10px;
+ 
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+
+
+.signup-form p {
+  font-size: 14px;
+  margin-top: 10px;
+  color: #666;
+}
+
+.signup-form p a {
+  color: #4CAF50;
+  text-decoration: none;
+}
+
+.signup-form p a:hover {
+  text-decoration: underline;
+}
+
+/* Social Login Icons */
+.social-login {
+  margin-top: 20px;
+}
+
+.social-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+ 
+}
+
+.social-buttons a {
+  text-decoration: none;
+}
+
+.social-buttons button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  padding: 0;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.google-btn {
+  background-color: #db4437;
+  color: white;
+  margin-right:-100px;
+}
+
+.google-btn:hover {
+  background-color: #c1351d;
+  transform: scale(1.1);
+}
+
+.linkedin-btn {
+  background-color: #0077b5;
+  color: white;
+  margin-right:-100px;
+
+}
+
+.linkedin-btn:hover {
+  background-color: #005983;
+  transform: scale(1.1);
+  margin-right:-50px;
+}
+
+.facebook-btn {
+  background-color: #1877f2;
+  color: white;
+ 
+}
+
+
+.facebook-btn:hover {
+  background-color: #3b5998;
+  transform: scale(1.1);
+}
+
+/* Hover effects */
+.google-btn i,
+.linkedin-btn i,
+.facebook-btn i {
+  font-size: 24px; /* Adjust size of the icons */
+}
+
+/* Media Queries for responsiveness */
+@media (max-width: 480px) {
+  .signup-form {
+    padding: 20px;
+    max-width: 100%;
+  }
+
+  .signup-form h2 {
+    font-size: 20px;
+  }
+
+  .signup-form input {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .signup-form button {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .social-buttons button {
+    font-size: 18px;
+  }
+}
+
+
+
+
