@@ -1,0 +1,94 @@
+Question,Answer,generated_query,generated_answer,time,error
+What was Google's total revenue in Q3 2024?,88268.0,"SELECT ""Q3_2024"" FROM ""GOOG_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Revenue';","[(88268.0,)]",0.1273,
+How much profit did Google report in Q3 2024?,26301.0,"SELECT ""Q3_2024"" FROM ""GOOG_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Operating Income';","[(28521.0,)]",0.096,
+What were Google's total operating expenses for Q3 2024?,54967.0,"SELECT ""Q3_2024"" FROM ""GOOG_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Selling, General & Admin';","[(10826.0,)]",0.0963,
+How much did Google spend on capital expenditures in Q3 2024?,-13061.0,"SELECT ""Q3_2024"" FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Capital Expenditures';","[(-13061.0,)]",0.1683,
+What was Google's earnings per share (EPS) in Q3 2024?,2.08,"SELECT Q3_2024 FROM ""GOOG_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'EPS (Basic)';","[(2.14,)]",0.0965,
+What were Google's total assets in Q3 2024?,430266.0,"SELECT ""Q3_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Assets';","[(430266.0,)]",0.1063,
+How much cash and cash equivalents did Google have in Q3 2024?,27461.0,"SELECT ""Q3_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Cash & Equivalents';","[(19959.0,)]",0.0993,
+What was Google's total shareholder equity in Q3 2024?,289873.0,"SELECT ""Q3_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Shareholder Equity';",No results found,0.095,
+How much long-term debt did Google report in Q3 2024?,10880.0,"SELECT ""Q3_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Long-Term Debt';","[(10880.0,)]",0.1065,
+What was Google's total liabilities in Q3 2024?,140393.0,"SELECT ""Q3_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Liabilities';","[(116147.0,)]",0.111,
+What was the net cash flow from operating activities for Google in Q3 2024?,27419.0,"SELECT ""Q3_2024"" FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Operating Cash Flow';",No results found,0.0975,
+How much did Google invest in short-term assets in Q3 2024?,14123.0,"SELECT ""Q3_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Short-Term Investments';","[(73271.0,)]",0.13,
+What was Google’s dividend per share in Q3 2024?,0.0,"SELECT ""Q3_2024"" FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Dividend Per Share';",No results found,0.099,
+What was the percentage increase in revenue from Q2 2024 to Q3 2024?,0.0412,"SELECT 
+        (Q3_2024 - Q2_2024) / Q2_2024 * 100
+    FROM 
+        ""GOOG_INCOME_QUARTERLY""
+    WHERE 
+        ""METRICS"" = 'Revenue';","[(4.160864742394562,)]",0.1008,
+How much did Google's net income change from Q2 2024 to Q3 2024?,0.0568,"SELECT (Q3_2024 - Q2_2024) FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE METRICS = 'Net Income Growth';",No results found,0.1015,
+What was the change in Google's total operating expenses from Q2 2024 to Q3 2024?,1412.0,"SELECT (Q3_2024 - Q2_2024) FROM ""GOOG_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Operating Expenses';","[(1463,)]",0.4017,
+By what percentage did capital expenditures change from Q2 2024 to Q3 2024?,-0.0325,"SELECT ((`Q3_2024` - `Q2_2024`) / `Q2_2024`) * 100 FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE `METRICS` = 'Capital Expenditures';",No results found,0.0,"ORA-00911: `: invalid character after (
+Help: https://docs.oracle.com/error-help/db/ora-00911/"
+What was the percentage growth in earnings per share (EPS) from Q2 to Q3 2024?,0.0387,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""GOOG_RATIO_QUARTERLY"" WHERE METRICS = 'EPS (Basic)';",No results found,0.1185,
+How much did total assets grow between Q2 and Q3 2024?,4173.0,"SELECT (""Q3_2024"" - ""Q2_2024"") FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = ""Total Assets"";",No results found,0.0,"ORA-00904: ""Total Assets"": invalid identifier
+Help: https://docs.oracle.com/error-help/db/ora-00904/"
+By what percentage did Google's cash and cash equivalents change from Q2 to Q3 2024?,0.0395,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Cash & Equivalents';","[(-26.68870523415978,)]",0.1019,
+What was the difference in shareholder equity between Q2 and Q3 2024?,2345.0,"SELECT ""Q3_2024"" - ""Q2_2024"" FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Shareholders'' Equity';","[(13366,)]",0.0977,
+How much did Google's total debt change from Q2 to Q3 2024?,-278.0,"SELECT Q3_2024 - Q2_2024 FROM ""GOOG_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Debt';","[(570,)]",0.0967,
+What is the difference in Google's net cash flow from operations between Q2 and Q3 2024?,174.0,"SELECT ""Q3_2024"" - ""Q2_2024"" FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Operating Cash Flow';","[(4058,)]",0.0995,
+What was the percentage change in Google’s dividend per share from Q2 to Q3 2024?,0.0,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Dividend Per Share';",No results found,0.099,
+What was the net increase in Google's cash position between Q2 and Q3 2024?,512.0,"SELECT (""Q3_2024"" - ""Q2_2024"") AS ""Net Increase"" FROM ""GOOG_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Change in Net Working Capital';","[(-1839,)]",0.0968,
+What was S&P Global's total revenue in Q3 2024?,3575.0,"SELECT Q3_2024 FROM ""SPGI_INCOME_QUARTERLY"" WHERE METRICS = 'Revenue';","[(3575.0,)]",0.1087,
+How much profit did S&P Global report in Q3 2024?,971.0,"SELECT ""Q3_2024"" FROM ""SPGI_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Net Income';","[(971.0,)]",0.0997,
+What were S&P Global's total operating expenses for Q3 2024?,2124.0,"SELECT ""Q3_2024"" FROM ""SPGI_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Selling, General & Admin';","[(766.0,)]",0.1008,
+How much did S&P Global spend on capital expenditures in Q3 2024?,-35.0,"SELECT ""Q3_2024"" FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Capital Expenditures';","[(-35.0,)]",0.1053,
+What was S&P Global's earnings per share (EPS) in Q3 2024?,2.56,"SELECT ""EPS (Diluted)"" FROM ""SPGI_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'EPS (Diluted)' AND ""Q3_2024"" IS NOT NULL;",No results found,0.0,"ORA-00904: ""EPS (Diluted)"": invalid identifier
+Help: https://docs.oracle.com/error-help/db/ora-00904/"
+What were S&P Global's total assets in Q3 2024?,60368.0,"SELECT ""Q3_2024"" FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Assets';","[(60368.0,)]",0.1395,
+How much cash and cash equivalents did S&P Global have in Q3 2024?,2621.0,"SELECT ""Q3_2024"" FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Cash & Equivalents';","[(1696.0,)]",0.0994,
+What was S&P Global's total shareholder equity in Q3 2024?,18352.0,"SELECT ""Q3_2024"" FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Shareholders' Equity';",No results found,0.0,DPY-2041: missing ending quote (')
+How much long-term debt did S&P Global report in Q3 2024?,11398.0,"SELECT ""Q3_2024"" FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Long-Term Debt';","[(11398.0,)]",0.0995,
+What was S&P Global's total liabilities in Q3 2024?,42016.0,"SELECT SUM(""Total Current Liabilities"") + SUM(""Total Liabilities"") FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Liabilities';",No results found,0.0,"ORA-00904: ""Total Liabilities"": invalid identifier
+Help: https://docs.oracle.com/error-help/db/ora-00904/"
+What was the net cash flow from operating activities for S&P Global in Q3 2024?,1003.0,"SELECT ""Q3_2024"" FROM ""ADMIN"".""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Income From Operating Activities';",No results found,0.0983,
+How much did S&P Global invest in short-term assets in Q3 2024?,1342.0,"SELECT ""Q3_2024"" FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Short-Term Investments';","[(None,)]",0.0932,
+What was S&P Global’s dividend per share in Q3 2024?,0.9,"SELECT ""Q3_2024"" FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Dividend Per Share';",No results found,0.0991,
+What was the percentage increase in revenue from Q2 2024 to Q3 2024?,0.0284,"SELECT ((`Q3_2024` - `Q2_2024`) / `Q2_2024`) * 100 FROM ""ADMIN"".""SPGI_INCOME_QUARTERLY"" WHERE `METRICS` = 'Revenue';",No results found,0.0,"ORA-00911: `: invalid character after (
+Help: https://docs.oracle.com/error-help/db/ora-00911/"
+How much did S&P Global's net income change from Q2 2024 to Q3 2024?,0.0411,"SELECT ""Q3_2024"" - ""Q2_2024"" FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Income'.",No results found,0.0,"ORA-03048: SQL reserved word '.' is not syntactically valid following '...WHERE ""METRICS"" = 'Net Income''
+Help: https://docs.oracle.com/error-help/db/ora-03048/"
+What was the change in S&P Global's total operating expenses from Q2 2024 to Q3 2024?,89.0,SELECT (Q3_2024 - Q2_2024) FROM SPGI_INCOME_QUARTERLY WHERE METRICS = 'Operating Expenses';,"[(84,)]",0.1061,
+By what percentage did capital expenditures change from Q2 2024 to Q3 2024?,-0.0278,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Capital Expenditures';","[(9.375,)]",0.0933,
+What was the percentage growth in earnings per share (EPS) from Q2 to Q3 2024?,0.0325,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""SPGI_RATIO_QUARTERLY"" WHERE ""METRICS"" = 'EPS (Basic)';",No results found,0.1093,
+How much did total assets grow between Q2 and Q3 2024?,763.0,"SELECT (Q3_2024 - Q2_2024) FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Current Assets';","[(-440,)]",0.096,
+By what percentage did S&P Global's cash and cash equivalents change from Q2 to Q3 2024?,0.0491,"SELECT ((SELECT ""Q3_2024"" FROM ""ADMIN"".""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = ""Cash & Equivalents"") - (SELECT ""Q2_2024"" FROM ""ADMIN"".""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = ""Cash & Equivalents"")) / (SELECT ""Q2_2024"" FROM ""ADMIN"".""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = ""Cash & Equivalents"") * 100 FROM DUAL;",No results found,0.0,"ORA-00904: ""Cash & Equivalents"": invalid identifier
+Help: https://docs.oracle.com/error-help/db/ora-00904/"
+What was the difference in shareholder equity between Q2 and Q3 2024?,498.0,"SELECT (""Q3_2024"" - ""Q2_2024"") FROM ""SPGI_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Shareholders' Equity';",No results found,0.0,DPY-2041: missing ending quote (')
+How much did S&P Global's total debt change from Q2 to Q3 2024?,-126.0,"SELECT (Q3_2024 - Q2_2024) FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Change in Total Debt'",No results found,0.0982,
+What is the difference in S&P Global's net cash flow from operations between Q2 and Q3 2024?,78.0,"SELECT (Q3_2024 - Q2_2024) AS net_cash_flow_difference FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Cash Flow' ;","[(-837,)]",0.0969,
+What was the percentage change in S&P Global’s dividend per share from Q2 to Q3 2024?,0.0112,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Dividend Per Share';",No results found,0.096,
+What was the net increase in S&P Global's cash position between Q2 and Q3 2024?,132.0,"SELECT Q3_2024 - Q2_2024 FROM ""SPGI_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Income';","[(-41,)]",0.096,
+What was Shell's total revenue in Q3 2024?,71089.0,"SELECT ""Q3_2024"" FROM ""SHEL_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Revenue';","[(71089.0,)]",0.1028,
+How much profit did Shell report in Q3 2024?,4291.0,"SELECT ""Q3_2024"" FROM ""SHEL_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Operating Income';","[(7410.0,)]",0.0959,
+What were Shell's total operating expenses for Q3 2024?,35128.0,"SELECT ""Q3_2024"" FROM ""SHEL_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Operating Expenses';","[(9316.0,)]",0.0395,
+How much did Shell spend on capital expenditures in Q3 2024?,-4690.0,"SELECT ""Q3_2024"" FROM ""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Capital Expenditures';","[(-4690.0,)]",0.0346,
+What was Shell's earnings per share (EPS) in Q3 2024?,1.28,"SELECT ""Q3_2024"" FROM """"SHEL_INCOME_QUARTERLY"""" WHERE ""METRICS"" = 'EPS (Basic)'",No results found,0.0,"ORA-01741: illegal zero-length identifier
+Help: https://docs.oracle.com/error-help/db/ora-01741/"
+What were Shell's total assets in Q3 2024?,394949.0,"SELECT ""Q3_2024"" FROM ""ADMIN"".""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Assets';","[(394949.0,)]",0.1059,
+How much cash and cash equivalents did Shell have in Q3 2024?,51690.0,"SELECT ""Q3_2024"" FROM ""ADMIN"".""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Cash & Equivalents';","[(42252.0,)]",0.0359,
+What was Shell's total shareholder equity in Q3 2024?,202388.0,"SELECT ""Q3_2024"" FROM ""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Shareholders' Equity';",No results found,0.0,DPY-2041: missing ending quote (')
+How much long-term debt did Shell report in Q3 2024?,39007.0,"SELECT ""Q3_2024"" FROM ""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Liabilities';","[(205411.0,)]",0.0297,
+What was Shell's total liabilities in Q3 2024?,192561.0,"SELECT ""Q3_2024"" FROM ""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Total Liabilities';","[(205411.0,)]",0.0612,
+What was the net cash flow from operating activities for Shell in Q3 2024?,11832.0,"SELECT ""Q3_2024"" FROM ""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Operating Cash Flow';","[(14684.0,)]",0.1116,
+How much did Shell invest in short-term assets in Q3 2024?,10456.0,"SELECT ""Q3_2024"" FROM ""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Cash & Short-Term Investments';","[(42252.0,)]",0.0961,
+What was Shell’s dividend per share in Q3 2024?,0.39,"SELECT ""Q3_2024"" FROM ""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Dividend Per Share';",No results found,0.0304,
+What was the percentage increase in revenue from Q2 2024 to Q3 2024?,0.0524,"SELECT ((Q3_2024 - Q2_2024) / Q2_2024) * 100 FROM ""SHEL_INCOME_QUARTERLY"" WHERE METRICS = 'Revenue'","[(-4.532391491190374,)]",0.0507,
+How much did Shell's net income change from Q2 2024 to Q3 2024?,0.0867,"SELECT ""Q2_2024"" - ""Q3_2024"" FROM ""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Income';","[(-774,)]",0.1123,
+What was the change in Shell's total operating expenses from Q2 2024 to Q3 2024?,738.0,"SELECT (""Q3_2024"" - ""Q2_2024"") FROM ""SHEL_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'Operating Expenses';","[(-179,)]",0.0352,
+By what percentage did capital expenditures change from Q2 2024 to Q3 2024?,-0.0324,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Capital Expenditures';","[(5.511811023622047,)]",0.099,
+What was the percentage growth in earnings per share (EPS) from Q2 to Q3 2024?,0.0278,"SELECT (Q3_2024 - Q2_2024) / Q2_2024 * 100 FROM ""SHEL_INCOME_QUARTERLY"" WHERE ""METRICS"" = 'EPS Growth';","[(-280.07153806847214,)]",0.0968,
+How much did total assets grow between Q2 and Q3 2024?,4123.0,"SELECT ((Q3_2024 - Q2_2024) / Q2_2024) * 100 FROM ""SHEL_BALANCE_SHEET_QUARTERLY"";","[(10.758100031456433,), (10.758100031456433,), (-88.24675324675324,), (-7.580157648313874,), (None,), (-7.580157648313874,), (-8.718666112140346,), (None,), (-7.737030411449016,), (-2.3920952795571866,), (1.0888134306323027,), (2.693266832917706,), (0.37489418309348166,), (-12.772983913923511,), (1.101645123384254,), (3.838315217391304,), (12.831497348021216,), (0.042048416471833897,), (-4.4836807781930785,), (None,), (None,), (10.747534334961747,), (None,), (4.94250061169562,), (-2.9484029484029484,), (-2.0448981376235027,), (-0.0307542479304954,), (-0.0390625,), (1.2685542405021906,), (-3.025369692036359,), (-1.0510951718025174,), (-1.7045454545454546,), (0,), (-0.7443475726740656,), (None,), (19.768197032522355,), (1.2221760774943773,), (4.598990465507572,), (1.254340509642609,), (0.042048416471833897,), (1.5158742778396141,), (-7.931404072883173,), (-6.529209621993127,), (-1.5812776723592663,), (-1.5812776723592663,), (-3.2475226195605345,), (2.830832196452933,), (2.13378312286026,), (3.766851704996035,)]",0.1261,
+By what percentage did Shell's cash and cash equivalents change from Q2 to Q3 2024?,0.0391,"SELECT ((Q3_2024 - Q2_2024) / Q2_2024) * 100 FROM ""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE METRICS = 'Cash & Equivalents';","[(10.758100031456433,)]",0.0947,
+What was the difference in shareholder equity between Q2 and Q3 2024?,2389.0,"SELECT ""Q3_2024"" - ""Q2_2024"" FROM ""SHEL_BALANCE_SHEET_QUARTERLY"" WHERE ""METRICS"" = 'Shareholders' Equity';",No results found,0.0,DPY-2041: missing ending quote (')
+How much did Shell's total debt change from Q2 to Q3 2024?,-276.0,"SELECT Q3_2024 - Q2_2024 FROM ""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Total Debt Repaid';","[(2922,)]",0.0974,
+What is the difference in Shell's net cash flow from operations between Q2 and Q3 2024?,1204.0,"SELECT Q2_2024 - Q3_2024 FROM ""ADMIN"".""SHEL_CASH_FLOW_QUARTERLY"" WHERE ""METRICS"" = 'Net Cash Flow' AND ( ""METRICS"" = 'Net Cash Flow' OR ""METRICS"" = 'Operating Cash Flow' ) ;","[(-5905,)]",0.095,
+What was the percentage change in Shell’s dividend per share from Q2 to Q3 2024?,0.0103,"SELECT ((t.Q3_2024 - t.Q2_2024) / t.Q2_2024) * 100 FROM ""ADMIN"".""SHEL_CASH_FLOW_QUARTERLY"" t","[(22.007392664202445,), (-3.095922855692776,), (-207.69230769230768,), (-82.33141662310507,), (3.8975501113585747,), (-29.60184650894403,), (106.46310432569975,), (-383.54297693920336,), (222.7738376674547,), (8.705952028427598,), (-277.89179104477614,), (5.511811023622047,), (-86.7605633802817,), (-25.58139534883721,), (46.89542483660131,), (15.54823247453565,), (None,), (-40.90909090909091,), (-40.90909090909091,), (-50.279329608938546,), (-68.17525276841599,), (-67.43595661204708,), (-68.2694596524637,), (-11.175288799598192,), (-0.4593477262287552,), (-72.07267833109017,), (-37.09268951544825,), (-678.5714285714286,), (None,), (-327.87340366463076,), (10.272536687631026,), (-398.8422575976845,), (15.52999178307313,), (12.056737588652481,), (-23.931623931623932,), (-12.180974477958237,), (23.38632966435657,), (20.70110701107011,), (841.8181818181819,)]",0.1323,
+What was the net increase in Shell's cash position between Q2 and Q3 2024?,982.0,"SELECT 
+       (""Q3_2024"" - ""Q2_2024"") 
+FROM 
+     ""ADMIN"".""SHEL_CASH_FLOW_QUARTERLY"" 
+WHERE 
+      ""METRICS"" = 'Net Cash Flow';","[(5905,)]",0.1028,
