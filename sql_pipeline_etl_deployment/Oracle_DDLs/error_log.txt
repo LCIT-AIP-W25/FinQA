@@ -1,1 +1,0 @@
-⚠️ Skipping DBTOOLS$EXECUTION_HISTORY: 'Metrics' column not found.
