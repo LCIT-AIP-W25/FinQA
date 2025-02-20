@@ -1,22 +1,30 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom"; // Import Navigate here
-import Login from "./components/Login";
-import Signup from "./components/Signup";
-import Dashboard from "./pages/Dashboard";
-import './components/Chatbox.css';
-
+import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import Dashboard from './components/Dashboard';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import Forget from './components/forget'
+import '../src/styles/custom.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Comp from './components/Comp'
 function App() {
   return (
-    <Router>
-      <div className="app">
+    <>
+      <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/" element={<Navigate to="/login" />} /> {/* Navigate is now imported */}
+        <Route path="/" element={<Navigate to="/login" />} />
+          <Route path='/signup' element={<Signup />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/dashboard' element={<Dashboard />} />
+          <Route path='/forget' element={<Forget />} />
         </Routes>
-      </div>
-    </Router>
+      </BrowserRouter>
+
+      
+
+    </>
+
+
   );
 }
 
