@@ -1,6 +1,0 @@
-langchain-huggingface
-faiss-cpu
-huggingface-hub
-sentence-transformers
-langchain-community
-ollama
