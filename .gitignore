@@ -1,0 +1,5 @@
+__pycache__/
+node_modules/
+instance/chats.db
+.env
+.DS_Store
