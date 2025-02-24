@@ -12,8 +12,6 @@ function ChatPage() {
     const [selectedChatIndex, setSelectedChatIndex] = useState(null);
     const [user, setUser] = useState(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [userInput, setUserInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
 
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
@@ -91,39 +89,24 @@ function ChatPage() {
     // ✅ Send message to Flask backend and save
     const sendMessage = async () => {
         if (!message.trim()) return;
-    
+
         const userMessage = { sender: "user", message: message };
         setCurrentChat((prevChat) => [...prevChat, userMessage]);
-    
+
         await saveChatToBackend(userMessage);
-    
+
         try {
-            // ✅ Updated API call to the real chatbot
-            const response = await axios.post("http://127.0.0.1:5000/query_chatbot", {
-                question: message,
-                session_id: sessionId,  // Pass the session ID dynamically
-                user_id: user,        // Pass the user ID dynamically
-            });
-    
-            // ✅ Handle the chatbot's real response
-            const botMessage = response.data.response
-                ? { sender: "bot", message: response.data.response }
-                : { sender: "bot", message: "Sorry, I could not process that request." };
-    
+            const response = await axios.post("http://127.0.0.1:5000/chat", { question: message });
+            const botMessage = { sender: "bot", message: response.data.answer };
+
             setCurrentChat((prevChat) => [...prevChat, botMessage]);
             await saveChatToBackend(botMessage);
         } catch (error) {
             console.error("Error sending message:", error);
-    
-            // ✅ Add error handling message
-            const errorMessage = { sender: "bot", message: "Error communicating with the chatbot." };
-            setCurrentChat((prevChat) => [...prevChat, errorMessage]);
-            await saveChatToBackend(errorMessage);
         }
-    
+
         setMessage(""); // Clear input
     };
-    
 
     // ✅ Save message to backend (SQLite)
     const saveChatToBackend = async (chatMessage) => {

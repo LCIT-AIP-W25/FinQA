@@ -16,7 +16,7 @@ function Login() {
             if (response.data.status === "success") {
                 localStorage.setItem("user", JSON.stringify(response.data)); // Store user session
                 localStorage.setItem("userId", response.data.user_id); // Store userId for chat history
-                navigate('/dashboard'); // Redirect after successful login
+                navigate('/Chat'); // Redirect after successful login
             }
         } catch (err) {
             setError("Invalid email or password.");
