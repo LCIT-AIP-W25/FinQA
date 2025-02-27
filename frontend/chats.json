@@ -1,0 +1,17 @@
+[
+    {
+      "session_id": "1",
+      "messages": [
+        { "sender": "user", "message": "Hello" },
+        { "sender": "bot", "message": "Hello, this is a chatbot response." }
+      ]
+    },
+    {
+      "session_id": "2",
+      "messages": [
+        { "sender": "user", "message": "How are you?" },
+        { "sender": "bot", "message": "I'm good, how can I help you?" }
+      ]
+    }
+  ]
+  
