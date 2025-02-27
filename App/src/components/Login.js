@@ -98,12 +98,12 @@ function Login() {
 
                                     <button type="submit" className='mt-4 btn-sign'>Sign in</button>
 
-                                    <p className='m-0 pt-2 pb-2 text-center'>Or</p>
+                                    {/* <p className='m-0 pt-2 pb-2 text-center'>Or</p>
 
                                     <button className='btn-sign btn-google' onClick={() => window.open('https://accounts.google.com/signup', '_blank')}>
                                         <img className='img-set' src='/images/google.png' alt="Google" />
                                         Sign in with Google
-                                    </button>
+                                    </button> */}
 
                                     <div className='box-end'>
                                         <p className='mt-2 mr-2 mb-0 account-txt'>Don't have an account?</p>

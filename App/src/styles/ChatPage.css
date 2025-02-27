@@ -1,210 +1,62 @@
-/* ✅ Chat History Sidebar */
-.bg-chat {
-    background-color: #3c3c3c;
-    padding: 20px;
-    height: 100vh;
-    overflow-y: auto;
-}
+/* ------------------------------------------ Header ----------------------------------- */
 
-.chat-history-btn {
-    background-color: transparent;
-    border: none;
-    color: white;
-    text-align: left;
-    padding: 10px;
-    width: 100%;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.chat-history-btn:hover {
-    background-color: #505050;
-}
-
-.chat-history-btn.active {
-    background-color: #606060;
-}
-
-/* 🗑️ Delete Button */
-.btn-danger {
-    background-color: #ff4d4d;
-    border: none;
-    margin-left: 10px;
-    transition: background 0.2s ease;
-}
-
-.btn-danger:hover {
-    background-color: #ff1a1a;
-}
-
-/* ✅ Restrict scrolling to chat messages only */
-.message-body {
-    flex: 1;
-    overflow-y: auto;
-    width: 100%;
-    padding: 20px;
-    background: #f4f4f4;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-    max-height: calc(100vh - 250px);
-    scroll-behavior: smooth;
-    overscroll-behavior: contain;
-}
-
-/* ✅ Chat Input Section */
-.box-chat {
-    display: flex;
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    background-color: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    margin-top: auto;
-    position: sticky;
-    bottom: 0;
-}
-
-/* ✅ Auto-wrapping long text */
-.user-msg,
-.bot-msg {
-    word-wrap: break-word;
-    white-space: pre-wrap;
-}
-
-/* ✅ Chat Bubbles */
-.user-msg {
-    background-color: #d1e7dd;
-    padding: 12px 20px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    text-align: right;
-    font-weight: 500;
-    color: #0f5132;
-    max-width: 75%;
-    margin-left: auto;
-}
-
-.bot-msg {
-    background-color: #f8d7da;
-    padding: 12px 20px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    text-align: left;
-    font-weight: 500;
-    color: #842029;
-    max-width: 75%;
-}
-
-/* ✅ Input Styling */
-.inp-bot {
-    flex: 1;
-    padding: 12px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    outline: none;
-    transition: border-color 0.2s ease;
-}
-
-.inp-bot:focus {
-    border-color: #007bff;
-}
-
-/* ✅ Buttons */
-.send-btn {
-    background-color: #007bff;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 5px;
-    border: none;
-    margin-left: 10px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.send-btn:hover {
-    background-color: #0056b3;
-}
-
-.new-chat-btn {
-    background-color: #dc3545;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 5px;
-    border: none;
-    margin-left: 10px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.new-chat-btn:hover {
-    background-color: #c82333;
-}
-
-/* ✅ Full-height container to remove bottom white space */
-.chat-bot {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    background-color: #f4f4f4;
-    overflow: hidden;
-}
-
-/* ✅ Ensure main content fills available space */
-.container-fluid {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-/* ✅ Center the placeholder message */
-.text-muted {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 95%;
-    font-size: 1.5rem;
-    color: #888;
-    font-weight: 500;
-    text-align: center;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-/* 🔥 Fade-in animation */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* ✅ Top Navigation Bar Styling */
-.head-chat {
+/* ✅ Chat App Header */
+.chat-app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 12px 20px;
     background-color: #f8f9fa;
     border-bottom: 1px solid #ddd;
+    height: 60px; /* Fixed height ensures content starts below */
+    flex-shrink: 0; /* Prevents shrinking */
+    position: relative;
+    z-index: 100; /* Ensures it stays on top */
 }
 
-/* ✅ User Profile Section */
-.profile-section {
+
+/* ✅ Logo Section */
+.chat-app-logo {
     display: flex;
     align-items: center;
-    position: relative;
-    z-index: 10;  /* 🔥 Ensures dropdown stays on top */
-    cursor: pointer;
+    gap: 10px;
 }
 
-.username {
-    margin-right: 10px;
+.chat-app-logo-img {
+    width: 45px;
+    height: auto;
+}
+
+/* ✅ Header Text Styling */
+.chat-app-header-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+
+/* ✅ User Profile Section */
+.chat-app-user-section {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Space between name and avatar */
+}
+
+.chat-app-profile {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.chat-app-username {
+    margin-right: 12px;
     font-weight: 500;
 }
 
-.profile-icon {
+/* ✅ Profile Icon */
+.chat-app-profile-icon {
     width: 40px;
     height: 40px;
     background-color: #333;
@@ -214,11 +66,10 @@
     justify-content: center;
     align-items: center;
     font-weight: bold;
-    cursor: pointer;
 }
 
-/* ✅ Dropdown Menu Fix */
-.dropdown-menu {
+/* ✅ Dropdown Menu */
+.chat-app-dropdown-menu {
     position: absolute;
     right: 0;
     top: 50px;
@@ -227,75 +78,39 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     width: 200px;
     padding: 10px;
-    z-index: 999;  /* 🔥 Always on top */
+    z-index: 999;
     display: none;
 }
 
-.profile-section:hover .dropdown-menu {
-    display: block;  /* ✅ Show menu on hover */
+.chat-app-profile-dropdown .chat-app-dropdown-menu {
+    display: block; 
 }
 
-/* ✅ Fix: Chat Input Section without Shrinking */
-.box-chat {
-    display: flex;
-    width: 100%;
-    max-width: 800px;  /* 🚩 Set a fixed max-width */
-    padding: 10px;
-    border-radius: 10px;
-    background-color: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    margin-top: auto;
-    position: sticky;
-    bottom: 0;
-}
-
-/* ✅ Input Box Resizing Fix */
-.inp-bot {
-    flex-grow: 1;  /* 🚩 Prevent shrinking */
-    padding: 12px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    outline: none;
-    transition: border-color 0.2s ease;
-    min-width: 200px;  /* ✅ Prevent shrinking below this width */
-}
-
-/* ✅ Send & New Chat Button Consistent Size */
-.send-btn,
-.new-chat-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 6px 16px;
-    border-radius: 5px;
-    height: 40px;
-    min-width: 80px;
-    font-size: 14px;
-}
-
-.profile-info {
+/* ✅ Profile Info Inside Dropdown */
+.chat-app-profile-info {
     text-align: center;
     margin-bottom: 10px;
 }
 
-.profile-avatar {
+.chat-app-avatar {
     width: 50px;
     height: 50px;
     background-color: #555;
     color: white;
     border-radius: 50%;
-    margin: 0 auto 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 24px;
+    margin: 0 auto 10px;
 }
 
-.profile-name {
+.chat-app-profile-name {
     font-weight: bold;
 }
 
-.dropdown-item {
+/* ✅ Dropdown Items */
+.chat-app-dropdown-item {
     width: 100%;
     padding: 10px;
     border: none;
@@ -304,36 +119,135 @@
     cursor: pointer;
 }
 
-.sign-out-btn {
+/* ✅ Sign Out Button */
+.chat-app-sign-out {
     color: white;
     background-color: #dc3545;
     border-radius: 5px;
 }
 
-.sign-out-btn:hover {
+.chat-app-sign-out:hover {
     background-color: #c82333;
 }
 
-/* ✅ Chat History Styling */
-.chat-history-header {
+/*----------------------------------------- side bar--------------------------------------*/
+
+/* ✅ Sidebar Styling */
+.chat-app-sidebar {
+    background-color: #202142; /* Dark gray */
+    padding: 20px;
+    height: 100vh;
+    overflow-y: auto;
+    width: 20%;
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ✅ Company Search Section */
+.chat-app-company-search {
+    padding: 12px;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #ccc;
+    border-radius: 8px; /* 🔥 Adds soft corners */
+}
+
+.chat-app-search-input {
+    width: 100%;
+    padding: 10px;  /* 🔥 Adds spacing inside input */
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 14px;
+}
+
+/* ✅ Company Dropdown */
+.chat-app-company-list {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+}
+
+.chat-app-company-item {
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.chat-app-company-item:hover {
+    background-color: #e6e6e6;
+}
+
+.chat-app-company-item.selected {
+    background-color: #e9f0fd;
+}
+
+/* ✅ Custom Scrollbar Styling */
+.chat-app-company-list::-webkit-scrollbar {
+    width: 10px;
+}
+
+.chat-app-company-list::-webkit-scrollbar-thumb {
+    background-color: #bbb; /* 🔥 Lighter scrollbar */
+    border-radius: 5px;
+}
+
+.chat-app-company-list::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+
+/* ✅ Chat History Section */
+.chat-app-chat-history-header {
+    font-size:18px;
     padding: 10px;
     margin-bottom: 10px;
     font-weight: bold;
     text-align: center;
     border-bottom: 1px solid #5c5c5c;
+    color: white;
 }
 
-.chat-history-list {
-    max-height: 80vh;
+.chat-app-chat-history {
+    flex-grow: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding-right: 8px;
+    margin-bottom: 20px;
+    max-height: calc(100vh - 200px);
+    box-sizing: content-box;
 }
 
-/* Individual chat session box */
-.chat-history-item {
+/* ✅ Scrollbar Styling */
+.chat-app-chat-history::-webkit-scrollbar {
+    width: 10px;
+}
+
+.chat-app-chat-history::-webkit-scrollbar-thumb {
+    background-color: #bbb; /* 🔥 Lighter scrollbar */
+    border-radius: 10px;
+}
+
+.chat-app-chat-history::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+
+.chat-app-chat-history::-webkit-scrollbar-button {
+    display: none; /* 🔥 Hides the up/down arrows */
+}
+
+/* ✅ Scrollbar for Firefox */
+.chat-app-chat-history {
+    scrollbar-width: auto;
+}
+
+/* ✅ Individual Chat Session Box */
+.chat-app-chat-item {
     display: flex;
     align-items: center;
-    background-color: #4b4b4b;
+    background-color: #495963;
     color: white;
     padding: 10px;
     margin-bottom: 8px;
@@ -343,29 +257,29 @@
     position: relative;
 }
 
-.chat-history-item:hover {
-    background-color: #5c5c5c;
+.chat-app-chat-item:hover {
+    background-color: #e6e6e6;
+    color:black;
 }
 
-/* Highlight for the active chat */
-.active-chat {
-    background-color: #1c5feb;
-    color: #fff;
+/* ✅ Highlight for Active Chat */
+.chat-app-chat-item.active {
+    background-color: #e9f0fd;
+    color: black;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Title of the chat */
-.chat-title {
-    flex-grow: 1;
-    font-weight: bold;
-    font-size: 14px;
+/* ✅ Chat Title */
+.chat-app-chat-title {
+    font-size: 12px;
+    text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    margin: 0;
 }
 
-/* Delete button styling */
-.delete-btn {
+/* ✅ Delete Button */
+.chat-app-delete-btn {
     background: none;
     border: none;
     color: #ff4d4d;
@@ -374,28 +288,166 @@
     transition: color 0.2s ease-in-out;
 }
 
-.delete-btn:hover {
+.chat-app-delete-btn:hover {
     color: #ff1a1a;
 }
 
-/* Flex container for chat title and delete button */
-.chat-history-content {
+/* ✅ Flex container for chat title and delete button */
+.chat-app-chat-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
 }
 
-/* Scrollbar customization */
-.chat-history-list::-webkit-scrollbar {
-    width: 5px;
+
+
+/* ---------------------------------------- Main Layout ---------------------------------- */
+
+/* ✅ Ensure main container takes full height */
+.chat-app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full viewport height */
+    overflow: hidden; /* Prevents unnecessary scrolling */
 }
 
-.chat-history-list::-webkit-scrollbar-thumb {
-    background-color: #888;
+/* ✅ Ensure content starts below the header */
+.chat-app-content {
+    display: flex;
+    flex: 1; /* Pushes content below header */
+    overflow: hidden;
+}
+
+
+/* ✅ Chat Window (Takes Remaining Space) */
+.chat-app-window {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #f4f4f4;
+    padding: 20px;
+    height: calc(100vh - 60px); /* Ensures it starts below the header */
+    overflow-y: auto;
+}
+
+/* ---------------------------------------- Chat Messages ---------------------------------- */
+
+/* ✅ Make chat messages expand to fill available space */
+.chat-app-messages {
+    flex-grow: 1;  /* Expands to take available space */
+    width: 100%;
+    max-width: 800px;
+    padding: 20p    x;
+    background: white;
     border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow-y: hidden;  /* 🔥 Removes unwanted scrollbar */
+    min-height: 100px;   /* Ensures some space but prevents scrolling */
 }
 
-.chat-history-list::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
+/* ✅ When messages are present, allow scrolling */
+.chat-app-messages.has-messages {
+    overflow-y: auto; /* 🔥 Only scrolls when there are messages */
 }
+
+/* ✅ Placeholder Message */
+.chat-app-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 1.2rem;
+    color: #888;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* ✅ Chat Messages Styling */
+.chat-app-user-message,
+.chat-app-bot-message {
+    padding: 14px 20px;  /* Increased padding for better spacing */
+    border-radius: 18px;
+    margin: 12px 16px;  /* 🔥 Adds left & right spacing, and top & bottom gap */
+    max-width: 75%;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 💬 User Message - Light Soft Gray */
+.chat-app-user-message {
+    background-color: #fafafa;
+    text-align: right;
+    color: #2f2f2f;
+    margin-left: auto;  /* Pushes user messages to the right */
+}
+
+/* 🤖 Bot Message - Lighter Gray for Better Readability */
+.chat-app-bot-message {
+    background-color: #e9f0fd;
+    text-align: left;
+    color: #2f2f2f;
+    margin-right: auto;  /* Pushes bot messages to the left */
+}
+
+/* ---------------------------------------- Chat Input ---------------------------------- */
+
+/* ✅ Attach input box naturally to the bottom */
+.chat-app-input-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 800px;
+    padding: 12px;
+    background-color: white;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    position: sticky;
+    bottom: 0;
+    gap: 10px;  /* 🔥 Adds spacing between elements */
+}
+
+/* ✅ Make input and buttons fit perfectly */
+.chat-app-input {
+    flex-grow: 1;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 14px;
+}
+
+.chat-app-send-btn,
+.chat-app-new-chat-btn {
+    padding: 10px 20px;  /* 🔥 Increased padding for better spacing */
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 90px;  /* 🔥 Ensures button width consistency */
+}
+
+/* 📩 Send Button */
+.chat-app-send-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+}
+
+.chat-app-send-btn:hover {
+    background-color: #0056b3;
+}
+
+/* 🆕 New Chat Button */
+.chat-app-new-chat-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+}
+
+.chat-app-new-chat-btn:hover {
+    background-color: #c82333;
+}
+

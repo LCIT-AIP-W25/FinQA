@@ -4,6 +4,12 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import "../styles/ChatPage.css"; // ✅ Import external CSS
 
+const companyList = [
+    'Amazon', 'McDonald\'s', 'Meta', 'Coca-Cola', 'Google', 'Alphabet',
+    'S&P Global', 'Tesla', 'Microsoft', 'Netflix', 'HSBC', 'JPMorgan',
+    'Shell', 'AT&T', 'Verizon', 'AMD', 'Mastercard', 'PepsiCo'
+  ];  
+
 function ChatPage() {
     const [message, setMessage] = useState("");
     const [currentChat, setCurrentChat] = useState([]);
@@ -14,6 +20,8 @@ function ChatPage() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [userInput, setUserInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedCompany, setSelectedCompany] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
@@ -102,7 +110,8 @@ function ChatPage() {
             const response = await axios.post("http://127.0.0.1:5000/query_chatbot", {
                 question: message,
                 session_id: sessionId,  // Pass the session ID dynamically
-                user_id: user,        // Pass the user ID dynamically
+                user_id: user.user_id,
+                selected_company: selectedCompany        // Pass the user ID dynamically
             });
     
             // ✅ Handle the chatbot's real response
@@ -212,48 +221,68 @@ function ChatPage() {
         localStorage.removeItem("user"); // Remove user data from local storage
         localStorage.removeItem("sessionId"); // Remove session ID
         navigate("/login"); // Redirect to login page
-    };    
+    };
+    
+        // Store custom titles dynamically in localStorage
+    const getOrGenerateTitle = (sessionId, chatMessages) => {
+        const storedTitles = JSON.parse(localStorage.getItem("chatTitles")) || {};
+    
+        if (storedTitles[sessionId]) {
+        return storedTitles[sessionId]; // Return the existing title
+        }
+    
+        // Generate a new title dynamically based on chat content
+        let newTitle = "New Chat";
+        if (chatMessages && chatMessages.length > 0) {
+        const firstMessage = chatMessages[0].message;
+        newTitle = firstMessage.slice(0, 20); // First 20 characters of the first message
+        } else {
+        // Use timestamp if no messages
+        newTitle = `Chat - ${new Date().toLocaleString()}`;
+        }
+    
+        // Save the new title
+        storedTitles[sessionId] = newTitle;
+        localStorage.setItem("chatTitles", JSON.stringify(storedTitles));
+    
+        return newTitle;
+    };
 
     return (
-        <section className="chat-bot">
-            <div className="container-fluid">
+        <section className="chat-app-container">
+            <div className="chat-app-wrapper">
                 {/* ✅ Header Section with User Info */}
-                <div className="row head-chat">
-                    <div className="col-6">
+                <div className="chat-app-header">
+                    <div className="chat-app-logo">
                         <Link to="/chat">
-                            <img className="we-img" src="/images/wes.png" alt="Logo" />
+                            <img className="chat-app-logo-img" src="/images/wes.png" alt="Logo" />
                         </Link>
+                        {/* Header Text */}
+                        <h2 className="chat-app-header-title">WealthWiz AI Chat</h2>
                     </div>
-                    <div className="col-6 text-end d-flex align-items-center justify-content-end">
-                        {/* <button className="btn btn-primary me-3" onClick={() => navigate("/dashboard")}>
-                            Go to Dashboard
-                        </button> */}
 
-                        {/* ✅ User Profile Dropdown */}
-                        <div className="profile-section">
+
+                    
+                    <div className="chat-app-user-section">
+                        <div className="chat-app-profile">
                             {user ? (
                                 <>
-                                    <span className="username">{user.username}</span>
-                                    <div className="profile-dropdown" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                        <div className="profile-icon">
+                                    <span className="chat-app-username">{user.username}</span>
+                                    <div className="chat-app-profile-dropdown" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                                        <div className="chat-app-profile-icon">
                                             {user.username.charAt(0).toUpperCase()}
                                         </div>
                                         {dropdownOpen && (
-                                            <div className="dropdown-menu">
-                                                <div className="profile-info">
-                                                    <div className="profile-avatar">
+                                            <div className="chat-app-dropdown-menu">
+                                                <div className="chat-app-profile-info">
+                                                    <div className="chat-app-avatar">
                                                         {user.username.charAt(0).toUpperCase()}
                                                     </div>
-                                                    <p className="profile-name">Hi, {user.username}!</p>
+                                                    <p className="chat-app-profile-name">Hi, {user.username}!</p>
                                                 </div>
                                                 <hr />
-                                                <button className="dropdown-item">My Profile</button>
-                                                <button
-                                                    className="dropdown-item sign-out-btn"
-                                                    onClick={handleSignOut}
-                                                >
-                                                    Sign Out
-                                                </button>
+                                                <button className="chat-app-dropdown-item">My Profile</button>
+                                                <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}>Sign Out</button>
                                             </div>
                                         )}
                                     </div>
@@ -262,36 +291,55 @@ function ChatPage() {
                                 <span>Loading...</span>  // Placeholder until user data loads
                             )}
                         </div>
-
                     </div>
                 </div>
 
-                {/* ✅ Chat Interface */}
-                <div className="row chat-row">
-                    {/* ✅ Left Sidebar - Chat History */}
-                    {/* ✅ Left Sidebar - Chat History */}
-                    <div className="col-2 bg-chat">
-                        <h5 className="text-white chat-history-header">Chat History</h5>
+                <div className="chat-app-content">
+                    {/* ✅ Sidebar Section */}
+                    <div className="chat-app-sidebar">
+                        <div className="chat-app-company-search">
+                            <input
+                                type="text"
+                                placeholder="Search company..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="chat-app-search-input"
+                            />
+                            <div className="chat-app-company-list">
+                                {companyList
+                                .filter(company => company.toLowerCase().includes(searchTerm.toLowerCase()))
+                                .map((company) => (
+                                    <div
+                                    key={company}
+                                    className={`chat-app-company-item ${selectedCompany === company ? 'selected' : ''}`}
+                                    onClick={() => setSelectedCompany(company)}
+                                    >
+                                    {company}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <h5 className="chat-app-chat-history-header">Chat History</h5>
                         {chatHistory.length === 0 ? (
-                            <p className="text-white">No previous chats</p>
+                            <p>No previous chats</p>
                         ) : (
-                            <div className="chat-history-list">
+                            <div className="chat-app-chat-history">
                                 {chatHistory.map((chat) => (
                                     <div
                                         key={chat.session_id}
-                                        className={`chat-history-item ${sessionId === chat.session_id ? "active-chat" : ""}`}
-                                        onClick={() => loadChatSession(chat.session_id)} // Load messages on click
+                                        className={`chat-app-chat-item ${sessionId === chat.session_id ? "active" : ""}`}
+                                        onClick={() => loadChatSession(chat.session_id)}
                                     >
-                                        <div className="chat-history-content">
-                                            <p className="chat-title">
-                                                {chat.title || `Chat ${chat.session_id.slice(0, 8)}`}
+                                        <div className="chat-app-chat-content">
+                                            <p className="chat-app-chat-title">
+                                                {getOrGenerateTitle(chat.session_id, chat.messages)}
                                             </p>
                                             <button
                                                 onClick={(e) => {
-                                                    e.stopPropagation(); // Prevents opening the chat when deleting
+                                                    e.stopPropagation();
                                                     deleteChatSession(chat.session_id);
                                                 }}
-                                                className="delete-btn"
+                                                className="chat-app-delete-btn"
                                             >
                                                 🗑️
                                             </button>
@@ -302,14 +350,14 @@ function ChatPage() {
                         )}
                     </div>
 
-                    {/* ✅ Chat Window */}
-                    <div className="col-8 d-flex flex-column align-items-center">
-                        <div className="message-body">
+                    {/* ✅ Chat Window Section */}
+                    <div className="chat-app-window">
+                        <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
                             {currentChat.length === 0 ? (
-                                <p className="text-muted">What can I help with?</p>
+                                <p className="chat-app-placeholder">What can I help with?</p>
                             ) : (
                                 currentChat.map((msg, idx) => (
-                                    <p key={idx} className={msg.sender === "user" ? "user-msg" : "bot-msg"}>
+                                    <p key={idx} className={msg.sender === "user" ? "chat-app-user-message" : "chat-app-bot-message"}>
                                         {msg.message}
                                     </p>
                                 ))
@@ -318,76 +366,26 @@ function ChatPage() {
                         </div>
 
                         {/* ✅ Chat Input Box */}
-                        <div
-                            className="d-flex justify-content-between align-items-center"
-                            style={{
-                                width: "100%",
-                                maxWidth: "790px",
-                                padding: "10px",
-                                backgroundColor: "white",
-                                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
-                                borderRadius: "10px",
-                                marginTop: "10px",
-                                marginLeft: "auto",
-                                marginRight: "auto"
-                            }}
-                        >
+                        <div className="chat-app-input-section">
                             <input
                                 type="text"
-                                className="form-control"
+                                className="chat-app-input"
                                 placeholder="Type a message..."
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                                style={{
-                                    flex: 1,
-                                    padding: "6px",
-                                    borderRadius: "5px",
-                                    fontSize: "13px",
-                                    height: "35px",
-                                    marginRight: "10px",
-                                    minWidth: "200px"
-                                }}
                             />
-
-                                <button
-                                    onClick={sendMessage}
-                                    className="btn btn-primary"
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "center",  // 🔥 Center horizontally
-                                        alignItems: "center",      // 🔥 Center vertically
-                                        padding: "6px 16px",
-                                        borderRadius: "5px",
-                                        height: "35px",
-                                        minWidth: "80px"
-                                    }}
-                                >
-                                    Send
-                                </button>
-
-                                <button
-                                    onClick={startNewChat}
-                                    className="btn btn-danger mx-2"
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "center",  // 🔥 Center horizontally
-                                        alignItems: "center",      // 🔥 Center vertically
-                                        padding: "6px 16px",
-                                        borderRadius: "5px",
-                                        height: "35px",
-                                        minWidth: "100px"
-                                    }}
-                                >
-                                    New Chat
-                                </button>
-
+                            <button onClick={sendMessage} className="chat-app-send-btn">Send</button>
+                            <button onClick={startNewChat} className="chat-app-new-chat-btn">New Chat</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
     );
+
+
+
 }
 
 export default ChatPage;

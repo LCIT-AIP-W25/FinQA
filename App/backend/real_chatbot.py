@@ -10,7 +10,7 @@ from datetime import datetime
 from groq import Groq
 import itertools
 
-def detect_company(user_input):
+def detect_company(company_name):
     """Maps company names from user input to corresponding DDL filenames."""
     company_map = {
         "amazon": "amzn",
@@ -28,16 +28,17 @@ def detect_company(user_input):
         "shell": "shel",
         "att": "t",
         "verizon": "vz",
-        "amd": "amd",
+        "amd": "amd",       
         "mastercard": "ma",
         "pepsico": "pep"
     }
 
-    for company, ddl_prefix in company_map.items():
-        if company.lower() in user_input.lower():
-            return ddl_prefix  # Return the prefix for DDL filename
+    # for company, ddl_prefix in company_map.items():
+    #     if company.lower() in user_input.lower():
+    #         return ddl_prefix  # Return the prefix for DDL filename
 
-    return None  # Return None if the company isn’t recognized
+    # return None  # Return None if the company isn’t recognized
+    return company_map.get(company_name.lower(), None)
 
 
 
@@ -72,51 +73,58 @@ def query_llm(user_question, ddl_content, model_name, api_key, max_retries=5):
     logging.debug("Querying LLM API using model: %s", model_name)
     
     prompt = f"""
-### System instructions:
-You are a highly intelligent and experienced SQL developer that can write precise, minimal and appropriate queries based on natural language questions.  
-Based on the DDL below, generate an SQL query by deriving appropriate columns, correct filters and table names from the user query in natural language that outputs a numerical value. 
-
 ### Output format:
 The SQL query should ALWAYS start with "SQL:" and be the ONLY OUTPUT. For example "SQL:SELECT * FROM TABLE;".  
 If you could not generate the SQL query, ONLY reply with "NOTE: [issue with creating the query].".  
 ALWAYS use "" (double quotes) for table and column names.
 ALWAYS use ''(single quotes) for filtering "METRICS" column.
 ALWAYS prefix "ADMIN" to table names.
+ALWAYS MAKE SURE THE SQL SYNTAX IS CORRECT.
+NEVER CREATE YOUR OWN COLUMN OR FILTER NAMES, ONLY USE WHAT IS PROVIDED IN THE DDL.
+IF THE USER ONLY MENTIONS AN YEAR BUT DOES NOT SPECIFY A QUARTER, TAKE ALL EXISTING QUARTERS IN THE DDL FOR THE YEAR MENTIONED IN THE USER QUERY AND PERFORM THE SPECIFIC OPERATION.
 ALWAYS cross-check what "METRICS" filter to use by going through the insert statements in the DDL for "METRICS" column.
-
-
+ 
 ### Information about the data:
-The tables have financial data of companies. 
-The column named "METRICS" in all tables just have string values of various financial metrics. 
+The tables have quarterly financial data of companies, where each column represents quarterly information of a metric.
+The column named "METRICS" in all tables just have string values of various financial metrics.
 The numerical values for a financial metric are stored inside the rest of the columns of that metric's row that contain quarterly information of that metric.
-For example, Q3_2024 means Quarter 3 of 2024. 
+For example, Q3_2024 means Quarter 3 of 2024.
 Only extract values from "Current" column if the user specifies "current" data of a year in the input.
-If the user does not specify a quarter, take all relevant quarters for the year mentioned in the user query and perform the specific operation. 
-Perform the required mathematical operation in the SQL query based on what the user specified.
-
+ 
 ### Examples:
 User input: What was McDonald's revenue in Q3 2024?
-Your output: SELECT "Q3_2024" FROM "ADMIN"."MCD_INCOME_QUARTERLY" WHERE "METRICS" = 'Revenue'; 
-
+Your output: SELECT "Q3_2024" FROM "ADMIN"."MCD_INCOME_QUARTERLY" WHERE "METRICS" = 'Revenue';
+ 
 User input: How much gross profit did Coca-Cola report in 2023?
 Your output: SELECT ("Q1_2023" + "Q2_2023" + "Q3_2023" + "Q4_2023")  FROM "ADMIN"."KO_INCOME_QUARTERLY" WHERE METRICS = 'Gross Profit';
-
+ 
+User input: What was the change in operating expenses from first quarter of 2024 to the second quarter for meta?
+Your output: SELECT ("Q2_2024" - "Q1_2024") FROM "ADMIN"."META_INCOME_QUARTERLY" WHERE "METRICS" = 'Operating Expenses';
+ 
 User input: What was the ratio of quarter 3 2024 and q2 2024 for Meta's cash and equivalents?
 Your output: SELECT ("Q3_2024"/"Q2_2024") FROM "ADMIN"."META_BALANCE_SHEET_QUARTERLY" WHERE "METRICS" = 'Cash and Equivalents'
-
-User input: During Q3 2024, what was the proportion or ratio of Property Plant and Equipment to Total Assets for amazon?
-Your output: SELECT ((SELECT "Q3_2024" FROM "ADMIN"."AMZN_BALANCE_SHEET_QUARTERLY" WHERE "METRICS" = 'Property Plant and Equipment') / (SELECT "Q3_2024" FROM "ADMIN"."AMZN_BALANCE_SHEET_QUARTERLY" WHERE "METRICS" = 'Total Assets')) 
-
+ 
+User input: What is the ratio of Accounts Receivable to Total Current Assets in Q3 2024 for AMD?
+Your output: SELECT ar."Q3_2024" * 1.0 / tca."Q3_2024" AS ratio FROM "ADMIN"."AMD_BALANCE_SHEET_QUARTERLY" ar JOIN "ADMIN"."AMD_BALANCE_SHEET_QUARTERLY" tca ON ar."METRICS" = 'Accounts Receivable' AND tca."METRICS" = 'Total Current Assets';
+ 
+User input: What proportion of Accounts Receivable is of Total Current Assets in Q3 2024 for AMD?
+Your output: SELECT ar."Q3_2024" * 1.0 / tca."Q3_2024" AS ratio FROM "ADMIN"."AMD_BALANCE_SHEET_QUARTERLY" ar JOIN "ADMIN"."AMD_BALANCE_SHEET_QUARTERLY" tca ON ar."METRICS" = 'Accounts Receivable' AND tca."METRICS" = 'Total Current Assets';
+ 
 User input: What was the average Book Value Per Share for the first three quarters of 2024 for Amazon?
 Your output: SELECT ("Q1_2024"+"Q2_2024"+"Q3_2024")/3 FROM "ADMIN"."AMZN_BALANCE_SHEET_QUARTERLY" where  "METRICS" = 'Book Value Per Share'
-
+ 
 User input: What was the percentage change in Cash and Equivalents from Q2 2024 to Q3 2024 for amazon?
-Your output: SELECT ("Q3_2024"- "Q2_2024")/"Q2_2024" * 100 FROM "ADMIN"."AMZN_BALANCE_SHEET_QUARTERLY" WHERE "METRICS" = 'Cash and Equivalents' 
-    
-## ddl = \"\"\"{ddl_content}\"\"\"
-
+Your output: SELECT ("Q3_2024"- "Q2_2024")/"Q2_2024" * 100 FROM "ADMIN"."AMZN_BALANCE_SHEET_QUARTERLY" WHERE "METRICS" = 'Cash and Equivalents'
+\n\n
+ 
+### System instructions:
+You generate SQL queries based on natural language questions.  
+Based on the DDL below, generate an SQL query by deriving correct columns, filters and table names that outputs a numerical value.
+ 
 ## Natural Language Query
 query = "{user_question}"
+\n\n
+## ddl = \"\"\"{ddl_content}\"\"\"
 
 """
     retries = 0

@@ -5,6 +5,8 @@ import uuid
 import logging
 import os
 from real_chatbot import detect_company, query_llm, extract_sql_and_notes, execute_sql  # Import your chatbot functions
+from real_chatbot_rag import load_faiss_index, query_llm_groq
+from classifier import classify_question  # Import the classification logic
 
 app = Flask(__name__)
 CORS(app)
@@ -135,15 +137,36 @@ def get_chat(session_id):
 @app.route('/query_chatbot', methods=['POST'])
 def query_chatbot():
     data = request.get_json()
+    print("Received data:", data)  # 🔍 Debug log
+
     user_question = data.get("question")
     session_id = data.get("session_id")
     user_id = data.get("user_id")
+    selected_company = data.get("selected_company")  # ✅ Matching key name
 
-    if not user_question or not session_id or not user_id:
-        return jsonify({"error": "Invalid request data"}), 400
+    print("User Question:", user_question)
+    print("Session ID:", session_id)
+    print("User ID:", user_id)
+    print("Selected Company:", selected_company)
 
-    ddl_directory = r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\Github_repo\FinQA\sql_pipeline_etl_deployment\Oracle_DDLs"
-    model_name = "llama-3.1-8b-instant"
+    # Validation
+    if not user_question or not session_id or not user_id or not selected_company:
+        return jsonify({"error": "Invalid request data - Missing required fields"}), 400
+
+    classification = classify_question(user_question)
+
+    if classification == 'numerical':
+        return handle_numerical_query(user_question, session_id, user_id, selected_company)
+    else:
+        return handle_contextual_query(user_question, selected_company)
+
+
+def handle_numerical_query(user_question, session_id, user_id, selected_company):
+    # ✅ Validate if a company is selected
+    if not selected_company:
+        return jsonify({"error": "No company selected for numerical query"}), 400
+    ddl_directory = r"C:\\Users\\user\\OneDrive - Loyalist College\\AIandDS\\Term 4\\Github_repo\\FinQA\\sql_pipeline_etl_deployment\\Oracle_DDLs"
+    model_name = "llama-3.3-70b-versatile"
     api_keys = [
         "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",
         "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",
@@ -154,10 +177,10 @@ def query_chatbot():
         "user": "ADMIN",
         "password": "Passwordtestdb@1",
         "dsn": "testdb_medium",
-        "wallet_location": r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\Github_repo\FinQA\sql_pipeline_etl_deployment\Wallet_testdb"
+        "wallet_location": r"C:\\Users\\user\\OneDrive - Loyalist College\\AIandDS\\Term 4\\Github_repo\\FinQA\\sql_pipeline_etl_deployment\\Wallet_testdb"
     }
 
-    ddl_prefix = detect_company(user_question)
+    ddl_prefix = detect_company(selected_company)
     if ddl_prefix:
         ddl_file_path = os.path.join(ddl_directory, f"{ddl_prefix}_ddl.sql")
     else:
@@ -180,14 +203,32 @@ def query_chatbot():
         print(f"Generated SQL Query: {sql_query}")
         results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
         if results:
-            # Convert list-like results to a readable format
             formatted_results = str(results[0][0]) if results else "No data found"
             return jsonify({"response": formatted_results}), 200
         else:
             return jsonify({"error": error_msg}), 500
     else:
         return jsonify({"error": "Failed to extract SQL query from LLM response."}), 500
+    
+# ✅ Handle Contextual (RAG-based) Queries
+def handle_contextual_query(user_question, selected_company):
+    vector_store = load_faiss_index()
+    if vector_store is None:
+        return jsonify({"error": "Vector store not available. Please run the embedding process first."}), 500
+    
+    final_query = f"[Company: {selected_company}] {user_question}"
 
+    retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+    response, relevant_docs = query_llm_groq(final_query, retriever)
+
+    if isinstance(response, str) and response.startswith("❌"):
+        return jsonify({"error": response}), 500
+
+    sources = [{"source": doc["source"], "snippet": doc["text"][:200]} for doc in relevant_docs]
+    return jsonify({
+        "response": response,
+        "sources": sources
+    }), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)

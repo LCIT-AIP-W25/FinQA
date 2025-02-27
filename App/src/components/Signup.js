@@ -101,16 +101,16 @@ function Signup() {
                                     {/* ✅ Signup Button */}
                                     <button type="submit" className='mt-4 btn-sign'>Sign up</button>
 
-                                    <p className='m-0 pt-2 pb-2 text-center'>Or</p>
+                                    {/* <p className='m-0 pt-2 pb-2 text-center'>Or</p> */}
 
                                     {/* ✅ Google Signup Button */}
-                                    <button
+                                    {/* <button
                                         className='btn-sign btn-google'
                                         onClick={() => window.open('https://accounts.google.com/signup', '_blank')}
                                     >
                                         <img className='img-set' src='/images/google.png' alt="Google" />
                                         Sign up with Google
-                                    </button>
+                                    </button> */}
 
                                     {/* ✅ Already have an account */}
                                     <div className='box-end'>
