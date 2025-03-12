@@ -1,0 +1,373 @@
+
+****** Result for Image/Page 1 ******
+Table of Contents	
+UNITED STATES	
+SECURITIES AND EXCHANGE COMMISSION	
+Washington, D.C. 20549	
+FORM 10-Q	
+(Mark One)	
+QUARTERLY REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934	
+For the qualterly period ended September 30, 2024	
+or	
+TRANSITION REPORT PURSUANT TO SECTION 13 OR 15(d) OF THE SECURITIES EXCHANGE ACT OF 1934	
+For the transition period from	to	
+Commission File No. 000-22513	
+AMAZON.COM, INC.	
+(Exact name of registrant as specified in its charter)	
+Delaware	91-1646860	
+(State or other jurisdiction of	(I.R.S. Employer	
+incorporation or organization)	Identification No.)	
+410 Terry Avenue North, Seattle, Washington 98109-5210	
+(206) 266-1000	
+(Address and telephone number, including area code, of registrant's principal executive offices)	
+Securities registered pursuant to Section 12(b) of the Act:	
+Title of Each Class	Trading Symbol(s)	Name of Each Exchange on "'hich Registered	
+Common Stock, par value $.01 per share	Nasdaq Global Select Market	
+Indicate by check mark whether the registrant (l) has filed all reports required to be filed by Section 13 or 15(d) Of the Securities Exchange Act Of 1934 during the preceding 12	
+months (or for such shorter period that the registrant was required to file such reports), and (2) has been subject to such filing requirements for the past 90 days. Yes No	
+Indicate by check mark whether the registrant has submitted electronically eveo•• Interactive Data File required to be submitted pursuant to Rule 405 of Regulation S-T during	
+the preceding 12 months (or for such shorter period that the registrant was required to submit such files). Yes NO	
+Indicate by check mark whether the registrant is a large accelerated filer, an accelerated filer, a non-accelerated filer, a smaller reporting company, or an emerging growth	
+company. See the definitions of "large accelerated filer," "accelerated filer," "smaller reporting company," and "emerging growth company" in Rule 12b-2 of the Exchange Act.	
+Large accelerated filer	Accelerated filer	
+Non-accelerated filer	Smaller reporting company	
+Emerging growth company	
+If an emerging growth company, indicate by check mark if the registrant has elected not to use the extended transition period for complying with any new or revised financial	
+accounting standards provided pursuant to Section 13(a) of the Exchange Act.	
+Indicate by check mark whether the registrant is a shell company (as defined in Rule 12b-2 of the Exchange Act). Yes Ü NO	
+10,515,011,008 shares of common stock, par value $0.01 per share, outstanding as of October 1 8, 2024	
+
+****** Result for Image/Page 2 ******
+Table of Contents	
+AMAZON.COM, INC.	
+FORM 10-Q	
+For the Quarterly Period Ended September 30, 2()24	
+INDEX	
+P age	
+PART 1. FINANCIAL INFORMATION	
+Item I.	Financial Statements	3	
+Consolidated Statements of Cash Flows	3	
+Consolidated Statements of Operations	4	
+Consolidated Statements of Comprehensive Income	5	
+Consolidated Balance Sheets	6	
+Notes to Consolidated Financial Statements	7	
+Item 2.	Management's Discussion and Analysis of Financial Condition and Results of Operations	22	
+Item 3.	Quantitative and Qualitative Disclosures About Market Risk	33	
+Item 4.	Controls and Procedures	34	
+PART 11. OTHER INFORMATION	
+Item l.	Legal Proceedings	35	
+Item IA.	Risk Factors	35	
+Item 2.	Unregistered sales of Equity-Securities-and-Use-Qf.R.1Q.ceeds	46	
+Item 3.	Defaults Upon Senior Securities	46	
+Item 4.	Mine Safety Disclosures	
+Item 5.	Other Information	46	
+Item 6.	Exhibits	47	
+Sjguatucs	48	
+2	
+
+****** Result for Image/Page 3 ******
+Table of Contents	
+PART 1. FINANCIAL INFORMATION	
+Item I.	Financial Statements	
+AMAZON.COM, INC.	
+CONSOLIDATED STATEMENTS OF CASH FLOWS	
+(in millions)	
+(unaudited)	
+Three Months Ended	Nine Months Ended	Twelve Months Ended	
+September 30,	September 30,	September 30,	
+2023	2024	2023	2024	2023	2024	
+CASH, CASH EQUIVALENTS, AND RESTRICTED CASH, BEGINNING OF PERIOD	50,067 s	71,673	s	54,253	73,890	35,178	S	50,081	
+OPERATING ACTIVITIES:	
+Net income	9,879	15,328	19,801	39,244	20,079	49,868	
+Adjustments to reconcile net income to net cash from operating activities:	
+Depreciation and amortization of property and equipment and capitalized content costs, operating lease	
+assets, and other	12,131	13,442	34,843	37,164	47,528	50,984	
+Stock-based compensation	5,829	5,333	17,704	17,016	23,310	23,335	
+N on-operating expense (income), net	(990)	(141)	(409)	2,498	3,036	2,159	
+Deferred income taxes	(1,196)	(1,317)	(4,412)	(3,040)	(7,779)	(4,504)	
+Changes in operating assets and liabilities:	
+Inventories	808	(1 ,509)	(1,194)	(2,818)	1,986	(175)	
+Accounts receivable, net and Other	(3,584)	(701)	(901)	774	(5,641)	(6,673)	
+Other assets	(3,134)	(4,537)	(9,463)	(10,293)	(13,511)	(13,095)	
+Accounts payable	2,820	(477)	(5,415)	(5,754)	4,437	5,134	
+Accrued expenses and other	(1,321)	129	(9,022)	(6,946)	(3,245)	(352)	
+Unearned revenue	(25)	421	949	2,396	1,454	6,025	
+Net cash provided by (used in) operating activities	21,217	25,971	42,481	70,241	71,654	112,706	
+INVESTING ACTIVITIES:	
+Purchases of propelty and equipment	(12,479)	(22,620)	(38,141)	(55,165)	(54,733)	(69,753)	
+Proceeds from property and equipment sales and incentives	1,181	1,342	3,361	3,559	4,513	4,794	
+Acquisitions, net of cash acquired, non-marketable investments, and other	(1,629)	(622)	(5,458)	(4,547)	(6,289)	(4,928)	
+Sales and maturities of marketable securities	1,393	8,069	4,059	12,726	9,742	14,294	
+Purchases of marketable securities	(219)	(3,068)	(1,053)	(13,472)	(1,286)	(13,907)	
+Net cash provided by (used in) investing activities	(11,753)	(16,899)	(37,232)	(56,899)	(48,053)	(69,500)	
+FINANCING ACTIVITIES:	
+Proceeds from short-term debt, and other	216	1,725	17,395	2,588	28,002	3,322	
+Repayments of sholt-telm debt, and other	(8,095)	(1 ,820)	(19,339)	(2,453)	(35,136)	(8,791)	
+Proceeds from long-term debt	8,235	
+Repayments of long-term debt	(2,183)	(3,386)	(6,682)	(4,643)	(6,972)	
+Principal repayments of finance leases	(1,005)	(402)	(3,605)	(1,710)	(5,245)	(2,489)	
+Principal repayments of financing obligations	(64)	(78)	(198)	(247)	(260)	(320)	
+Net cash provided by (used in) financing activities	(8,948)	(2,758)	(9,133)	(8,504)	(9,047)	(15,250)	
+Foreign currency effect on cash, cash equivalents, and restricted cash	(502)	690	(288)	(51)	349	640	
+Net increase (decrease) in cash, cash equivalents, and restricted cash	14	7,004	(4, 172)	4,787	14,903	28,596	
+CASH, CASH EQUIVALENTS, AND RESTRICTED CASH, END OF PERIOD	50,081 S	78,677	S	50,081	78,677	50,081	S	78,677	
+See accompanying notes to consolidated financial statements.	
+3	
+
+****** Result for Image/Page 4 ******
+Table of Contents	
+AMAZON.COM, INC.	
+CONSOLIDATED STATEMENTS OF OPERATIONS	
+(in millions, except per share data)	
+(unaudited)	
+Three Months Ended	Nine Months Ended	
+September 30,	September 30,	
+2023	2024	2023	2024	
+Net product sales	63,171	67,601	179,184	190,085	
+Net service sales	79,912	91,276	225,640	260,082	
+Total net sales	143,083	158,877	404,824	450,167	
+Operating expenses:	
+Cost of sales	75,022	80,977	212,186	227,395	
+Fulfillment	22,314	24,660	64,524	70,543	
+Technology and infrastructure	21,203	22,245	63,584	64,973	
+Sales and marketing	10,551	10,609	31,468	30,783	
+General and administrative	2,561	2,713	8,806	8,496	
+Other operating expense (income),	net	244	262	613	587	
+Total operating expenses	131,895	381,181	402,777	
+Operating income	11,188	17,411	23,643	47,390	
+Interest income	776	1,256	2,048	3,429	
+Interest expense	(806)	(603)	(2,469)	(1 ,836)	
+Other income (expense), net	1,031	(27)	649	(2,718)	
+Total non-operating income (expense)	1,001	626	228	(1,125)	
+Income before income taxes	12,189	18,037	23,871	46,265	
+Provision for income taxes	(2,306)	(2,706)	(4,058)	(6,940)	
+Equity-method investment activity, net of tax	(4)	(3)	(12)	(81)	
+Net income	s	9,879	15,328	19,801	39,244	
+Basic earnings per share	s	0.96	s	1.46	1.93	3.76	
+Diluted earnings per share	0.94	1.43	1.89	3.67	
+Weighted-average shares used in computation of earnings per share:	
+Basic	10,322	10,501	10,286	10,447	
+Diluted	10,452	10,705	
+10,558	10,735	
+See accompanying notes to consolidated financial statements.	
+4	
+
+****** Result for Image/Page 5 ******
+Table of Contents	
+AMAZON.COM, INC.	
+CONSOLIDATED STATEMENTS OF COMPREHENSIVE INCOME	
+(in millions)	
+(unaudited)	
+Three Months Ended	Nine Months Ended	
+September 30,	September 30,	
+2023	2024	2023	2024	
+Net income	s	9,879 s	15,328	19,801	39,244	
+Other comprehensive income (loss):	
+Foreign currency translation adjustments, net of tax ofS36, S(45), $4, and	
+$43	(1,388)	1,911	(738)	178	
+Available-for-sale debt securities:	
+Change in net unrealized gains (losses), net of tax of $(18), $(55),	$(52),	
+and $(282)	62	167	174	944	
+Less: reclassification adjustment for losses (gains) included in "Other	
+income (expense), net," net of tax of SO, SO, $(15), and S(l)	3	48	4	
+Net change	65	167	222	948	
+Other, net of tax of SO, $3, $0, and SI	(3)	(4)	
+Total other comprehensive income (loss)	(1,323)	2,075	(516)	1,122	
+Comprehensive income	s	8,556 s	17,403	19,285	40,366	
+See accompanying notes to consolidated financial statements.	
+5	
+
+****** Result for Image/Page 6 ******
+Table of Contents	
+AMAZON.COM, INC.	
+CONSOLIDATED BALANCE SHEETS	
+(in millions, except per share data)	
+December 31, 2023	September 30, 2024	
+(unaudited)	
+ASSETS	
+Current assets:	
+Cash and cash equivalents	73,387	75,091	
+Marketable securities	13,393	12,960	
+Inventories	33,318	36,103	
+Accounts receivable, net and other	52,253	51,638	
+Total current assets	172,351	175,792	
+Property and equipment, net	204,177	237,917	
+Operating leases	72,513	76,527	
+Goodwill	22,789	23,081	
+Other assets	56,024	71,309	
+Total assets	527,854	584,626	
+LIABILITIES AND STOCKHOLDERS' EQUITY	
+Current liabilities:	
+Accounts payable	84,981	84,570	
+Accrued expenses and other	64,709	60,602	
+Unearned revenue	15,227	16,305	
+Total current liabilities	164,917	161,477	
+Long-term lease liabilities	77,297	79,802	
+Long-tem debt	58,314	54,890	
+Other long-term liabilities	25,451	29,306	
+Commitments and contingencies (Note 4)	
+Stockholders' equity:	
+Preferred stock (SO.OI par value; 500 shares authorized; no shares issued or outstanding)	
+Common stock ($0.01 par value; 100,000 shares authorized; 10,898 and 11,026 shares issued,	• 10,383 and	
+10,511 shares outstanding)	109	110	
+Treasury stock, at cost	(7,837)	(7,837)	
+Additional paid-in capital	99,025	115,934	
+Accumulated other comprehensive income (loss)	(3,040)	(1,918)	
+Retained earnings	113,618	152,862	
+Total stockholders' equity	201,875	259,151	
+Total liabilities and stockholders' equity	527,854	584,626	
+See accompanying notes to consolidated financial statements.	
+6	
+
+****** Result for Image/Page 7 ******
+Table of Contents	
+AMAZON.COM, INC.	
+NOTES TO CONSOLIDATED FINANCIAL STATEMENTS	
+(unaudited)	
+Note 1 — ACCOUNTING POLICIES AND SUPPLEMENTAL DISCLOSURES	
+Unaudited Interim Financial Information	
+We have prepared the accompanying consolidated financial statements pursuant to the lilles and regulations of the Securities and Exchange Commission (the	
+"SEC") for interim financial reporting. These consolidated financial statements are unaudited and, in our opinion, include all adjustments, consisting of normal	
+recurring adjustments and accruals necessary for a fair presentation of our consolidated cash flows, operating results, and balance sheets for the periods presented.	
+Operating results for the periods presented are not necessarily indicative of the results that may be expected for 2024 due to seasonal and other factors. Certain	
+information and footnote disclosures normally included in financial statements prepared in accordance with accounting principles generally accepted in the United	
+States ("GAAP") have been omitted in accordance with the rules and regulations of the SEC. These consolidated financial statements should be read in conjunction	
+with the audited consolidated financial statements and accompanying notes in Item 8 of Part II, ' 'Financial Statements and Supplementary Data," of our 2023 Annual	
+Report on Form 10-K.	
+Prior Period Reclassifications	
+Certain prior period amounts have been reclassified to conform to the current period presentation. "Other assets" were reclassified out of "Accounts	
+receivable, net and other" on our consolidated statements of cash flows.	
+Principles of Consolidation	
+The consolidated financial statements include the accounts ofAmazon.com, Inc. and its consolidated entities (collectively, the "Company"), consisting of its	
+wholly-owned subsidiaries and those entities in which we have a variable interest and ofwhich we are the pnmary beneficiary, including certain entities in India and	
+certain entities that support our health care services. Intercompany balances and transactions between consolidated entities are eliminated.	
+Use of Estimates	
+The preparation of financial statements in conformity with GAAP requires estimates and assumptions that affect the reported amounts of assets and liabilities,	
+revenues and expenses, and related disclosures of contingent liabilities in the consolidated financial statements and accompanying notes. Estimates are used for, but	
+not limited to, income taxes, useful lives of equipment, commitments and contingencies, valuation of acquired intangibles and goodwill, stock-based compensation	
+forfeiture rates, vendor fitnding, inventory valuation, collectability of receivables, impairment of property and equipment and operating leases, valuation and	
+impairment of investments, self-insurance liabilities, and viewing patterns of capitalized video content. Actual results could differ materially from these estimates.	
+We review the useful lives of equipment on an ongoing basis, and effective January I, 2024 we changed our estimate of the useful lives for our servers from	
+five to six years. The longer useful lives are due to continuous improvements In our hardware, software, and data center designs. The effect of this change in	
+estimate for Q3 2024, based on servers that were included in "Property and equipment, net" as of June 30, 2024 and those acquired during the three months ended	
+September 30, 2024, was a reduction in depreciation and amortization expense of $760 million and a benefit to net income of $598 million, or $0.06 per basic share	
+and $0.06 per diluted share. The effect of this change in estimate for the nine months ended September 3(), 2024, based on servers that were included in "Property	
+and equipment, net" as of December 31, 2023 and those acquired during the nine months ended September 30, 2024, was a reduction in depreciation and	
+amortization expense of $2.4 billion and a benefit to net income of $1.9 billion, or $0.18 per basic share and SO.18 per diluted share.	
+7	
+
+****** Result for Image/Page 8 ******
+Table of Contents	
+Supplemental Cash Flow Information	
+The following table shows supplemental cash flow information (in millions):	
+Three Months Ended	Nine Months Ended	Twelve Months Ended	
+September 30,	September 30,	September 30,	
+2023	2024	2023	2024	2023	2024	
+SUPPLEMENTAL CASH FLOW INFORMATION:	
+Cash paid for interest on debt, net Of capitalized interest	s	465	266	S	1,821	S	1,215	2,450	2,002	
+Cash paid for operating leases	2,692	2,940	7,687	9,116	10,052	11,882	
+Cash paid for interest on finance leases	76	71	234	217	318	291	
+Cash paid for interest on financing obligations	50	47	150	161	205	207	
+Cash paid for income taxes, net of refunds	2,628	2,004	6,982	8,162	8,677	12,359	
+Assets acquired under operating leases	3,345	3,571	11,075	11,235	15,844	14,212	
+Property and equipment acquired under finance leases, net Of remeasurements and	
+modifications	183	186	431	409	748	620	
+Property and equipment recognized during the construction period of build-to-suit	
+lease anangements	93	21	308	89	618	138	
+Property and equipment derecognized after the construction period Of build-to-suit	
+lease arrangements, with the associated leases recognized as operating	492	1,212	3,063	162	
+Earnings Per Share	
+Basic earnings per share is calculated using our weighted-average outstanding common shares. Diluted earnings per share is calculated using our weighted-	
+average outstanding common shares including the dilutive effect of stock awards as determined under the treasury stock method. In periods when we have a net loss,	
+stock awards are excluded from our calculation of earnings per share as their inclusion would have an antidilutive effect.	
+The following table shows the calculation of diluted shares (in millions):	
+Nine Months Ended	
+Three Months Ended	
+September 30,	September 30,	
+2023	2024	2023	2024	
+Shares used in computation of basic earnings per share	10,322	10,501	10,286	10,447	
+Total dilutive effect of outstanding stock awards	236	234	166	258	
+Shares used in computation of diluted eamings per share	10,558	10,735	10,452	10,705	
+Other Income (Expense), Net	
+"Other income (expense), net" is as follows (in millions):	
+Three Months Ended	Nine Months Ended	
+September 30,	September 30,	
+2023	2024	2023	2024	
+Marketable equity securities valuation gains (losses)	1,196 $	(117)	1,015 $	(1 ,800)	
+Equity warrant valuation gains (losses)	(27)	80	(188)	(421)	
+Upward adjustments relating to equity investments in private companies	7	2	33	13	
+Foreign currency gains (losses)	(94)	17	(15)	(195)	
+Other, net	(51)	(9)	(196)	(315)	
+Total other income (expense), net	1,031	(27)	649	(2,718)	
+Included in "Other income (expense), net" is a marketable equity securities valuation gain (loss) of S I .2 billion and $(348) million in Q3 2023 and Q3 2024,	
+and S926 million and .9) billion for the nine months ended September 30, 2023 and 2024, from our equity investment in RivianAutomotive, Inc. ("Rivian"). As	
+of September 30, 2024, we held 158 million shares of Rivian's Class A common stock, representing an approximate 16% ownership interest, and an approximate	
+15% voting interest. We determined that we have the ability to exercise significant influence over Rivian through our equity investment, our commercial	
+arrangement for the purchase of electric vehicles and jointly-owned intellectual property, and one of our employees serving on Rivian's board of directors. We	
+elected the fair value option to account for our equity investment in Rivian, which is	
+8	
+
+****** Result for Image/Page 9 ******
+Table of Contents	
+included in "Marketable securities" on our consolidated balance sheets, and had a fair value ofS3.7 billion and Sl .8 billion as ofDecember 31, 2023 and	
+September 30, 2024.	
+Required summarized financial information of Rivian as disclosed in its most recent SEC filings is as follows (in millions):	
+Six Months Ended June 30,	
+2023	2024	
+Revenues	1,782 $	2,362	
+Gross profit (loss)	(947)	(978)	
+Loss from operations	(2,718)	(2,859)	
+Net loss	(2,544)	(2,903)	
+Inventories	
+Inventories, consisting of products available for sale, are primarily accounted for using the first-in, first-out method, and are valued at the lower of cost and	
+net realizable value. This valuation requires us to make judgments, based on currently available information, about the likely method of disposition, such as through	
+sales to individual customers, returns to product vendors, or liquidations, and expected recoverable values of each disposition categow. The inventory valuation	
+allowance, representing a write-down of inventory, was S3.0 billion and S2.7 billion as of December 31, 2023 and September 30, 2024.	
+Accounts Receivable, Net and Other	
+Included in "Accounts receivable, net and other" on our consolidated balance sheets are receivables primarily related to customers, vendors, and sellers, as	
+well as prepaid expenses and other current assets. As of December 31 , 2023 and September 30, 2024, customer receivables, net, were $34. I billion and $34.6	
+billion, vendor receivables, net, were S8.5 billion and S8.3 billion, seller receivables, net, were Sl .0 billion and $60 million, and other receivables, net, were S3.3	
+billion and $3.0 billion. Seller receivables are amounts due from sellers related to our seller lending program, which provided fitnding to sellers primarily to procure	
+inventory. Prepaid expenses and other current assets were S5.4 billion and S5.8 billion as of December 31, 2023 and September 30, 2024.	
+We estimate losses on receivables based on expected losses, including our historical experience of actual losses. The allowance for doubtful accounts was Sl.7	
+billion and $1.9 billion as of December 31, 2023 and September 30, 2024.	
+Digital Video and Music Content	
+Included in "Other assets" on our consolidated balance sheets are the total capitalized costs of video, which is primarily released content, and music, which as	
+of December 31, 2023 and September 30, 2024 were Sl 7.4 billion and $19.8 billion. Total video and music expense was $4.6 billion and $5.0 billion in Q3 2023 and	
+Q3 2024, and S13.0 billion and S14.2 billion for the nine months ended September 30, 2023 and 2024.	
+Unearned Revenue	
+Unearned revenue is recorded when payments are received or due in advance of performing our service obligations and is recognized over the service period.	
+Unearned revenue primarily relates to prepayments of AWS services and Amazon Prime memberships. Our total unearned revenue as of December 31 , 2023 was	
+$20.9 billion, of which S12.5 billion was recognized as revenue during the nine months ended September 30, 2024. Included in "Other long-term liabilities" on our	
+consolidated balance sheets was S5.7 billion and S7.0 billion of unearned revenue as of December 31, 2023 and September 30, 2024.	
+Additionally, we have performance obligations, primarily related to AWS, associated with commitments in customer contracts for future services that have not	
+yet been recognized in our consolidated financial statements. For contracts with original terms that exceed one year, those commitments not yet recognized were	
+approximately S164 billion as of September 30, 2024. The weighted-average remaining life of our long-term contracts is 3.9 years. However, the amount and timing	
+of revenue recognition is largely driven by customer usage, which can extend beyond the original contractual term.	
+Accounting Pronouncements Not Yet Adopted	
+In December 2023, the Financial Accounting Standards Board issued an Accounting Standards Update ("ASU") amending existing income tax disclosure	
+guidance, primarily requiring more detailed disclosure for income taxes paid and the effective tax rate reconciliation. The ASU is effective for annual reporting	
+periods beginning after December 15, 2024, with	
+9	
+
+****** Result for Image/Page 10 ******
+Table of Contents	
+early adoption permitted, and can be applied on either a prospective or retroactive basis. We are currently evaluating the ASU to determine its impact on our income	
+tax disclosures.	
+Note 2 — FINANCIAL INSTRUMENTS	
+Cash, Cash Equivalents, Restricted Cash, and Marketable Securities	
+As of December 31, 2023 and September 30, 2024, our cash, cash equivalents, restricted cash, and marketable securities primarily consisted of cash, AAA-	
+rated money market ftnds, U.S. and foreign government and agency securities, other investment grade securities, and marketable equity securities. Cash equivalents	
+and marketable securities are recorded at fair value. Fair value is defined as the price that would be received to sell an asset or paid to transfer a liability in an	
+orderly transaction between market participants at the measurement date. To increase the comparability of fair value measures, the following hierarchy prioritizes	
+the inputs to valuation methodologies used to measure fair value:	
+Level I—Valuations based on quoted prices for identical assets and liabilities in active markets.	
+Level 2—VaIuations based on observable inputs other than quoted prices included in Level I, such as quoted prices for similar assets and liabilities in active	
+markets, quoted prices for identical or similar assets and liabilities in markets that are not active, or other inputs that are observable or can be corroborated by	
+observable market data.	
+Level 3—Valuations based on unobservable inputs reflecting our own assumptions, consistent with reasonably available assumptions made by other market	
+participants. These valuations require significant judgment.	
+We measure the fair value of money market åtnds and certain marketable equity securities based on quoted prices in active markets for identical assets or	
+liabilities. Other marketable securities were valued either based on recent trades of securities in inactive markets or based on quoted market prices of similar	
+instruments and other significant inputs derived from or corroborated by observable market data.	
+10	
