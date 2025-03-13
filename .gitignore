@@ -2,7 +2,7 @@
 config.json
 .env
 "App/backend/Rag/index.faiss"
-.faiss
+*.faiss
 
 # Ignore system files
 .DS_Store
