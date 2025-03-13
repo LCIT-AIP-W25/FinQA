@@ -10,8 +10,8 @@ from groq import Groq
 load_dotenv()
 
 # Configuration
-FAISS_STORE_PATH = r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\FinQA_Project_Env\React_App\backend\Rag"
-DATA_DIR = r"C:\Users\user\OneDrive - Loyalist College\AIandDS\Term 4\Github_repo\FinQA\RAG system new companies\extracted_sec_text"
+FAISS_STORE_PATH = "Rag"
+DATA_DIR = "extracted_sec_text"
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Ensure this is set in your .env file
 

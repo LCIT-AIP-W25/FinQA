@@ -1,27 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
-import "../styles/ChatPage.css"; // ✅ Import external CSS
+import "../styles/ChatPage.css"; // ✅ Import external CSS  
 
-const companyList = [
-    'Amazon', 'McDonald\'s', 'Meta', 'Coca-Cola', 'Google', 'Alphabet',
-    'S&P Global', 'Tesla', 'Microsoft', 'Netflix', 'HSBC', 'JPMorgan',
-    'Shell', 'AT&T', 'Verizon', 'AMD', 'Mastercard', 'PepsiCo'
-  ];  
 
 function ChatPage() {
     const [message, setMessage] = useState("");
     const [currentChat, setCurrentChat] = useState([]);
     const [chatHistory, setChatHistory] = useState([]);
     const [sessionId, setSessionId] = useState("");
-    const [selectedChatIndex, setSelectedChatIndex] = useState(null);
     const [user, setUser] = useState(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [userInput, setUserInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [companyList, setCompanyList] = useState([]);
 
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
@@ -32,6 +24,20 @@ function ChatPage() {
             chatEndRef.current.parentNode.scrollTop = chatEndRef.current.parentNode.scrollHeight;
         }
     };
+
+
+    // ✅ Fetch company names from API on component mount
+    useEffect(() => {
+            async function fetchCompanies() {
+                try {
+                    const response = await axios.get("http://127.0.0.1:5000/api/companies");
+                    setCompanyList(response.data);  // ✅ Store fetched company names
+                } catch (error) {
+                    console.error("Error fetching company names:", error);
+                }
+            }
+            fetchCompanies();
+        }, []);
 
     // ✅ Initialize session ID or generate a new one
     useEffect(() => {
@@ -64,15 +70,15 @@ function ChatPage() {
         scrollToBottom();
     }, [currentChat]);
 
-    // ✅ Fetch chat history for the current session
-    const fetchChatHistory = async (id) => {
-        try {
-            const response = await axios.get(`http://127.0.0.1:5000/get_chats/${id}`);
-            setCurrentChat(response.data);
-        } catch (error) {
-            console.error("Error fetching chat history:", error);
-        }
-    };
+    // // ✅ Fetch chat history for the current session
+    // const fetchChatHistory = async (id) => {
+    //     try {
+    //         const response = await axios.get(`http://127.0.0.1:5000/get_chats/${id}`);
+    //         setCurrentChat(response.data);
+    //     } catch (error) {
+    //         console.error("Error fetching chat history:", error);
+    //     }
+    // };
 
     // ✅ Fetch all chat sessions for displaying history
     const fetchAllChatSessions = async () => {
@@ -179,18 +185,18 @@ function ChatPage() {
     
       
     
-    const handleChatSelection = async (selectedSessionId) => {
-        try {
-            // Fetch chat messages for the selected session from the backend
-            const response = await axios.get(`http://127.0.0.1:5000/get_chat/${selectedSessionId}`);
+    // const handleChatSelection = async (selectedSessionId) => {
+    //     try {
+    //         // Fetch chat messages for the selected session from the backend
+    //         const response = await axios.get(`http://127.0.0.1:5000/get_chat/${selectedSessionId}`);
             
-            // Update state with the selected session's messages
-            setSessionId(selectedSessionId);
-            setCurrentChat(response.data.messages);  // Display chat messages in the chat window
-        } catch (error) {
-            console.error("Error fetching selected chat:", error);
-        }
-    };
+    //         // Update state with the selected session's messages
+    //         setSessionId(selectedSessionId);
+    //         setCurrentChat(response.data.messages);  // Display chat messages in the chat window
+    //     } catch (error) {
+    //         console.error("Error fetching selected chat:", error);
+    //     }
+    // };
     
     // ✅ Delete a chat session
     const deleteChatSession = async (sessionIdToDelete) => {

@@ -1,6 +1,8 @@
 # Ignore configuration files with credentials
 config.json
 .env
+"App/backend/Rag/index.faiss"
+.faiss
 
 # Ignore system files
 .DS_Store

@@ -7,6 +7,11 @@ import os
 from real_chatbot import detect_company, query_llm, extract_sql_and_notes, execute_sql  # Import your chatbot functions
 from real_chatbot_rag import load_faiss_index, query_llm_groq
 from classifier import classify_question  # Import the classification logic
+from dotenv import load_dotenv
+import oracledb
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
@@ -15,6 +20,14 @@ CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# Retrieve database configuration
+db_config = {
+        "user": os.getenv("DB_USER"),
+        "password": os.getenv("DB_PASSWORD"),
+        "dsn": os.getenv("DB_DSN"),
+        "wallet_location": os.getenv("DB_WALLET_LOCATION"),
+    }
 
 # ✅ Chat Model
 class ChatSession(db.Model):
@@ -160,27 +173,65 @@ def query_chatbot():
     else:
         return handle_contextual_query(user_question, selected_company)
 
+def get_ddl_prefix_from_db(company_name):
+    """Fetch DDL prefix from the Oracle database mapping table."""
+    connection = oracledb.connect(
+            user=db_config["user"],
+            password=db_config["password"],
+            dsn=db_config["dsn"],
+            config_dir=db_config["wallet_location"],
+            wallet_location=db_config["wallet_location"],
+            wallet_password=db_config["password"]
+            )
+    cursor = connection.cursor()
+
+    query = "SELECT DDL_PREFIX FROM COMPANY_MAPPING WHERE LOWER(COMPANY_NAME) = LOWER(:company_name)"
+    cursor.execute(query, {"company_name": company_name})
+    
+    result = cursor.fetchone()
+    cursor.close()
+    connection.close()
+
+    return result[0] if result else None
+
+def get_company_names_from_db():
+    """Fetch distinct company names from the COMPANY_MAPPING table."""
+    connection = oracledb.connect(
+        user=db_config["user"],
+        password=db_config["password"],
+        dsn=db_config["dsn"],
+        config_dir=db_config["wallet_location"],
+        wallet_location=db_config["wallet_location"],
+        wallet_password=db_config["password"]
+    )
+    cursor = connection.cursor()
+    query = "SELECT DISTINCT UPPER(COMPANY_NAME) FROM COMPANY_MAPPING"
+    cursor.execute(query)
+    
+    companies = [row[0] for row in cursor.fetchall()]
+    cursor.close()
+    connection.close()
+    
+    return companies
+
+@app.route('/api/companies', methods=['GET'])
+def fetch_companies():
+    """API Endpoint to get company names"""
+    return jsonify(get_company_names_from_db())
 
 def handle_numerical_query(user_question, session_id, user_id, selected_company):
     # ✅ Validate if a company is selected
     if not selected_company:
         return jsonify({"error": "No company selected for numerical query"}), 400
-    ddl_directory = r"C:\\Users\\user\\OneDrive - Loyalist College\\AIandDS\\Term 4\\Github_repo\\FinQA\\sql_pipeline_etl_deployment\\Oracle_DDLs"
+    ddl_directory = "Oracle_DDLs"
     model_name = "llama-3.3-70b-versatile"
-    api_keys = [
-        "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",
-        "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",
-        "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",
-        "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"
-    ]
-    db_config = {
-        "user": "ADMIN",
-        "password": "Passwordtestdb@1",
-        "dsn": "testdb_medium",
-        "wallet_location": r"C:\\Users\\user\\OneDrive - Loyalist College\\AIandDS\\Term 4\\Github_repo\\FinQA\\sql_pipeline_etl_deployment\\Wallet_testdb"
-    }
 
-    ddl_prefix = detect_company(selected_company)
+    # Retrieve API keys as a list
+    api_keys = os.getenv("API_KEYS").split(",")
+
+    # ddl_prefix = detect_company(selected_company)
+    ddl_prefix = get_ddl_prefix_from_db(selected_company)
+
     if ddl_prefix:
         ddl_file_path = os.path.join(ddl_directory, f"{ddl_prefix}_ddl.sql")
     else:
@@ -229,6 +280,8 @@ def handle_contextual_query(user_question, selected_company):
         "response": response,
         "sources": sources
     }), 200
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)

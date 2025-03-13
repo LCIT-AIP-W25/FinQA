@@ -1,0 +1,8 @@
+testdb_high = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.ca-toronto-1.oraclecloud.com))(connect_data=(service_name=geb46f104c7011b_testdb_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+testdb_low = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.ca-toronto-1.oraclecloud.com))(connect_data=(service_name=geb46f104c7011b_testdb_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+testdb_medium = (description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.ca-toronto-1.oraclecloud.com))(connect_data=(service_name=geb46f104c7011b_testdb_medium.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))
+
+
+
