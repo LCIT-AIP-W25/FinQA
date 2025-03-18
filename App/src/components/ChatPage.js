@@ -1,7 +1,9 @@
+import { useLoader } from "./LoaderContext";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/ChatPage.css"; // ✅ Import external CSS  
+
 
 
 function ChatPage() {
@@ -14,9 +16,45 @@ function ChatPage() {
     const [selectedCompany, setSelectedCompany] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [companyList, setCompanyList] = useState([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
+
+
+    const { setLoading } = useLoader();
+
+    // ✅ Function to toggle sidebar
+    const toggleSidebar = () => {
+        setIsSidebarOpen((prev) => !prev);
+    };
+
+    useEffect(() => {
+    // Add a global request interceptor
+        const requestInterceptor = axios.interceptors.request.use((config) => {
+            setLoading(true);
+            return config;
+        });
+
+    // Add a global response interceptor
+    const responseInterceptor = axios.interceptors.response.use(
+        (response) => {
+        setLoading(false);
+        return response;
+        },
+        (error) => {
+        setLoading(false);
+        return Promise.reject(error);
+        }
+    );
+
+    // Cleanup interceptors on unmount
+    return () => {
+        axios.interceptors.request.eject(requestInterceptor);
+        axios.interceptors.response.eject(responseInterceptor);
+    };
+    }, [setLoading]);
+
 
     // ✅ Auto-scroll to the latest message
     const scrollToBottom = () => {
@@ -301,8 +339,10 @@ function ChatPage() {
                 </div>
 
                 <div className="chat-app-content">
+
+
                     {/* ✅ Sidebar Section */}
-                    <div className="chat-app-sidebar">
+                    <div className={`chat-app-sidebar ${isSidebarOpen ? "active" : ""}`}>
                         <div className="chat-app-company-search">
                             <input
                                 type="text"
@@ -355,6 +395,11 @@ function ChatPage() {
                             </div>
                         )}
                     </div>
+
+                    {/* ✅ Menu Button (Separate from Sidebar) */}
+                    <button className="chat-app-menu-btn" onClick={toggleSidebar}>
+                        ☰
+                    </button>
 
                     {/* ✅ Chat Window Section */}
                     <div className="chat-app-window">

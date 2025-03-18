@@ -130,21 +130,67 @@
     background-color: #c82333;
 }
 
-/*----------------------------------------- side bar--------------------------------------*/
+/*----------------------------------------- SIDE BAR --------------------------------------*/
 
 /* ✅ Sidebar Styling */
 .chat-app-sidebar {
-    background-color: #202142; /* Dark gray */
+    background-color: #202142 !important;
     padding: 20px;
-    height: 100vh;
+    height: calc(100vh - 60px); /* Keeps it below header */
     overflow-y: auto;
-    width: 20%;
+    width: 270px;
     display: flex;
     flex-direction: column;
+    position: absolute;
+    top: 60px; /* ✅ Positioned below the header */
+    left: 0; /* ✅ Always visible on large screens */
+    transition: left 0.3s ease-in-out;
+    z-index: 100;
+}
+
+/* ✅ Hide sidebar by default on small screens */
+@media (max-width: 768px) {
+    .chat-app-sidebar {
+        left: -270px; /* ✅ Hidden by default on small screens */
+    }
+
+    /* ✅ Show sidebar when active */
+    .chat-app-sidebar.active {
+        left: 0;
+    }
+}
+
+/* ✅ Menu Button - Moves with Sidebar */
+.chat-app-menu-btn {
+    position: absolute;
+    top: 60px; /* ✅ Aligns below header */
+    left: 0px; /* ✅ Default position outside sidebar */
+    background-color: #202142;
+    color: white;
+    border: none;
+    font-size: 12.3px;
+    cursor: pointer;
+    z-index: 150;
+    transition: left 0.3s ease-in-out;
+    display: none;
+}
+
+/* ✅ Show menu button only on small screens */
+@media (max-width: 768px) {
+    .chat-app-menu-btn {
+        display: block;
+    }
+
+    /* ✅ Move the button with sidebar */
+    .chat-app-sidebar.active + .chat-app-menu-btn {
+        left: 270px; /* ✅ Moves when sidebar opens */
+    }
 }
 
 
-/* ✅ Company Search Section */
+
+/*------------------------------------- COMPANY SEARCH SECTION ---------------------------*/
+
 .chat-app-company-search {
     padding: 12px;
     background-color: #f5f5f5;
@@ -154,12 +200,22 @@
 
 .chat-app-search-input {
     width: 100%;
-    padding: 10px;  /* 🔥 Adds spacing inside input */
+    padding: 10px;
     margin-bottom: 8px;
     border-radius: 6px;
     border: 1px solid #ccc;
     outline: none;
     font-size: 14px;
+    color: black !important; /* Ensures input text stays black */
+}
+
+/* ✅ Prevent Autofill Yellow Background */
+.chat-app-search-input:-webkit-autofill,
+.chat-app-search-input:-webkit-autofill:hover,
+.chat-app-search-input:-webkit-autofill:focus,
+.chat-app-search-input:-webkit-autofill:active {
+    -webkit-text-fill-color: black !important;
+    box-shadow: 0 0 0px 1000px #f5f5f5 inset !important; /* Ensures input background remains normal */
 }
 
 /* ✅ Company Dropdown */
@@ -175,14 +231,26 @@
     padding: 8px;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    font-weight: normal !important;
+    color: black !important; /* Keeps text white */
 }
 
+/* ✅ Prevent Text from Turning Bold */
+.chat-app-company-item:focus,
+.chat-app-company-item:active {
+    font-weight: normal !important;
+    outline: none;
+}
+
+/* ✅ Hover Effect */
 .chat-app-company-item:hover {
     background-color: #e6e6e6;
+    color: black;
 }
 
 .chat-app-company-item.selected {
     background-color: #e9f0fd;
+    color: black !important;
 }
 
 /* ✅ Custom Scrollbar Styling */
@@ -191,7 +259,7 @@
 }
 
 .chat-app-company-list::-webkit-scrollbar-thumb {
-    background-color: #bbb; /* 🔥 Lighter scrollbar */
+    background-color: #bbb;
     border-radius: 5px;
 }
 
@@ -199,10 +267,10 @@
     background-color: #f1f1f1;
 }
 
+/*------------------------------------- CHAT HISTORY SECTION ---------------------------*/
 
-/* ✅ Chat History Section */
 .chat-app-chat-history-header {
-    font-size:18px;
+    font-size: 18px;
     padding: 10px;
     margin-bottom: 10px;
     font-weight: bold;
@@ -220,35 +288,13 @@
     box-sizing: content-box;
 }
 
-/* ✅ Scrollbar Styling */
-.chat-app-chat-history::-webkit-scrollbar {
-    width: 10px;
-}
-
-.chat-app-chat-history::-webkit-scrollbar-thumb {
-    background-color: #bbb; /* 🔥 Lighter scrollbar */
-    border-radius: 10px;
-}
-
-.chat-app-chat-history::-webkit-scrollbar-track {
-    background-color: #f1f1f1;
-}
-
-.chat-app-chat-history::-webkit-scrollbar-button {
-    display: none; /* 🔥 Hides the up/down arrows */
-}
-
-/* ✅ Scrollbar for Firefox */
-.chat-app-chat-history {
-    scrollbar-width: auto;
-}
-
-/* ✅ Individual Chat Session Box */
+/* ✅ Prevent Chat History Text from Changing */
 .chat-app-chat-item {
     display: flex;
     align-items: center;
     background-color: #495963;
-    color: white;
+    color: white !important;
+    font-weight: normal !important;
     padding: 10px;
     margin-bottom: 8px;
     border-radius: 8px;
@@ -257,21 +303,29 @@
     position: relative;
 }
 
+/* ✅ Prevent Text from Turning Bold */
+.chat-app-chat-item:focus,
+.chat-app-chat-item:active {
+    font-weight: normal !important;
+    outline: none;
+}
+
+/* ✅ Hover Effect */
 .chat-app-chat-item:hover {
     background-color: #e6e6e6;
-    color:black;
+    color: black !important;
 }
 
 /* ✅ Highlight for Active Chat */
 .chat-app-chat-item.active {
     background-color: #e9f0fd;
-    color: black;
+    color: black !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /* ✅ Chat Title */
 .chat-app-chat-title {
-    font-size: 12px;
+    font-size: 11px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -299,7 +353,6 @@
     align-items: center;
     width: 100%;
 }
-
 
 
 /* ---------------------------------------- Main Layout ---------------------------------- */

@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useLoader } from "./LoaderContext"; // ✅ Import global loader
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -11,6 +14,33 @@ function Signup() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
 
+
+    const { setLoading } = useLoader();
+
+    useEffect(() => {
+      const requestInterceptor = axios.interceptors.request.use((config) => {
+        setLoading(true);
+        return config;
+      });
+    
+      const responseInterceptor = axios.interceptors.response.use(
+        (response) => {
+          setLoading(false);
+          return response;
+        },
+        (error) => {
+          setLoading(false);
+          return Promise.reject(error);
+        }
+      );
+    
+      return () => {
+        axios.interceptors.request.eject(requestInterceptor);
+        axios.interceptors.response.eject(responseInterceptor);
+      };
+    }, [setLoading]);
+    
+  
     // ✅ Handle Signup Submission
     const onSubmit = async (data) => {
         try {

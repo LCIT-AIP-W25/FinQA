@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useLoader } from "./LoaderContext"; // ✅ Import global loader
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react";
@@ -9,6 +12,32 @@ function Login() {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState("");
+
+
+    const { setLoading } = useLoader();
+
+    useEffect(() => {
+    const requestInterceptor = axios.interceptors.request.use((config) => {
+        setLoading(true);
+        return config;
+    });
+
+    const responseInterceptor = axios.interceptors.response.use(
+        (response) => {
+        setLoading(false);
+        return response;
+        },
+        (error) => {
+        setLoading(false);
+        return Promise.reject(error);
+        }
+    );
+
+    return () => {
+        axios.interceptors.request.eject(requestInterceptor);
+        axios.interceptors.response.eject(responseInterceptor);
+    };
+    }, [setLoading]);
 
     const onSubmit = async (data) => {
         try {

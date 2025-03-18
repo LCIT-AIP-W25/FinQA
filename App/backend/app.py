@@ -1,21 +1,25 @@
+#----------------------------------------Imports----------------------------------------
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import uuid
 import logging
 import os
-from real_chatbot import detect_company, query_llm, extract_sql_and_notes, execute_sql  # Import your chatbot functions
+from real_chatbot import query_llm, extract_sql_and_notes, execute_sql  # Import chatbot functions
 from real_chatbot_rag import load_faiss_index, query_llm_groq
-from classifier import classify_question  # Import the classification logic
+from classifier import classify_question  # Import classification logic
 from dotenv import load_dotenv
 import oracledb
 
+#----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
 load_dotenv()
 
+#----------------------------------------Flask App Initialization----------------------------------------
 app = Flask(__name__)
 CORS(app)
 
+#----------------------------------------Database Setup----------------------------------------
 # ✅ SQLite DB Setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -23,12 +27,13 @@ db = SQLAlchemy(app)
 
 # Retrieve database configuration
 db_config = {
-        "user": os.getenv("DB_USER"),
-        "password": os.getenv("DB_PASSWORD"),
-        "dsn": os.getenv("DB_DSN"),
-        "wallet_location": os.getenv("DB_WALLET_LOCATION"),
-    }
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "dsn": os.getenv("DB_DSN"),
+    "wallet_location": os.getenv("DB_WALLET_LOCATION"),
+}
 
+#----------------------------------------Database Models----------------------------------------
 # ✅ Chat Model
 class ChatSession(db.Model):
     id = db.Column(db.String(50), primary_key=True)
@@ -44,6 +49,8 @@ class Chat(db.Model):
 # ✅ Initialize the DB
 with app.app_context():
     db.create_all()
+
+#----------------------------------------Routes----------------------------------------
 
 # ✅ Route to Save Chat Message
 @app.route('/save_chat', methods=['POST'])
@@ -172,6 +179,13 @@ def query_chatbot():
         return handle_numerical_query(user_question, session_id, user_id, selected_company)
     else:
         return handle_contextual_query(user_question, selected_company)
+    
+@app.route('/api/companies', methods=['GET'])
+def fetch_companies():
+    """API Endpoint to get company names"""
+    return jsonify(get_company_names_from_db())
+    
+#----------------------------------------Utility Functions----------------------------------------
 
 def get_ddl_prefix_from_db(company_name):
     """Fetch DDL prefix from the Oracle database mapping table."""
@@ -213,11 +227,6 @@ def get_company_names_from_db():
     connection.close()
     
     return companies
-
-@app.route('/api/companies', methods=['GET'])
-def fetch_companies():
-    """API Endpoint to get company names"""
-    return jsonify(get_company_names_from_db())
 
 def handle_numerical_query(user_question, session_id, user_id, selected_company):
     # ✅ Validate if a company is selected
@@ -281,7 +290,6 @@ def handle_contextual_query(user_question, selected_company):
         "sources": sources
     }), 200
 
-
-
+#----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
