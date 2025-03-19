@@ -23,12 +23,15 @@ function ChatPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    
 
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
 
     const [modalOpen, setModalOpen] = useState(false);
 const [modalContent, setModalContent] = useState([]);
+
+const [hoveredMenu, setHoveredMenu, index] = useState(null);
 
 
     // ✅ Auto-scroll to the latest message
@@ -289,7 +292,26 @@ const [modalContent, setModalContent] = useState([]);
                 </div>
                 <hr />
 
-                <button className="chat-app-dropdown-item">My Profile</button>
+                <button className="chat-app-dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#myProfile">My Profile</button>
+
+                <div class="modal fade" id="myProfile" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+                    {/* ✅ Modal */}
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalTitle">My Profile</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Profile Content
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary">Save changes</button>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+
                 <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}><i className="fas fa-sign-out-alt" aria-hidden="true"></i>Logout</button>
             </div>
         )}
@@ -309,48 +331,67 @@ const [modalContent, setModalContent] = useState([]);
                                 className="chat-app-search-input"
                             />
                             <div className="chat-app-company-list">
-                
+                                <ul className="menu">
                                 {companyList
                                 .filter(company => company.toLowerCase().includes(searchTerm.toLowerCase()))
                                 .map((company) => (
-                                    <div
+                                    <li
                                     key={company}
-                                    className={`chat-app-company-item ${selectedCompany === company ? 'selected' : ''}`}
+                                    className={`menu-item chat-app-company-item ${selectedCompany === company ? 'selected' : ''}`}
                                     onClick={() => setSelectedCompany(company)}
+                                    onMouseEnter={() => setHoveredMenu(index)}
+                                    onMouseLeave={() => setHoveredMenu(null)}
                                     >
                 
                                     {company}
-                                    </div>
-                                ))}
+                                        {hoveredMenu === index && (
+                                            <ul className="submenu chat-app-company-submenu">
+                                                <h6 className="sub-heading">Matrix</h6>
+                                                <li className="chat-app-company-item">Nedddsdws</li>
+                                                <li className="chat-app-company-item">Compadsdny Info</li>
+                                                <li className="chat-app-company-item">Stdsdock Info</li>
+                                                <li className="chat-app-company-item">News</li>
+                                                <li className="chat-app-company-item">Company Info</li>
+                                                <li className="chat-app-company-item">Stock Info</li>
+                                                <li className="chat-app-company-item">Stdsdock Info</li>
+                                                <li className="chat-app-company-item">News</li>
+                                                <li className="chat-app-company-item">Company Info</li>
+                                                <li className="chat-app-company-item">Stock Info</li>
+                                            </ul>
+                                        )}
+                                    </li>
+                                ))}</ul>
                             </div>
                         </div>
-                        <h5 className="chat-app-chat-history-header">Chat History</h5>
                         {chatHistory.length === 0 ? (
                             <p>No previous chats</p>
                         ) : (
                             <div className="chat-app-chat-history">
-                                {chatHistory.map((chat) => (
-                                    <div
-                                        key={chat.session_id}
-                                        className={`chat-app-chat-item ${sessionId === chat.session_id ? "active" : ""}`}
-                                        onClick={() => loadChatSession(chat.session_id)}
-                                    >
-                                        <div className="chat-app-chat-content">
-                                            <p className="chat-app-chat-title">
-                                                {getOrGenerateTitle(chat.session_id, chat.messages)}
-                                            </p>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteChatSession(chat.session_id);
-                                                }}
-                                                className="chat-app-delete-btn"
-                                            >
-                                                🗑️
-                                            </button>
+                                <h5 className="chat-app-chat-history-header">Chat History</h5>
+                                <div className="chat-app-chat-list">
+                                    {chatHistory.map((chat) => (
+                                        <div
+                                            key={chat.session_id}
+                                            className={`chat-app-chat-item ${sessionId === chat.session_id ? "active" : ""}`}
+                                            onClick={() => loadChatSession(chat.session_id)}
+                                        >
+                                            <div className="chat-app-chat-content">
+                                                <p className="chat-app-chat-title">
+                                                    {getOrGenerateTitle(chat.session_id, chat.messages)}
+                                                </p>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteChatSession(chat.session_id);
+                                                    }}
+                                                    className="chat-app-delete-btn"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -383,14 +424,14 @@ const [modalContent, setModalContent] = useState([]);
                             <button onClick={sendMessage} className="chat-app-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                             <button onClick={startNewChat} className="chat-app-new-chat-btn"><i class="fa fa-plus"></i></button>
                         </div>
+
                     </div>
+                    
                 </div>
             </div>
+            
         </section>
     );
-
-
-
 }
 
 export default ChatPage;
