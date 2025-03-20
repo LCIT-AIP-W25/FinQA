@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import oracledb
 from groq import Groq  # ✅ Required for Groq API
 import time
+import re
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -357,7 +358,19 @@ def handle_numerical_query(user_question, selected_company):
     sql_query, notes = extract_sql_and_notes(llm_output)
     if sql_query:
         print(f"Generated SQL Query: {sql_query}")
-        results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
+        write_operation_patterns = [
+        r"\b(?:insert|update|delete|drop|create|rename|replace|modify|insertMany|updateMany|bulkWrite)\b",
+        r"\$set\b", 
+        r"\$push\b", 
+        r"\$addToSet\b",  
+        r"\$pull\b"  
+    ]
+        for pattern in write_operation_patterns:
+            if re.search(pattern, sql_query, re.IGNORECASE):
+                return jsonify({"error": "Failed to run SQL query due to security concerns."}), 500
+            else:
+
+                results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
         if results:
             formatted_results = str(results[0][0]) if results else "No data found"
             return jsonify({"response": formatted_results}), 200
