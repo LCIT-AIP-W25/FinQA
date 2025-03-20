@@ -7,9 +7,10 @@ import logging
 import os
 from real_chatbot import query_llm, extract_sql_and_notes, execute_sql  # Import chatbot functions
 from real_chatbot_rag import load_faiss_index, query_llm_groq
-from classifier import classify_question  # Import classification logic
 from dotenv import load_dotenv
 import oracledb
+from groq import Groq  # ✅ Required for Groq API
+import time
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -153,39 +154,134 @@ def get_chat(session_id):
     except Exception as e:
         return jsonify({"status": "Error", "message": str(e)}), 500
 
-# ✅ Route to Query Real Chatbot
+
+
+#----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
 def query_chatbot():
     data = request.get_json()
-    print("Received data:", data)  # 🔍 Debug log
+    print("Received data:", data)
 
     user_question = data.get("question")
     session_id = data.get("session_id")
     user_id = data.get("user_id")
-    selected_company = data.get("selected_company")  # ✅ Matching key name
+    selected_company = data.get("selected_company")
 
     print("User Question:", user_question)
     print("Session ID:", session_id)
     print("User ID:", user_id)
     print("Selected Company:", selected_company)
 
-    # Validation
     if not user_question or not session_id or not user_id or not selected_company:
         return jsonify({"error": "Invalid request data - Missing required fields"}), 400
 
-    classification = classify_question(user_question)
+    # ✅ Unpack the (Response, status) tuple
+    numerical_result, numerical_status = handle_numerical_query(user_question, selected_company)
+    contextual_result, contextual_status = handle_contextual_query(user_question, selected_company)
 
-    if classification == 'numerical':
-        return handle_numerical_query(user_question, session_id, user_id, selected_company)
-    else:
-        return handle_contextual_query(user_question, selected_company)
-    
+    # ✅ Adjust error checking based on the unpacked status codes
+    numerical_text = numerical_result.get_json().get('response') if numerical_status == 200 else str(numerical_result.get_json().get('error'))
+    contextual_text = contextual_result.get_json().get('response') if contextual_status == 200 else str(contextual_result.get_json().get('error'))
+
+    #print values
+    print("SQL Output:",numerical_text)
+    print("RAG Output:",contextual_text)
+    # ✅ Run summarizer
+    summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
+
+    return jsonify({"response": summarized_response}), 200
+
+
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
     """API Endpoint to get company names"""
     return jsonify(get_company_names_from_db())
     
 #----------------------------------------Utility Functions----------------------------------------
+
+   
+#----------------------------------------Summarization Function----------------------------------------
+def summarize_responses(user_question, numerical_response, contextual_response):
+    model_name = "mistral-saba-24b"
+    max_retries = 3
+
+    api_keys = os.getenv("API_KEYS")
+    if not api_keys:
+        return "We are currently unable to process this request. Please try again later."
+
+    api_keys = api_keys.split(",")
+    api_key = api_keys[2]
+
+    try:
+        client = Groq(api_key=api_key)
+    except Exception:
+        return "We are currently experiencing technical difficulties. Please try again later."
+
+    prompt = f"""
+    You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
+
+    ### Decision Rule:
+    - Prioritize the SQL numerical response if it directly answers the user's question.
+    - Use the contextual response only if SQL data is insufficient or irrelevant.
+    - Always use the **user question** to understand if the expected answer is a **percentage**, **monetary amount**, or **count**.
+
+    ### Formatting Guidelines:
+    - If the user asks about **percentage change, growth, or decrease**, format the number as a percentage (e.g., `-1.24%`, `12.5%`).
+    - If the user asks about **revenue, profit, income, shareholder equity**, or any **monetary value**, format as currency:
+        - If values are large, use `$` sign and **M** for millions (e.g., `$143M`, `$22.7M`)
+        - Add commas for readability (e.g., `$25,500`)
+    - If the user asks for a **count** (like number of employees, units, or quarters), return the raw number with commas if large (`5,000`).
+    - Do not repeat the question. No explanations.
+
+    ###Inputs:
+    User Question: {user_question}
+    Numerical Response (SQL): {numerical_response}
+    Contextual Response (RAG): {contextual_response}
+
+    If you used the numerical response, always end with:
+    "All monetary values are in millions."
+"""
+
+    for attempt in range(max_retries):
+        try:
+            llm_response = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "system", "content": prompt}],
+                max_tokens=300,
+                temperature=0.3
+            )
+
+            formatted_response = llm_response.choices[0].message.content.strip()
+
+            if not formatted_response or formatted_response.lower().startswith("error"):
+                raise ValueError("Invalid response received from LLM.")
+
+            return formatted_response
+        except Exception as e:
+            error_message = str(e).lower()
+
+            if "503" in error_message or "service unavailable" in error_message:
+                if attempt == max_retries - 1:
+                    return "We are currently experiencing high demand. Please try again later."
+                time.sleep((attempt + 1) * 2)
+                continue
+
+            if "rate limit" in error_message or "too many requests" in error_message:
+                if attempt == max_retries - 1:
+                    return "We are currently handling a high number of requests. Please try again in a few minutes."
+                time.sleep((attempt + 1) * 2)
+                continue
+
+            if "unauthorized" in error_message or "invalid api key" in error_message:
+                return "We are currently unable to process this request. Please try again later."
+
+            if attempt == max_retries - 1:
+                return "We are experiencing technical difficulties. Please try again later."
+
+            time.sleep((attempt + 1) * 2)
+
+    return "We are experiencing technical difficulties. Please try again later."
+
 
 def get_ddl_prefix_from_db(company_name):
     """Fetch DDL prefix from the Oracle database mapping table."""
@@ -228,7 +324,7 @@ def get_company_names_from_db():
     
     return companies
 
-def handle_numerical_query(user_question, session_id, user_id, selected_company):
+def handle_numerical_query(user_question, selected_company):
     # ✅ Validate if a company is selected
     if not selected_company:
         return jsonify({"error": "No company selected for numerical query"}), 400
@@ -252,7 +348,7 @@ def handle_numerical_query(user_question, session_id, user_id, selected_company)
     with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
         ddl_content = ddl_file.read().strip()
 
-    api_key = api_keys[0]  # Cycle through if needed
+    api_key = api_keys[1]  # Cycle through if needed
     llm_output, llm_time = query_llm(user_question, ddl_content, model_name, api_key)
 
     if not llm_output:

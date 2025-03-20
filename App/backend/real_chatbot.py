@@ -10,6 +10,10 @@ from datetime import datetime
 from groq import Groq
 import itertools
 
+import nltk
+nltk.download('punkt_tab')
+
+
 def load_excel_data(file_path):
     """Loads the Excel file and creates a dictionary of DataFrames for each company."""
     xls = pd.ExcelFile(file_path)

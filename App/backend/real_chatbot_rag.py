@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from groq import Groq
+import nltk
+nltk.download('punkt_tab')
 
 # Load environment variables
 load_dotenv()
