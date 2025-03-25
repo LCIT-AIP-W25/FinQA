@@ -20,6 +20,7 @@ function ChatPage() {
     const [user, setUser] = useState(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [userInput, setUserInput] = useState('');
+    
     const [isLoading, setIsLoading] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -266,7 +267,7 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
                             <img className="chat-app-logo-img" src="/images/wes.png" alt="Logo" />
                         </Link>
                         {/* Header Text */}
-                        <h2 className="chat-app-header-title">WealthWiz AI Chat</h2>
+                        <h2 className="chat-app-header-title">WealthWiz</h2>
                     </div>
 
 
@@ -289,6 +290,8 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
                         {user?.username?.charAt(0).toUpperCase()}
                     </div>
                     <p className="chat-app-profile-name">Hi, {user?.username}!</p>
+                    
+                    
                 </div>
                 <hr />
 
@@ -296,20 +299,40 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
 
                 <div class="modal fade" id="myProfile" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
                     {/* ✅ Modal */}
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="modalTitle">My Profile</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            Profile Content
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary">Save changes</button>
-                        </div>
-                        </div>
-                    </div>
+                    <div className="modal-dialog modal-dialog-centered">
+  <div className="modal-content p-4 shadow-lg rounded-4">
+    {/* Modal Header */}
+    <div className="modal-header border-0">
+      <h5 className="modal-title fw-bold text-primary" id="modalTitle">
+        <i className="bi bi-person-circle me-2"></i> My Profile
+      </h5>
+      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+    {/* Modal Body */}
+    <div className="modal-body text-center">
+      {/* Profile Image Placeholder */}
+    
+
+      {/* User Information */}
+      <p className="mb-2">
+        <strong className="text-secondary">Username:</strong> <span className="text-dark">{user?.username}</span>
+      </p>
+      <p className="mb-3">
+        <strong className="text-secondary">Email:</strong> <span className="text-dark">{user?.email}</span>
+      </p>
+    </div>
+
+    {/* Modal Footer */}
+    <div className="modal-footer border-0 d-flex justify-content-center">
+      
+      <button type="button" className="btn btn-success">
+        <i className="bi bi-check-circle"></i> Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+
                     </div>
 
                 <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}><i className="fas fa-sign-out-alt" aria-hidden="true"></i>Logout</button>
@@ -429,9 +452,15 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
                     
                 </div>
             </div>
+
             
         </section>
+        
+
     );
+       
 }
+
+
 
 export default ChatPage;
