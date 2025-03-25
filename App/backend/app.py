@@ -12,6 +12,8 @@ import oracledb
 from groq import Groq  # ✅ Required for Groq API
 import time
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -21,10 +23,31 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# Initialize thread-local storage for database sessions
+db_lock = threading.Lock()
+
+#----------------------------------------Groq client----------------------------------------------------#
+api_keys = os.getenv("API_KEYS")
+if not api_keys:
+    print("We are currently unable to process this request. Please try again later.")
+
+api_keys = api_keys.split(",")
+api_key = api_keys[2]
+
+try:
+    client = Groq(api_key=api_key)
+except Exception:
+    print("We are currently experiencing technical difficulties. Please try again later.")
+
 #----------------------------------------Database Setup----------------------------------------
 # ✅ SQLite DB Setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 20,
+    'max_overflow': 0,
+    'pool_pre_ping': True
+}
 db = SQLAlchemy(app)
 
 # Retrieve database configuration
@@ -67,16 +90,19 @@ def save_chat():
     if isinstance(message, list):
         message = str(message[0][0]) if message and isinstance(message[0], list) else str(message)
 
-    chat_session = ChatSession.query.filter_by(id=session_id, user_id=user_id).first()
-    if not chat_session:
-        return jsonify({"status": "Error", "message": "Invalid session or unauthorized"}), 403
+    with db_lock:
+        try:
+            chat_session = ChatSession.query.filter_by(id=session_id, user_id=user_id).first()
+            if not chat_session:
+                return jsonify({"status": "Error", "message": "Invalid session or unauthorized"}), 403
 
-    chat_message = Chat(sender=sender, message=message, session_id=session_id)
-    db.session.add(chat_message)
-    db.session.commit()
-
-    return jsonify({"status": "Message saved!"}), 201
-
+            chat_message = Chat(sender=sender, message=message, session_id=session_id)
+            db.session.add(chat_message)
+            db.session.commit()
+            return jsonify({"status": "Message saved!"}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"status": "Error", "message": str(e)}), 500
 
 # ✅ Route to Create New Chat Session
 @app.route('/new_session', methods=['POST'])
@@ -85,77 +111,94 @@ def new_session():
     user_id = data['user_id']
 
     new_session_id = str(uuid.uuid4())
-    new_chat_session = ChatSession(id=new_session_id, title=f"Chat {new_session_id[:8]}", user_id=user_id)
-    db.session.add(new_chat_session)
-    db.session.commit()
-
-    return jsonify({"session_id": new_session_id, "title": new_chat_session.title}), 201
+    with db_lock:
+        try:
+            new_chat_session = ChatSession(id=new_session_id, title=f"Chat {new_session_id[:8]}", user_id=user_id)
+            db.session.add(new_chat_session)
+            db.session.commit()
+            return jsonify({"session_id": new_session_id, "title": new_chat_session.title}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"status": "Error", "message": str(e)}), 500
 
 # ✅ Route to Get Chat Sessions for a Specific User
 @app.route('/get_sessions/<user_id>', methods=['GET'])
 def get_sessions(user_id):
-    sessions = ChatSession.query.filter_by(user_id=user_id).all()
-    session_data = [{"id": session.id, "title": session.title} for session in sessions]
-    return jsonify(session_data)
+    with db_lock:
+        try:
+            sessions = ChatSession.query.filter_by(user_id=user_id).all()
+            session_data = [{"id": session.id, "title": session.title} for session in sessions]
+            return jsonify(session_data)
+        except Exception as e:
+            return jsonify({"status": "Error", "message": str(e)}), 500
 
 # ✅ Route to Get Chat Messages for a Session
 @app.route('/get_chats/<session_id>', methods=['GET'])
 def get_chats(session_id):
-    chats = Chat.query.filter_by(session_id=session_id).all()
-    chat_history = [{'sender': chat.sender, 'message': chat.message} for chat in chats]
-    return jsonify(chat_history)
+    with db_lock:
+        try:
+            chats = Chat.query.filter_by(session_id=session_id).all()
+            chat_history = [{'sender': chat.sender, 'message': chat.message} for chat in chats]
+            return jsonify(chat_history)
+        except Exception as e:
+            return jsonify({"status": "Error", "message": str(e)}), 500
 
 # ✅ Route to Get All Chat Sessions
 @app.route('/get_all_sessions/<user_id>', methods=['GET'])
 def get_all_sessions(user_id):
-    sessions = ChatSession.query.filter_by(user_id=user_id).all()
-    session_list = [{'session_id': session.id, 'title': session.title} for session in sessions]
-    return jsonify(session_list)
+    with db_lock:
+        try:
+            sessions = ChatSession.query.filter_by(user_id=user_id).all()
+            session_list = [{'session_id': session.id, 'title': session.title} for session in sessions]
+            return jsonify(session_list)
+        except Exception as e:
+            return jsonify({"status": "Error", "message": str(e)}), 500
 
 # ✅ Route to Delete a Chat Session
 @app.route('/delete_chat/<session_id>', methods=['DELETE'])
 def delete_chat(session_id):
-    try:
-        Chat.query.filter_by(session_id=session_id).delete()
-        ChatSession.query.filter_by(id=session_id).delete()
-        db.session.commit()
-        return jsonify({"status": "Chat deleted successfully!"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "Error deleting chat", "error": str(e)}), 500
+    with db_lock:
+        try:
+            Chat.query.filter_by(session_id=session_id).delete()
+            ChatSession.query.filter_by(id=session_id).delete()
+            db.session.commit()
+            return jsonify({"status": "Chat deleted successfully!"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"status": "Error deleting chat", "error": str(e)}), 500
 
 # ✅ Route to Cleanup Empty Sessions
 @app.route('/cleanup_empty_sessions', methods=['DELETE'])
 def cleanup_empty_sessions():
-    try:
-        active_sessions = db.session.query(Chat.session_id).distinct().all()
-        active_session_ids = [session[0] for session in active_sessions]
-        empty_sessions = ChatSession.query.filter(~ChatSession.id.in_(active_session_ids)).all()
+    with db_lock:
+        try:
+            active_sessions = db.session.query(Chat.session_id).distinct().all()
+            active_session_ids = [session[0] for session in active_sessions]
+            empty_sessions = ChatSession.query.filter(~ChatSession.id.in_(active_session_ids)).all()
 
-        for session in empty_sessions:
-            db.session.delete(session)
+            for session in empty_sessions:
+                db.session.delete(session)
 
-        db.session.commit()
-        return jsonify({"status": "Empty chat sessions cleaned up!"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "Error during cleanup", "error": str(e)}), 500
+            db.session.commit()
+            return jsonify({"status": "Empty chat sessions cleaned up!"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"status": "Error during cleanup", "error": str(e)}), 500
 
 # ✅ Route to Get a Specific Chat Session
 @app.route('/get_chat/<session_id>', methods=['GET'])
 def get_chat(session_id):
-    try:
-        chat_session = ChatSession.query.filter_by(id=session_id).first()
-        if chat_session:
-            messages = Chat.query.filter_by(session_id=session_id).all()
-            message_list = [{'sender': msg.sender, 'message': msg.message} for msg in messages]
-            return jsonify({"messages": message_list}), 200
-        else:
-            return jsonify({"status": "Error", "message": "Session not found"}), 404
-    except Exception as e:
-        return jsonify({"status": "Error", "message": str(e)}), 500
-
-
+    with db_lock:
+        try:
+            chat_session = ChatSession.query.filter_by(id=session_id).first()
+            if chat_session:
+                messages = Chat.query.filter_by(session_id=session_id).all()
+                message_list = [{'sender': msg.sender, 'message': msg.message} for msg in messages]
+                return jsonify({"messages": message_list}), 200
+            else:
+                return jsonify({"status": "Error", "message": "Session not found"}), 404
+        except Exception as e:
+            return jsonify({"status": "Error", "message": str(e)}), 500
 
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
@@ -168,26 +211,33 @@ def query_chatbot():
     user_id = data.get("user_id")
     selected_company = data.get("selected_company")
 
-    print("User Question:", user_question)
-    print("Session ID:", session_id)
-    print("User ID:", user_id)
-    print("Selected Company:", selected_company)
-
     if not user_question or not session_id or not user_id or not selected_company:
         return jsonify({"error": "Invalid request data - Missing required fields"}), 400
 
-    # ✅ Unpack the (Response, status) tuple
-    numerical_result, numerical_status = handle_numerical_query(user_question, selected_company)
-    contextual_result, contextual_status = handle_contextual_query(user_question, selected_company)
+    # Create a copy of the app context for thread safety
+    app_ctx = app.app_context()
+    
+    def run_in_context(fn, *args):
+        with app_ctx:
+            return fn(*args)
 
-    # ✅ Adjust error checking based on the unpacked status codes
-    numerical_text = numerical_result.get_json().get('response') if numerical_status == 200 else str(numerical_result.get_json().get('error'))
-    contextual_text = contextual_result.get_json().get('response') if contextual_status == 200 else str(contextual_result.get_json().get('error'))
+    # Use ThreadPoolExecutor to run both queries concurrently
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        future_num = executor.submit(run_in_context, handle_numerical_query, user_question, selected_company)
+        future_ctx = executor.submit(run_in_context, handle_contextual_query, user_question, selected_company)
 
-    #print values
-    print("SQL Output:",numerical_text)
-    print("RAG Output:",contextual_text)
-    # ✅ Run summarizer
+        # Wait for both futures to complete
+        numerical_data, numerical_status = future_num.result()
+        contextual_data, contextual_status = future_ctx.result()
+
+    # Process results
+    numerical_text = numerical_data.get('response') if numerical_status == 200 else str(numerical_data.get('error'))
+    contextual_text = contextual_data.get('response') if contextual_status == 200 else str(contextual_data.get('error'))
+
+    print("SQL Output:", numerical_text)
+    print("RAG Output:", contextual_text)
+    
+    # Run summarizer
     summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
 
     return jsonify({"response": summarized_response}), 200
@@ -200,24 +250,10 @@ def fetch_companies():
     
 #----------------------------------------Utility Functions----------------------------------------
 
-   
 #----------------------------------------Summarization Function----------------------------------------
 def summarize_responses(user_question, numerical_response, contextual_response):
-    model_name = "mistral-saba-24b"
+    model_name = "llama-3.1-8b-instant"
     max_retries = 3
-
-    api_keys = os.getenv("API_KEYS")
-    if not api_keys:
-        return "We are currently unable to process this request. Please try again later."
-
-    api_keys = api_keys.split(",")
-    api_key = api_keys[2]
-
-    try:
-        client = Groq(api_key=api_key)
-    except Exception:
-        return "We are currently experiencing technical difficulties. Please try again later."
-
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
 
@@ -227,10 +263,11 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     - Always use the **user question** to understand if the expected answer is a **percentage**, **monetary amount**, or **count**.
 
     ### Formatting Guidelines:
-    - If the user asks about **percentage change, growth, or decrease**, format the number as a percentage (e.g., `-1.24%`, `12.5%`).
+    - If the user asks about **percentage change, growth, or decrease**, format the number as a percentage (e.g.,'1.24 becomes `-1.24%`, `12.5 becomes 12.5%`).
     - If the user asks about **revenue, profit, income, shareholder equity**, or any **monetary value**, format as currency:
-        - If values are large, use `$` sign and **M** for millions (e.g., `$143M`, `$22.7M`)
+        - Use `$` sign  (e.g., `143 becomes $143`, `22.7 becomes $22.7`)
         - Add commas for readability (e.g., `$25,500`)
+        - NEVER add in decimals or round the original numerical answer.
     - If the user asks for a **count** (like number of employees, units, or quarters), return the raw number with commas if large (`5,000`).
     - Do not repeat the question. No explanations.
 
@@ -283,7 +320,6 @@ def summarize_responses(user_question, numerical_response, contextual_response):
 
     return "We are experiencing technical difficulties. Please try again later."
 
-
 def get_ddl_prefix_from_db(company_name):
     """Fetch DDL prefix from the Oracle database mapping table."""
     connection = oracledb.connect(
@@ -324,81 +360,81 @@ def get_company_names_from_db():
     connection.close()
     
     return companies
-
 def handle_numerical_query(user_question, selected_company):
-    # ✅ Validate if a company is selected
-    if not selected_company:
-        return jsonify({"error": "No company selected for numerical query"}), 400
-    ddl_directory = "Oracle_DDLs"
-    model_name = "llama-3.3-70b-versatile"
+    try:
+        if not selected_company:
+            return {"error": "No company selected for numerical query"}, 400
+        
+        ddl_directory = "Oracle_DDLs"
+        model_name = "llama-3.3-70b-versatile"
+        api_keys = os.getenv("API_KEYS").split(",")
+        ddl_prefix = get_ddl_prefix_from_db(selected_company)
 
-    # Retrieve API keys as a list
-    api_keys = os.getenv("API_KEYS").split(",")
-
-    # ddl_prefix = detect_company(selected_company)
-    ddl_prefix = get_ddl_prefix_from_db(selected_company)
-
-    if ddl_prefix:
-        ddl_file_path = os.path.join(ddl_directory, f"{ddl_prefix}_ddl.sql")
-    else:
-        return jsonify({"error": "Company not recognized"}), 404
-
-    if not os.path.exists(ddl_file_path):
-        return jsonify({"error": "DDL not found for the specified company"}), 404
-
-    with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
-        ddl_content = ddl_file.read().strip()
-
-    api_key = api_keys[1]  # Cycle through if needed
-    llm_output, llm_time = query_llm(user_question, ddl_content, model_name, api_key)
-
-    if not llm_output:
-        return jsonify({"error": "Failed to generate a response from LLM."}), 500
-
-    sql_query, notes = extract_sql_and_notes(llm_output)
-    if sql_query:
-        print(f"Generated SQL Query: {sql_query}")
-        write_operation_patterns = [
-        r"\b(?:insert|update|delete|drop|create|rename|replace|modify|insertMany|updateMany|bulkWrite)\b",
-        r"\$set\b", 
-        r"\$push\b", 
-        r"\$addToSet\b",  
-        r"\$pull\b"  
-    ]
-        for pattern in write_operation_patterns:
-            if re.search(pattern, sql_query, re.IGNORECASE):
-                return jsonify({"error": "Failed to run SQL query due to security concerns."}), 500
-            else:
-
-                results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
-        if results:
-            formatted_results = str(results[0][0]) if results else "No data found"
-            return jsonify({"response": formatted_results}), 200
+        if ddl_prefix:
+            ddl_file_path = os.path.join(ddl_directory, f"{ddl_prefix}_ddl.sql")
         else:
-            return jsonify({"error": error_msg}), 500
-    else:
-        return jsonify({"error": "Failed to extract SQL query from LLM response."}), 500
+            return {"error": "Company not recognized"}, 404
+
+        if not os.path.exists(ddl_file_path):
+            return {"error": "DDL not found for the specified company"}, 404
+
+        with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
+            ddl_content = ddl_file.read().strip()
+
+        api_key = api_keys[1]
+        llm_output, llm_time = query_llm(user_question, ddl_content, model_name, api_key)
+
+        if not llm_output:
+            return {"error": "Failed to generate a response from LLM."}, 500
+
+        sql_query, notes = extract_sql_and_notes(llm_output)
+        if sql_query:
+            print(f"Generated SQL Query: {sql_query}")
+            write_operation_patterns = [
+                r"\b(?:insert|update|delete|drop|create|rename|replace|modify|insertMany|updateMany|bulkWrite)\b",
+                r"\$set\b", 
+                r"\$push\b", 
+                r"\$addToSet\b",  
+                r"\$pull\b"  
+            ]
+            for pattern in write_operation_patterns:
+                if re.search(pattern, sql_query, re.IGNORECASE):
+                    return {"error": "Failed to run SQL query due to security concerns."}, 500
+
+            results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
+            if results:
+                formatted_results = str(results[0][0]) if results else "No data found"
+                return {"response": formatted_results}, 200
+            else:
+                return {"error": error_msg}, 500
+        else:
+            return {"error": "Failed to extract SQL query from LLM response."}, 500
+    except Exception as e:
+        return {"error": str(e)}, 500
     
+
 # ✅ Handle Contextual (RAG-based) Queries
 def handle_contextual_query(user_question, selected_company):
-    vector_store = load_faiss_index()
-    if vector_store is None:
-        return jsonify({"error": "Vector store not available. Please run the embedding process first."}), 500
-    
-    final_query = f"[Company: {selected_company}] {user_question}"
+    try:
+        vector_store = load_faiss_index()
+        if vector_store is None:
+            return {"error": "Vector store not available. Please run the embedding process first."}, 500
+        
+        final_query = f"[Company: {selected_company}] {user_question}"
+        retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+        response, relevant_docs = query_llm_groq(final_query, retriever)
 
-    retriever = vector_store.as_retriever(search_kwargs={"k": 4})
-    response, relevant_docs = query_llm_groq(final_query, retriever)
+        if isinstance(response, str) and response.startswith("❌"):
+            return {"error": response}, 500
 
-    if isinstance(response, str) and response.startswith("❌"):
-        return jsonify({"error": response}), 500
-
-    sources = [{"source": doc["source"], "snippet": doc["text"][:200]} for doc in relevant_docs]
-    return jsonify({
-        "response": response,
-        "sources": sources
-    }), 200
+        sources = [{"source": doc["source"], "snippet": doc["text"][:200]} for doc in relevant_docs]
+        return {
+            "response": response,
+            "sources": sources
+        }, 200
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='127.0.0.1', port=5000, threaded=True)
