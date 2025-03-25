@@ -6,7 +6,7 @@ import uuid
 import logging
 import os
 from real_chatbot import query_llm, extract_sql_and_notes, execute_sql  # Import chatbot functions
-from real_chatbot_rag import load_faiss_index, query_llm_groq
+from real_chatbot_rag import query_llm_groq, load_vector_store
 from dotenv import load_dotenv
 import oracledb
 from groq import Groq  # ✅ Required for Groq API
@@ -415,14 +415,15 @@ def handle_numerical_query(user_question, selected_company):
 
 # ✅ Handle Contextual (RAG-based) Queries
 def handle_contextual_query(user_question, selected_company):
+    """Handle contextual queries using MongoDB Atlas Vector Search."""
     try:
-        vector_store = load_faiss_index()
+        
+        vector_store = load_vector_store()
         if vector_store is None:
-            return {"error": "Vector store not available. Please run the embedding process first."}, 500
+            return {"error": "Vector store not available. Please check MongoDB connection."}, 500
         
         final_query = f"[Company: {selected_company}] {user_question}"
-        retriever = vector_store.as_retriever(search_kwargs={"k": 4})
-        response, relevant_docs = query_llm_groq(final_query, retriever)
+        response, relevant_docs = query_llm_groq(final_query, vector_store, selected_company)
 
         if isinstance(response, str) and response.startswith("❌"):
             return {"error": response}, 500
