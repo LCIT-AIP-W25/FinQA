@@ -103,8 +103,7 @@ query = "{user_question}"
     retries = 0
     while retries < max_retries:
         try:
-            time.sleep(3)
-            start_time = time.time()
+            
             client = Groq(api_key=api_key)
             response = client.chat.completions.create(
                 model=model_name,
@@ -115,9 +114,9 @@ query = "{user_question}"
                 stream=False,
             )
             llm_response = response.choices[0].message.content.strip()
-            time_taken = round(time.time() - start_time, 2)
+            
             logging.debug("LLM Response received: %s", llm_response)
-            return llm_response, time_taken
+            return llm_response
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429:
                 retry_after = int(e.response.headers.get("retry-after", random.uniform(0, 5)))
@@ -169,77 +168,3 @@ def retry_query(error_msg, sql_query, ddl_content, model_name, api_key):
     if corrected_query:
         corrected_query = re.sub(r'("METRICS")<%=<s*([^"]+)"', r'\1 = \1\2', corrected_query)
     return corrected_query
-
-def process_questions(company_dfs, ddl_directory, model_name, db_config, api_keys):
-    """
-    Processes questions from an Excel file, queries an LLM, and executes SQL against a database.
-    
-    :param excel_file_path: Path to the Excel file with questions.
-    :param ddl_directory: Path to the directory containing DDL files.
-    :param model_name: Name of the LLM model to use.
-    :param db_config: Database configuration for SQL execution.
-    :param api_keys: List of API keys to cycle through.
-    """
-    api_key_cycle = itertools.cycle(api_keys)
-    
-    first_sheet = True  # Flag to track if it's the first sheet for saving CSV
-    
-    for company, df in company_dfs.items():
-        df["sheet_name"] = company  # Retain sheet name for each row
-        
-        ddl_prefix = detect_company(user_question)
-        if ddl_prefix:
-            ddl_file_path = os.path.join(ddl_directory, f"{ddl_prefix}_ddl.sql")
-        else:
-            logging.error("Company not recognized for DDL loading.")
-            exit()
-
-        if not os.path.exists(ddl_file_path):
-            logging.warning("Skipping %s, no DDL file found.", company)
-            continue
-
-        with open(ddl_file_path, "r", encoding="utf-8") as file:
-            ddl_content = file.read().strip()
-        
-        for index, row in df.iterrows():
-            question = row["Question"]
-            retries = 0
-
-            while retries < 4:
-                api_key = next(api_key_cycle)
-                llm_output, llm_time = query_llm(question, ddl_content, model_name, api_key)
-
-                if llm_output is None:
-                    logging.warning("Skipping question due to failed LLM response.")
-                    df.at[index, "generated_query"] = "Failed to generate query"
-                    df.at[index, "generated_answer"] = "No results found"
-                    df.at[index, "time"] = 0
-                    df.at[index, "error"] = "LLM did not return a response"
-                    save_progress(df.iloc[[index]], model_name, mode="w" if first_sheet else "a")  # Save row
-                    continue  # Move to the next question
-                
-                # Extract SQL query from LLM output
-                sql_query, _ = extract_sql_and_notes(llm_output)
-                if sql_query:
-                    sql_query = re.sub(r'("METRICS")<%=<s*([^"+])"', r'\1 = \1\2', sql_query)
-                
-                # Execute SQL query if available
-                results, columns, exec_time, error_msg = execute_sql(sql_query, db_config) if sql_query else (None, None, None, None)
-
-                if error_msg:
-                    logging.warning("Database error encountered. Retrying...")
-                    sql_query = retry_query(error_msg, sql_query, ddl_content, model_name, api_key)
-                    retries += 1
-                else:
-                    break
-
-            # Store results in DataFrame
-            df.at[index, "generated_answer"] = str(results) if results else "No results found"
-            df.at[index, "generated_query"] = sql_query or "Failed to generate query"
-            df.at[index, "time"] = exec_time if exec_time else 0
-            df.at[index, "error"] = error_msg if error_msg else ''
-
-            # Save progress after every row
-            save_progress(df.iloc[[index]], model_name, mode="w" if first_sheet else "a")  
-
-        first_sheet = False  # Switch to append mode after first sheet

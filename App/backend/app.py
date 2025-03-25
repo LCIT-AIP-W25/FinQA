@@ -6,7 +6,7 @@ import uuid
 import logging
 import os
 from real_chatbot import query_llm, extract_sql_and_notes, execute_sql  # Import chatbot functions
-from real_chatbot_rag import query_llm_groq, load_vector_store
+from real_chatbot_rag import query_llm_groq, initialize_components
 from dotenv import load_dotenv
 import oracledb
 from groq import Groq  # ✅ Required for Groq API
@@ -25,6 +25,15 @@ CORS(app)
 
 # Initialize thread-local storage for database sessions
 db_lock = threading.Lock()
+#---------------------------------------Initialize RAG components----------------------------------------
+
+try:
+    if not initialize_components():
+        raise RuntimeError("Failed to initialize RAG components")
+    print("✅ All components initialized successfully")
+except Exception as e:
+    print(f"❌ Failed to initialize components: {e}")
+    # You might want to exit here if RAG is critical
 
 #----------------------------------------Groq client----------------------------------------------------#
 api_keys = os.getenv("API_KEYS")
@@ -32,7 +41,7 @@ if not api_keys:
     print("We are currently unable to process this request. Please try again later.")
 
 api_keys = api_keys.split(",")
-api_key = api_keys[2]
+api_key = api_keys[0]
 
 try:
     client = Groq(api_key=api_key)
@@ -381,8 +390,8 @@ def handle_numerical_query(user_question, selected_company):
         with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
             ddl_content = ddl_file.read().strip()
 
-        api_key = api_keys[1]
-        llm_output, llm_time = query_llm(user_question, ddl_content, model_name, api_key)
+        api_key = api_keys[3]
+        llm_output = query_llm(user_question, ddl_content, model_name, api_key)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500
@@ -417,14 +426,12 @@ def handle_numerical_query(user_question, selected_company):
 def handle_contextual_query(user_question, selected_company):
     """Handle contextual queries using MongoDB Atlas Vector Search."""
     try:
+        from real_chatbot_rag import query_llm_groq  # Import here to avoid circular imports
         
-        vector_store = load_vector_store()
-        if vector_store is None:
-            return {"error": "Vector store not available. Please check MongoDB connection."}, 500
-        
+        # No need to load_vector_store() here - it's already initialized
         final_query = f"[Company: {selected_company}] {user_question}"
-        response, relevant_docs = query_llm_groq(final_query, vector_store, selected_company)
-
+        response, relevant_docs = query_llm_groq(final_query, selected_company)  # Updated signature
+        
         if isinstance(response, str) and response.startswith("❌"):
             return {"error": response}, 500
 

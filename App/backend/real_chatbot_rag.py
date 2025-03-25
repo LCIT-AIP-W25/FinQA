@@ -16,96 +16,103 @@ URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MONGO_URI = os.getenv("MONGO_URI")
 
-# ------------------- MongoDB Connection ------------------- #
-def connect_to_mongo():
-    """Establish connection to MongoDB Atlas."""
-    try:
-        mongo_uri = os.getenv("MONGO_URI")
-        if not mongo_uri:
-            raise ValueError("MONGO_URI not found in .env file")
-        
-        client = MongoClient(mongo_uri)
-        db = client["Financial_Rag_DB"]
-        collection = db["test_files"]
-        # Verify connection by performing a simple operation
-        collection.count_documents({}, limit=1)  # This will raise an exception if connection fails
-        print("✅ Connected to MongoDB Atlas")
-        return collection
-    except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
-        return None
+# Global variables for initialized components
+_initialized = False
+_collection = None
+_embeddings = None
+_vector_store = None
 
-def validate_mongo_connection(collection):
-    """Validate the MongoDB connection by checking document count."""
-    try:
-        count = collection.estimated_document_count()
-        print(f"✅ MongoDB Collection validated: {count} documents found")
+# ------------------- Initialization (Run Once) ------------------- #
+def initialize_components():
+    """Initialize all components once at application startup."""
+    global _initialized, _collection, _embeddings, _vector_store
+    
+    if _initialized:
         return True
-    except Exception as e:
-        print(f"❌ MongoDB validation failed: {e}")
-        return False
-
-# ------------------- Embeddings ------------------- #
-def init_embeddings():
-    """Initialize the Sentence Transformer embeddings model."""
-    embeddings = SentenceTransformerEmbeddings(model_name="sentence-transformers/multi-qa-mpnet-base-cos-v1")
-    return embeddings
-
-# ------------------- Vector Store ------------------- #
-def load_vector_store():
-    """Load the MongoDB Atlas vector store."""
+    
     try:
-        collection = connect_to_mongo()
-        if collection is None:  # Explicit None check
-            return None
+        # 1. MongoDB Connection
+        _collection = connect_to_mongo()
+        if _collection is None:
+            return False
         
-        # Verify the collection exists and is accessible
-        if not validate_mongo_connection(collection):
-            return None
-        
-        embeddings = init_embeddings()
-        if embeddings is None:
-            return None
+        # 2. Embeddings Model
+        _embeddings = init_embeddings()
+        if _embeddings is None:
+            return False
             
-        vector_store = MongoDBAtlasVectorSearch(
-            collection=collection,
-            embedding=embeddings,
+        # 3. Vector Store
+        _vector_store = MongoDBAtlasVectorSearch(
+            collection=_collection,
+            embedding=_embeddings,
             index_name="st_vector_index",
             embedding_key="embedding",
             text_key="content"
         )
         
-        # Test the vector store with a simple query
-        try:
-            vector_store.similarity_search("test", k=1)
-            print("✅ Vector store initialized and validated")
-            return vector_store
-        except Exception as e:
-            print(f"❌ Vector store test query failed: {e}")
-            return None
-            
+        # Test the vector store
+        _vector_store.similarity_search("test", k=1)
+        
+        _initialized = True
+        print("✅ All components initialized successfully")
+        return True
+        
     except Exception as e:
-        print(f"❌ Error loading vector store: {e}")
+        print(f"❌ Initialization failed: {e}")
+        return False
+
+# ------------------- MongoDB Connection ------------------- #
+def connect_to_mongo():
+    """Establish connection to MongoDB Atlas (called once during init)."""
+    try:
+        if not MONGO_URI:
+            raise ValueError("MONGO_URI not found in .env file")
+        
+        client = MongoClient(MONGO_URI)
+        db = client["Financial_Rag_DB"]
+        collection = db["test_files"]
+        
+        # Verify connection
+        count = collection.estimated_document_count()
+        print(f"✅ Connected to MongoDB Atlas - {count} documents found")
+        return collection
+        
+    except Exception as e:
+        print(f"❌ MongoDB connection failed: {e}")
+        return None
+
+# ------------------- Embeddings ------------------- #
+def init_embeddings():
+    """Initialize the embeddings model (called once during init)."""
+    try:
+        embeddings = SentenceTransformerEmbeddings(model_name="sentence-transformers/multi-qa-mpnet-base-cos-v1")
+        print("✅ Embeddings model initialized")
+        return embeddings
+    except Exception as e:
+        print(f"❌ Embeddings initialization failed: {e}")
         return None
 
 # ------------------- Document Processing ------------------- #
 def financial_preprocessor(text):
-    """Remove HTML tags and URLs."""
+    """Remove HTML tags and URLs (called per query)."""
     text = BeautifulSoup(text, "html.parser").get_text()
     text = URL_PATTERN.sub('', text)
     return text.strip()
 
-def retrieve_documents(vector_store, query, selected_company=None, k=4):
+def retrieve_documents(query, selected_company=None, k=4):
     """
-    Retrieve relevant documents from MongoDB Atlas Vector Search.
+    Retrieve relevant documents (called per query).
+    Uses the pre-initialized vector store.
     """
+    if not _initialized:
+        raise RuntimeError("Components not initialized")
+    
     filter_query = None
     if selected_company and selected_company != "All":
-        # Construct regex to match company_id format
         filter_query = {"company_id": {"$regex": f"^{re.escape(selected_company)}_Q[1-4] \\d{{4}}\\.txt$", "$options": "i"}}
     
     try:
-        retrieved_docs = vector_store.similarity_search(query, k=k, filter=filter_query)
+        retrieved_docs = _vector_store.similarity_search(query, k=k, filter=filter_query)
         
         # Additional company filter as a safeguard
         if selected_company and selected_company != "All":
@@ -123,10 +130,13 @@ def retrieve_documents(vector_store, query, selected_company=None, k=4):
         return []
 
 # ------------------- LLM Query ------------------- #
-def query_llm_groq(final_query, retriever, selected_company=None):
-    """Queries Groq API with context from MongoDB vector store."""
+def query_llm_groq(final_query, selected_company=None):
+    """Queries Groq API with context (called per query)."""
+    if not _initialized:
+        raise RuntimeError("Components not initialized")
+    
     try:
-        relevant_docs = retrieve_documents(retriever, final_query, selected_company)
+        relevant_docs = retrieve_documents(final_query, selected_company)
         
         if not relevant_docs:
             return "No relevant documents found for the query.", []
@@ -153,3 +163,8 @@ def query_llm_groq(final_query, retriever, selected_company=None):
     except Exception as e:
         return f"❌ Groq API Error: {str(e)}", []
 
+
+# At the very end of real_chatbot_rag.py
+if __name__ != "__main__":
+    # Auto-initialize when imported as a module
+    initialize_components()
