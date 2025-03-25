@@ -40,9 +40,17 @@ def save_progress(df, model_name, mode="w"):
     df.to_csv(output_file, mode=mode, index=False, header=header)
     logging.info("Progress saved to %s", output_file)
 
-def query_llm(user_question, ddl_content, model_name, api_key, max_retries=5):
+def query_llm(user_question, ddl_content, model_name, api_key, max_retries=5, chat_history=None):
     """Queries the LLM API with retry logic."""
     logging.debug("Querying LLM API using model: %s", model_name)
+    # Format last 5 messages if provided
+    history_context = ""
+    if chat_history:
+        last_5_messages = chat_history[-5:]  # Get only the last 5 messages
+        history_context = "\n\n### Conversation Context:\n"
+        for msg in last_5_messages:
+            speaker = "User" if msg['sender'] == 'user' else "Assistant"
+            history_context += f"{speaker}: {msg['message']}\n"
     
     prompt = f"""
 ### Output format:
@@ -52,7 +60,10 @@ ALWAYS use "" (double quotes) for table and column names.
 ALWAYS use ''(single quotes) for filtering "METRICS" column.
 ALWAYS prefix "ADMIN" to table names.
 ALWAYS MAKE SURE THE SQL SYNTAX IS CORRECT.
- 
+
+### Previous Conversation Context:
+{history_context} 
+
 ### Examples:
 User input: What was McDonald's revenue in Q3 2024?
 Your SQL output: SELECT "Q3_2024" FROM "ADMIN"."MCD_INCOME_QUARTERLY" WHERE "METRICS" = 'Revenue';

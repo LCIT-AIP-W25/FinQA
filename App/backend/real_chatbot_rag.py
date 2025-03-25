@@ -129,31 +129,58 @@ def retrieve_documents(query, selected_company=None, k=4):
         print(f"❌ Retrieval Error: {str(e)}")
         return []
 
-# ------------------- LLM Query ------------------- #
-def query_llm_groq(final_query, selected_company=None):
-    """Queries Groq API with context (called per query)."""
+def query_llm_groq(final_query, selected_company=None, chat_history=None):
+    """Queries Groq API with context and limited chat history."""
     if not _initialized:
         raise RuntimeError("Components not initialized")
     
     try:
+        # Retrieve relevant documents
         relevant_docs = retrieve_documents(final_query, selected_company)
         
         if not relevant_docs:
             return "No relevant documents found for the query.", []
 
         retrieved_text = "\n\n".join([doc["text"][:400] + "..." for doc in relevant_docs])
-
+        
+        # Format only the last 5 messages if provided
+        history_messages = []
+        if chat_history:
+            last_5_messages = chat_history[-5:]  # Get only the last 5 messages
+            for msg in last_5_messages:
+                role = "assistant" if msg['sender'] == 'bot' else "user"
+                history_messages.append({"role": role, "content": msg['message']})
+        
+        # Prepare the messages for Groq API
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a financial AI assistant that provides concise answers based on:"
+                    "\n1. Retrieved documents (below)"
+                    "\n2. The last few messages of our conversation"
+                    "\n\nBe factual and professional in your responses."
+                )
+            }
+        ]
+        
+        # Add limited chat history if available
+        messages.extend(history_messages)
+        
+        # Add the current query and context
+        messages.append({
+            "role": "user",
+            "content": (
+                "Context from documents:\n"
+                f"{retrieved_text}\n\n"
+                f"My question: {final_query}"
+            )
+        })
+        
         client = Groq(api_key=GROQ_API_KEY)
         response = client.chat.completions.create(
             model="mistral-saba-24b",
-            messages=[{
-                "role": "user",
-                "content": (
-                    "You are a financial AI assistant that provides concise answers based on retrieved documents.\n"
-                    "Based on the following retrieved information, answer the question:\n\n"
-                    f"{retrieved_text}\n\nQuestion: {final_query}"
-                )
-            }],
+            messages=messages,
             temperature=0.3,
             max_tokens=512,
             top_p=1,
@@ -162,8 +189,7 @@ def query_llm_groq(final_query, selected_company=None):
         return response.choices[0].message.content, relevant_docs
     except Exception as e:
         return f"❌ Groq API Error: {str(e)}", []
-
-
+    
 # At the very end of real_chatbot_rag.py
 if __name__ != "__main__":
     # Auto-initialize when imported as a module

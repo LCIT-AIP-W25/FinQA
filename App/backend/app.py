@@ -223,35 +223,55 @@ def query_chatbot():
     if not user_question or not session_id or not user_id or not selected_company:
         return jsonify({"error": "Invalid request data - Missing required fields"}), 400
 
-    # Create a copy of the app context for thread safety
-    app_ctx = app.app_context()
+    try:
+        # Get chat history within the main thread context
+        with db_lock:
+            chat_messages = Chat.query.filter_by(session_id=session_id).order_by(Chat.id).all()
+            chat_history = [{'sender': msg.sender, 'message': msg.message} for msg in chat_messages]
+
+        # Create a new app context for thread safety
+        def run_in_context(fn, *args):
+            with app.app_context():
+                return fn(*args)
+
+        # Use ThreadPoolExecutor to run both queries concurrently
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            # Pass the pre-fetched chat_history to avoid context issues
+            future_num = executor.submit(
+                run_in_context, 
+                handle_numerical_query, 
+                user_question, 
+                selected_company, 
+                session_id
+            )
+            future_ctx = executor.submit(
+                run_in_context, 
+                handle_contextual_query, 
+                user_question, 
+                selected_company, 
+                session_id
+            )
+
+            # Wait for both futures to complete
+            numerical_data, numerical_status = future_num.result()
+            contextual_data, contextual_status = future_ctx.result()
+
+        # Process results
+        numerical_text = numerical_data.get('response') if numerical_status == 200 else str(numerical_data.get('error'))
+        contextual_text = contextual_data.get('response') if contextual_status == 200 else str(contextual_data.get('error'))
+
+        print("SQL Output:", numerical_text)
+        print("RAG Output:", contextual_text)
+        
+        # Run summarizer
+        summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
+
+        return jsonify({"response": summarized_response}), 200
+
+    except Exception as e:
+        print(f"Error in query_chatbot: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
     
-    def run_in_context(fn, *args):
-        with app_ctx:
-            return fn(*args)
-
-    # Use ThreadPoolExecutor to run both queries concurrently
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        future_num = executor.submit(run_in_context, handle_numerical_query, user_question, selected_company)
-        future_ctx = executor.submit(run_in_context, handle_contextual_query, user_question, selected_company)
-
-        # Wait for both futures to complete
-        numerical_data, numerical_status = future_num.result()
-        contextual_data, contextual_status = future_ctx.result()
-
-    # Process results
-    numerical_text = numerical_data.get('response') if numerical_status == 200 else str(numerical_data.get('error'))
-    contextual_text = contextual_data.get('response') if contextual_status == 200 else str(contextual_data.get('error'))
-
-    print("SQL Output:", numerical_text)
-    print("RAG Output:", contextual_text)
-    
-    # Run summarizer
-    summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
-
-    return jsonify({"response": summarized_response}), 200
-
-
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
     """API Endpoint to get company names"""
@@ -261,6 +281,9 @@ def fetch_companies():
 
 #----------------------------------------Summarization Function----------------------------------------
 def summarize_responses(user_question, numerical_response, contextual_response):
+    # Ensure numerical_text is always a string
+    numerical_str = str(numerical_response) if numerical_response else "No numerical data available"
+    
     model_name = "mistral-saba-24b"
     max_retries = 3
     prompt = f"""
@@ -277,6 +300,7 @@ def summarize_responses(user_question, numerical_response, contextual_response):
         - Use `$` sign  (e.g., `143 becomes $143`, `22.7 becomes $22.7`)
         - Add commas for readability (e.g., `$25,500`)
         - NEVER add in decimals or round the original numerical answer.
+        - Never put % unless the question mentions percentage
     - If the user asks for a **count** (like number of employees, units, or quarters), return the raw number with commas if large (`5,000`).
     - Do not repeat the question. No explanations.
 
@@ -369,7 +393,8 @@ def get_company_names_from_db():
     connection.close()
     
     return companies
-def handle_numerical_query(user_question, selected_company):
+
+def handle_numerical_query(user_question, selected_company, session_id=None):
     try:
         if not selected_company:
             return {"error": "No company selected for numerical query"}, 400
@@ -378,6 +403,13 @@ def handle_numerical_query(user_question, selected_company):
         model_name = "llama-3.3-70b-versatile"
         api_keys = os.getenv("API_KEYS").split(",")
         ddl_prefix = get_ddl_prefix_from_db(selected_company)
+
+        # Get chat history if session_id is provided
+        chat_history = []
+        if session_id:
+            with db_lock:
+                chat_messages = Chat.query.filter_by(session_id=session_id).order_by(Chat.id).all()
+                chat_history = [{'sender': msg.sender, 'message': msg.message} for msg in chat_messages]
 
         if ddl_prefix:
             ddl_file_path = os.path.join(ddl_directory, f"{ddl_prefix}_ddl.sql")
@@ -391,7 +423,7 @@ def handle_numerical_query(user_question, selected_company):
             ddl_content = ddl_file.read().strip()
 
         api_key = api_keys[3]
-        llm_output = query_llm(user_question, ddl_content, model_name, api_key)
+        llm_output = query_llm(user_question, ddl_content, model_name, api_key, chat_history=chat_history)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500
@@ -412,7 +444,11 @@ def handle_numerical_query(user_question, selected_company):
 
             results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
             if results:
-                formatted_results = str(results[0][0]) if results else "No data found"
+                # Properly format the numerical results
+                if isinstance(results[0], (list, tuple)):  # Handle row results
+                    formatted_results = str(results[0][0]) if results[0] else "No data found"
+                else:  # Handle scalar results
+                    formatted_results = str(results[0]) if results else "No data found"
                 return {"response": formatted_results}, 200
             else:
                 return {"error": error_msg}, 500
@@ -421,16 +457,22 @@ def handle_numerical_query(user_question, selected_company):
     except Exception as e:
         return {"error": str(e)}, 500
     
-
+    
 # ✅ Handle Contextual (RAG-based) Queries
-def handle_contextual_query(user_question, selected_company):
-    """Handle contextual queries using MongoDB Atlas Vector Search."""
+def handle_contextual_query(user_question, selected_company, session_id=None):
+    """Handle contextual queries using MongoDB Atlas Vector Search with conversation history."""
     try:
-        from real_chatbot_rag import query_llm_groq  # Import here to avoid circular imports
+    
+        # Get chat history if session_id is provided
+        # Get chat history within the same context
+        chat_history = []
+        if session_id:
+            with db_lock:
+                chat_messages = Chat.query.filter_by(session_id=session_id).order_by(Chat.id).all()
+                chat_history = [{'sender': msg.sender, 'message': msg.message} for msg in chat_messages]
         
-        # No need to load_vector_store() here - it's already initialized
         final_query = f"[Company: {selected_company}] {user_question}"
-        response, relevant_docs = query_llm_groq(final_query, selected_company)  # Updated signature
+        response, relevant_docs = query_llm_groq(final_query, selected_company, chat_history)
         
         if isinstance(response, str) and response.startswith("❌"):
             return {"error": response}, 500
@@ -442,7 +484,7 @@ def handle_contextual_query(user_question, selected_company):
         }, 200
     except Exception as e:
         return {"error": str(e)}, 500
-
+    
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000, threaded=True)
