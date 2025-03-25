@@ -1,3 +1,32 @@
+/* ✅ Ensure full height without unnecessary scroll */
+html, body {
+    height: 100%;
+    overflow: hidden; /* ✅ Prevents extra scroll */
+}
+
+/* ✅ Only for Small Screens (Lift Input Box Higher) */
+@media (max-width: 600px) {
+    .chat-app-window {
+        height: calc(100vh - 140px); /* ✅ Reduce chat window height slightly */
+        padding: 10px;
+    }
+
+    .chat-app-input-section {
+        bottom: 15px; /* ✅ Lifts input box up ONLY on small screens */
+        margin-bottom: 100px;
+    }
+
+    .chat-app-button-group {
+        justify-content: space-between;
+    }
+
+    .chat-app-send-btn,
+    .chat-app-new-chat-btn {
+        flex: 1; /* ✅ Ensures equal width */
+        min-width: 45%;
+    }
+}
+
 /* ------------------------------------------ Header ----------------------------------- */
 
 /* ✅ Chat App Header */
@@ -54,6 +83,14 @@
     margin-right: 12px;
     font-weight: 500;
 }
+
+/* ✅ Hide username on small screens */
+@media (max-width: 768px) {
+    .chat-app-username {
+        display: none;
+    }
+}
+
 
 /* ✅ Profile Icon */
 .chat-app-profile-icon {
@@ -383,6 +420,7 @@
     padding: 20px;
     height: calc(100vh - 60px); /* Ensures it starts below the header */
     overflow-y: auto;
+    width: 100%; /* ✅ Ensures it scales properly */
 }
 
 /* ---------------------------------------- Chat Messages ---------------------------------- */
@@ -447,7 +485,7 @@
 
 /* ---------------------------------------- Chat Input ---------------------------------- */
 
-/* ✅ Attach input box naturally to the bottom */
+/* ✅ Default layout: Input and buttons in one row */
 .chat-app-input-section {
     display: flex;
     align-items: center;
@@ -458,12 +496,12 @@
     background-color: white;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
-    position: sticky;
+    position: relative;
     bottom: 0;
-    gap: 10px;  /* 🔥 Adds spacing between elements */
+    gap: 10px;  /* ✅ Keeps spacing between elements */
 }
 
-/* ✅ Make input and buttons fit perfectly */
+/* ✅ Input field takes most space */
 .chat-app-input {
     flex-grow: 1;
     padding: 10px;
@@ -473,16 +511,17 @@
     font-size: 14px;
 }
 
+/* ✅ Send & New Chat Buttons */
 .chat-app-send-btn,
 .chat-app-new-chat-btn {
-    padding: 10px 20px;  /* 🔥 Increased padding for better spacing */
+    padding: 10px 20px;
     border-radius: 5px;
     font-size: 14px;
     cursor: pointer;
-    min-width: 90px;  /* 🔥 Ensures button width consistency */
+    min-width: 90px;
 }
 
-/* 📩 Send Button */
+/* ✅ Send Button */
 .chat-app-send-btn {
     background-color: #007bff;
     color: white;
@@ -493,7 +532,7 @@
     background-color: #0056b3;
 }
 
-/* 🆕 New Chat Button */
+/* ✅ New Chat Button */
 .chat-app-new-chat-btn {
     background-color: #dc3545;
     color: white;
@@ -504,3 +543,90 @@
     background-color: #c82333;
 }
 
+/* ✅ Button Group (Adds spacing on large screens) */
+.chat-app-button-group {
+    display: flex;
+    gap: 12px; /* ✅ Adds space between buttons */
+}
+
+/* ✅ On small screens, move buttons below input */
+@media (max-width: 600px) {
+    .chat-app-input-section {
+        flex-direction: column;
+        align-items: stretch;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .chat-app-input {
+        width: 100%;
+    }
+
+    /* ✅ Ensure buttons remain side-by-side */
+    .chat-app-button-group {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 12px;
+    }
+
+    .chat-app-send-btn,
+    .chat-app-new-chat-btn {
+        flex: 1;
+        min-width: 48%;
+    }
+}
+
+/* ✅ Fix for Very Small Screens */
+@media (max-width: 400px) {
+    .chat-app-button-group {
+        flex-direction: column;
+    }
+
+    .chat-app-send-btn,
+    .chat-app-new-chat-btn {
+        width: 100%; /* ✅ Stack buttons on very small screens */
+    }
+}
+
+/* -------------------------Selected company--------------------------------- */
+/* ✅ Selected Company Display inside Chat Window */
+.chat-app-selected-company {
+    width: 100%; /* ✅ Matches chat window width */
+    max-width: 800px; /* ✅ Keeps it consistent with chat content */
+    text-align: center;
+    background-color: #ffffff;
+    border-radius: 6px;
+    font-size: 13px; /* ✅ Smaller font */
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 10px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); /* ✅ Subtle shadow */
+}
+
+/* ✅ Main container for selected company text */
+.chat-app-selected-label-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+/* ✅ Label inside the text (Keeps blue color & fixes alignment) */
+.chat-app-selected-label {
+    font-weight: bold;
+    color: #007bff !important;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+/* ✅ Message when no company is selected */
+.chat-app-select-company-message {
+    color: #888;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 0;
+}

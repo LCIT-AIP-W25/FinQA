@@ -140,42 +140,52 @@ function ChatPage() {
     };
       
 
-    // ✅ Send message to Flask backend and save
-    const sendMessage = async () => {
+    const sendMessage = async () => { //newly added today
         if (!message.trim()) return;
     
+        // Append user message to chat
         const userMessage = { sender: "user", message: message };
         setCurrentChat((prevChat) => [...prevChat, userMessage]);
     
         await saveChatToBackend(userMessage);
     
+        // ✅ Check if company is selected
+        if (!selectedCompany) {
+            const errorMessage = { sender: "bot", message: "Please select a company before sending a message." };
+            setCurrentChat((prevChat) => [...prevChat, errorMessage]);
+            await saveChatToBackend(errorMessage);
+            setMessage(""); // Clear input field
+            return;
+        }
+    
         try {
-            // ✅ Updated API call to the real chatbot
+            // ✅ Make API call to the chatbot
             const response = await axios.post("http://127.0.0.1:5000/query_chatbot", {
                 question: message,
-                session_id: sessionId,  // Pass the session ID dynamically
+                session_id: sessionId,
                 user_id: user.user_id,
-                selected_company: selectedCompany        // Pass the user ID dynamically
+                selected_company: selectedCompany
             });
     
-            // ✅ Handle the chatbot's real response
+            // ✅ Handle chatbot response
             const botMessage = response.data.response
                 ? { sender: "bot", message: response.data.response }
-                : { sender: "bot", message: "Sorry, I could not process that request." };
+                : { sender: "bot", message: "I'm not sure how to respond to that." };
     
             setCurrentChat((prevChat) => [...prevChat, botMessage]);
             await saveChatToBackend(botMessage);
         } catch (error) {
-            console.error("Error sending message:", error);
+            console.error("Error sending message:", error); // Log technical error
     
-            // ✅ Add error handling message
-            const errorMessage = { sender: "bot", message: "Error communicating with the chatbot." };
+            // ✅ User-friendly error message
+            const errorMessage = { sender: "bot", message: "Oops! Something went wrong. Please try again later." };
             setCurrentChat((prevChat) => [...prevChat, errorMessage]);
             await saveChatToBackend(errorMessage);
         }
     
-        setMessage(""); // Clear input
+        setMessage(""); // Clear input field
     };
+    
     
 
     // ✅ Save message to backend (SQLite)
@@ -403,6 +413,18 @@ function ChatPage() {
 
                     {/* ✅ Chat Window Section */}
                     <div className="chat-app-window">
+
+                        {/* ✅ Display the selected company above the chat window */}
+                        <div className="chat-app-selected-company">
+                            {selectedCompany ? (
+                                <p className="chat-app-selected-label-main">
+                                    <span className="chat-app-selected-label">Selected Company:</span> {selectedCompany}
+                                </p>
+                            ) : (
+                                <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
+                            )}
+                        </div>
+
                         <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
                             {currentChat.length === 0 ? (
                                 <p className="chat-app-placeholder">What can I help with?</p>
@@ -426,8 +448,11 @@ function ChatPage() {
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                             />
-                            <button onClick={sendMessage} className="chat-app-send-btn">Send</button>
-                            <button onClick={startNewChat} className="chat-app-new-chat-btn">New Chat</button>
+                            {/* ✅ Group buttons together for responsiveness */}
+                            <div className="chat-app-button-group">
+                                <button onClick={sendMessage} className="chat-app-send-btn">Send</button>
+                                <button onClick={startNewChat} className="chat-app-new-chat-btn">New Chat</button>
+                            </div>
                         </div>
                     </div>
                 </div>

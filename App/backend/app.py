@@ -252,7 +252,7 @@ def fetch_companies():
 
 #----------------------------------------Summarization Function----------------------------------------
 def summarize_responses(user_question, numerical_response, contextual_response):
-    model_name = "llama-3.1-8b-instant"
+    model_name = "mistral-saba-24b"
     max_retries = 3
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
