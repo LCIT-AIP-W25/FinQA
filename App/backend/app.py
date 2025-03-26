@@ -276,6 +276,36 @@ def query_chatbot():
 def fetch_companies():
     """API Endpoint to get company names"""
     return jsonify(get_company_names_from_db())
+
+@app.route('/api/sec_reports/<company>', methods=['GET'])
+def get_sec_reports(company):
+    company = company.upper()
+
+    connection = oracledb.connect(
+        user=db_config["user"],
+        password=db_config["password"],
+        dsn=db_config["dsn"],
+        config_dir=db_config["wallet_location"],
+        wallet_location=db_config["wallet_location"],
+        wallet_password=db_config["password"]
+    )
+    cursor = connection.cursor()
+
+    query = """
+        SELECT quarter, filing_url
+        FROM sec_filings
+        WHERE UPPER(company_name) = :company
+    """
+    cursor.execute(query, {"company": company})
+    result = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    if not result:
+        return jsonify({"error": "No SEC filings found"}), 404
+
+    reports = {row[0]: row[1] for row in result}
+    return jsonify({"company": company, "reports": reports})
     
 #----------------------------------------Utility Functions----------------------------------------
 

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/ChatPage.css"; // ✅ Import external CSS  
-
+import InlineReportDropdown from './InlineReportDropdown';
 
 
 function ChatPage() {
@@ -417,9 +417,12 @@ function ChatPage() {
                         {/* ✅ Display the selected company above the chat window */}
                         <div className="chat-app-selected-company">
                             {selectedCompany ? (
-                                <p className="chat-app-selected-label-main">
-                                    <span className="chat-app-selected-label">Selected Company:</span> {selectedCompany}
-                                </p>
+                        <div className="chat-app-selected-label-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                        <div>
+                            <span className="chat-app-selected-label">Selected Company:</span> {selectedCompany}
+                        </div>
+                        <InlineReportDropdown company={selectedCompany} /> {/* ✅ Report dropdown */}
+                        </div>
                             ) : (
                                 <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
                             )}
