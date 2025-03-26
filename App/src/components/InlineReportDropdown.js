@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+// Fixed list of all quarters
 const ALL_QUARTERS = [
   "Q3 2022", "Q4 2022/Annual",
   "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023/Annual",
@@ -11,6 +12,7 @@ const InlineReportDropdown = ({ company }) => {
   const [selectedQuarter, setSelectedQuarter] = useState('');
   const [url, setUrl] = useState('');
 
+  // Fetch SEC reports when company changes
   useEffect(() => {
     if (!company) return;
 
@@ -34,33 +36,40 @@ const InlineReportDropdown = ({ company }) => {
 
   return (
     <div>
-      <select
-        className="form-select form-select-sm"
-        onChange={(e) => handleQuarterChange(e.target.value)}
-        value={selectedQuarter}
-        style={{ minWidth: "160px" }}
-      >
-        <option value="">Select Quarter</option>
-        {ALL_QUARTERS.map((qtr) => (
-          <option key={qtr} value={qtr}>
-            {qtr} {reports[qtr] ? "" : " (N/A)"}
-          </option>
-        ))}
-      </select>
+      {/* Label + Dropdown */}
+      <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "nowrap" }}>
+        <span style={{ fontWeight: "700", fontSize: "13px", whiteSpace: "nowrap" }}>
+          Financial Report
+        </span>
 
-      {/* Show "View Report" button if URL exists */}
+        <select
+          className="form-select form-select-sm"
+          onChange={(e) => handleQuarterChange(e.target.value)}
+          value={selectedQuarter}
+          style={{ minWidth: "180px" }}
+        >
+          <option value="">Select Quarter</option>
+          {ALL_QUARTERS.map((qtr) => (
+            <option key={qtr} value={qtr}>
+              {qtr} {reports[qtr] ? "" : " (N/A)"}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* View Report Button */}
       {selectedQuarter && url && (
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
           style={{
-            display: "inline-block",
-            marginTop: "10px",
+            display: "flex",
+            marginTop: "5px",
             backgroundColor: "#1a73e8",
             color: "white",
-            padding: "8px 16px",
-            borderRadius: "5px",
+            padding: "2px 8px",
+            borderRadius: "3px",
             textDecoration: "none",
             fontWeight: "500"
           }}
@@ -69,7 +78,7 @@ const InlineReportDropdown = ({ company }) => {
         </a>
       )}
 
-      {/* Show fallback message if no report */}
+      {/* No report available message */}
       {selectedQuarter && !url && (
         <p style={{ color: "#999", fontSize: "14px", marginTop: "8px" }}>
           No financial report found for {selectedQuarter}.
