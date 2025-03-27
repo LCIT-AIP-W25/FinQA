@@ -1,6 +1,54 @@
 /* ------------------------------------------ Header ----------------------------------- */
 
 
+.chat-app-company-suggestions {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 300px;
+}
+
+.chat-app-company-suggestions-header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: white;
+    background-color: navy;
+    height: 30px;
+}
+
+.chat-app-company-suggestions-list {
+    background-color: #ffffff;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-item:hover {
+    background-color: #f1f1f1;
+}
+
+
 
 
 
@@ -507,6 +555,7 @@
 
 /* ✅ Placeholder Message */
 .chat-app-placeholder {
+
     display: flex;
     justify-content: center;
     align-items: center;

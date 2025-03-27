@@ -281,6 +281,8 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
 
         {/* User's Name (Displayed Only on Large Screens) */}
         <span className="chat-app-username">{user?.username}</span>
+        
+
 
         {/* Animated Dropdown */}
         {dropdownOpen && (
@@ -300,38 +302,38 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
                 <div class="modal fade" id="myProfile" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
                     {/* ✅ Modal */}
                     <div className="modal-dialog modal-dialog-centered">
-  <div className="modal-content p-4 shadow-lg rounded-4">
-    {/* Modal Header */}
-    <div className="modal-header border-0">
-      <h5 className="modal-title fw-bold text-primary" id="modalTitle">
-        <i className="bi bi-person-circle me-2"></i> My Profile
-      </h5>
-      <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-    </div>
+                <div className="modal-content p-4 shadow-lg rounded-4">
+                 {/* Modal Header */}
+                <div className="modal-header border-0">
+                  <h5 className="modal-title fw-bold text-primary" id="modalTitle">
+                    <i className="bi bi-person-circle me-2"></i> My Profile
+                        </h5>
+                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
 
-    {/* Modal Body */}
-    <div className="modal-body text-center">
-      {/* Profile Image Placeholder */}
+                    {/* Modal Body */}
+                    <div className="modal-body text-center">
+                    {/* Profile Image Placeholder */}
     
 
-      {/* User Information */}
-      <p className="mb-2">
-        <strong className="text-secondary">Username:</strong> <span className="text-dark">{user?.username}</span>
-      </p>
-      <p className="mb-3">
-        <strong className="text-secondary">Email:</strong> <span className="text-dark">{user?.email}</span>
-      </p>
-    </div>
+                    {/* User Information */}
+                    <p className="mb-2">
+                        <strong className="text-secondary">Username:</strong> <span className="text-dark">{user?.username}</span>
+                    </p>
+                    <p className="mb-3">
+                        <strong className="text-secondary">Email:</strong> <span className="text-dark">{user?.email}</span>
+                    </p>
+                    </div>
 
-    {/* Modal Footer */}
-    <div className="modal-footer border-0 d-flex justify-content-center">
-      
-      <button type="button" className="btn btn-success">
-        <i className="bi bi-check-circle"></i> Save Changes
-      </button>
-    </div>
-  </div>
-</div>
+                    {/* Modal Footer */}
+                    <div className="modal-footer border-0 d-flex justify-content-center">
+                    
+                    <button type="button" className="btn btn-success">
+                        <i className="bi bi-check-circle"></i> Save Changes
+                    </button>
+                    </div>
+                </div>
+                </div>
 
                     </div>
 
@@ -446,6 +448,20 @@ const [hoveredMenu, setHoveredMenu, index] = useState(null);
                             />
                             <button onClick={sendMessage} className="chat-app-send-btn"><i class="fa-solid fa-paper-plane"></i></button>
                             <button onClick={startNewChat} className="chat-app-new-chat-btn"><i class="fa fa-plus"></i></button>
+                        </div>
+
+                    </div>
+
+                    <div className=" chat-app-company-suggestions">
+                        <h5 className="chat-app-company-suggestions-header">Quick Suggestions</h5>
+                        <div className="chat-app-company-suggestions-list">
+                            <ul className="menu">
+                                {companyList.map((company) => (
+                                    <li key={company} className="menu-item chat-app-company-item">
+                                        {company}
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
 
                     </div>
