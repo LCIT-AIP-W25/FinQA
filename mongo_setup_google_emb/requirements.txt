@@ -1,0 +1,10 @@
+streamlit
+pandas
+pymongo
+rouge-score
+bert-score
+groq
+python-dotenv
+numpy
+torch
+transformers
