@@ -319,7 +319,7 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     # Ensure numerical_text is always a string
     numerical_str = str(numerical_response) if numerical_response else "No numerical data available"
     
-    model_name = "llama-3.1-8b-instant"
+    model_name = "llama3-70b-8192"
     max_retries = 3
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
@@ -354,7 +354,7 @@ def summarize_responses(user_question, numerical_response, contextual_response):
                 model=model_name,
                 messages=[{"role": "system", "content": prompt}],
                 max_tokens=300,
-                temperature=0.3
+                temperature=0.5
             )
 
             formatted_response = llm_response.choices[0].message.content.strip()

@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/ChatPage.css"; 
-import InlineReportDropdown from './InlineReportDropdown';
+import InlineReportDropdown from "./InlineReportDropdown";
 
 
 function ChatPage() {
