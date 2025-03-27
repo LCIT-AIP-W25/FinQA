@@ -588,40 +588,51 @@ html, body {
 }
 
 /* -------------------------Selected company--------------------------------- */
-/* ✅ Selected Company Display inside Chat Window */
+/* ✅ Updated Selected Company Section */
 .chat-app-selected-company {
-    width: 100%; /* ✅ Matches chat window width */
-    max-width: 800px; /* ✅ Keeps it consistent with chat content */
-    text-align: center;
+    width: 100%; 
+    max-width: 800px;
+    text-align: left; /* Align text properly */
     background-color: #ffffff;
     border-radius: 6px;
-    font-size: 13px; /* ✅ Smaller font */
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 10px;
-    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); /* ✅ Subtle shadow */
-}
-
-/* ✅ Main container for selected company text */
-.chat-app-selected-label-main {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
     font-size: 14px;
     font-weight: 500;
     color: #333;
-    text-align: center;
-    margin-bottom: 0;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); 
+    display: flex;
+    justify-content: space-between; /* Pushes dropdown to the right */
+    align-items: center;
 }
 
-/* ✅ Label inside the text (Keeps blue color & fixes alignment) */
+/* ✅ Container for "Selected Company" text */
+.chat-app-selected-label-main {
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* ✅ Styling for "Selected Company:" label */
 .chat-app-selected-label {
     font-weight: bold;
-    color: #007bff !important;
-    text-align: center;
-    margin-bottom: 0;
+    color: #007bff !important; /* Ensures blue color */
 }
+
+/* ✅ Styling for selected company name */
+.chat-app-selected-name {
+    color: #000;
+    font-weight: 500;
+}
+
+/* ✅ Dropdown alignment fix */
+.inline-report-dropdown {
+    margin-left: auto; /* Push to the right */
+}
+
 
 /* ✅ Message when no company is selected */
 .chat-app-select-company-message {
@@ -629,4 +640,70 @@ html, body {
     font-size: 14px;
     text-align: center;
     margin-bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ------------------------------PDF Upload------------------------------------------ */
+.chat-app-upload-btn {
+    border:2px solid;
+    border-color: #e6e6e6;
+    border-radius:6px;
+}
+
+.chat-app-upload-message {
+    margin-top: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #28a745; /* Green color for success */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Red for error messages */
+.chat-app-upload-message.error {
+    color: #dc3545;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
+/* ------------Upload PDF------------------------------------- */
+/* Upload Status Icon */
+.upload-status-icon {
+    display: inline-block;
+    font-size: 1.5rem; /* Keep the icon visible */
+    cursor: pointer;
+    position: relative;
+    margin-left: 10px;
+}
+
+/* Tooltip for Hover Message */
+.upload-status-icon::after {
+    content: attr(data-hover); /* Show full message on hover */
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    left: 50%;
+    bottom: 120%; /* Position above the icon */
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;  /* Adjust padding to keep it compact */
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 0.75rem; /* ✅ Reduced font size */
+    z-index: 10;
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Show tooltip on hover */
+.upload-status-icon:hover::after {
+    visibility: visible;
+    opacity: 1;
 }

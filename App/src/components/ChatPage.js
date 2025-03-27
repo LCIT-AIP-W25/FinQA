@@ -2,7 +2,7 @@ import { useLoader } from "./LoaderContext";
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../styles/ChatPage.css"; // ✅ Import external CSS  
+import "../styles/ChatPage.css"; 
 import InlineReportDropdown from './InlineReportDropdown';
 
 
@@ -30,30 +30,39 @@ function ChatPage() {
     };
 
     useEffect(() => {
-    // Add a global request interceptor
+        // ✅ Add a global request interceptor
         const requestInterceptor = axios.interceptors.request.use((config) => {
-            setLoading(true);
+            // 🚀 Skip loader for PDF upload & processing
+            if (!config.url.includes("/upload_pdf") && !config.url.includes("/pdf_status")) {
+                setLoading(true);
+            }
             return config;
         });
-
-    // Add a global response interceptor
-    const responseInterceptor = axios.interceptors.response.use(
-        (response) => {
-        setLoading(false);
-        return response;
-        },
-        (error) => {
-        setLoading(false);
-        return Promise.reject(error);
-        }
-    );
-
-    // Cleanup interceptors on unmount
-    return () => {
-        axios.interceptors.request.eject(requestInterceptor);
-        axios.interceptors.response.eject(responseInterceptor);
-    };
+    
+        // ✅ Add a global response interceptor
+        const responseInterceptor = axios.interceptors.response.use(
+            (response) => {
+                // 🚀 Skip disabling loader for PDF requests (they never triggered it)
+                if (!response.config.url.includes("/upload_pdf") && !response.config.url.includes("/pdf_status")) {
+                    setLoading(false);
+                }
+                return response;
+            },
+            (error) => {
+                if (!error.config.url.includes("/upload_pdf") && !error.config.url.includes("/pdf_status")) {
+                    setLoading(false);
+                }
+                return Promise.reject(error);
+            }
+        );
+    
+        // ✅ Cleanup interceptors on unmount
+        return () => {
+            axios.interceptors.request.eject(requestInterceptor);
+            axios.interceptors.response.eject(responseInterceptor);
+        };
     }, [setLoading]);
+    
 
 
     // ✅ Auto-scroll to the latest message
@@ -108,15 +117,6 @@ function ChatPage() {
         scrollToBottom();
     }, [currentChat]);
 
-    // // ✅ Fetch chat history for the current session
-    // const fetchChatHistory = async (id) => {
-    //     try {
-    //         const response = await axios.get(`http://127.0.0.1:5000/get_chats/${id}`);
-    //         setCurrentChat(response.data);
-    //     } catch (error) {
-    //         console.error("Error fetching chat history:", error);
-    //     }
-    // };
 
     // ✅ Fetch all chat sessions for displaying history
     const fetchAllChatSessions = async () => {
@@ -231,21 +231,6 @@ function ChatPage() {
         }
     };
     
-      
-    
-    // const handleChatSelection = async (selectedSessionId) => {
-    //     try {
-    //         // Fetch chat messages for the selected session from the backend
-    //         const response = await axios.get(`http://127.0.0.1:5000/get_chat/${selectedSessionId}`);
-            
-    //         // Update state with the selected session's messages
-    //         setSessionId(selectedSessionId);
-    //         setCurrentChat(response.data.messages);  // Display chat messages in the chat window
-    //     } catch (error) {
-    //         console.error("Error fetching selected chat:", error);
-    //     }
-    // };
-    
     // ✅ Delete a chat session
     const deleteChatSession = async (sessionIdToDelete) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this chat?");
@@ -300,6 +285,69 @@ function ChatPage() {
         localStorage.setItem("chatTitles", JSON.stringify(storedTitles));
     
         return newTitle;
+    };
+
+    const [uploadMessage, setUploadMessage] = useState("");
+    const [filename, setFilename] = useState("");
+    const [uploadStatus, setUploadStatus] = useState(null); // "success" | "error" | "loading"
+    const [hoverMessage, setHoverMessage] = useState(""); // Store full message for hover
+
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+    
+        setUploadStatus("loading");
+        setUploadMessage("⏳ Uploading...");
+        setHoverMessage("Uploading PDF...");
+    
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("company", "Unknown");
+    
+        try {
+            const response = await axios.post("http://127.0.0.1:5000/upload_pdf", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+    
+            if (response.data.error) {
+                setUploadStatus("error");
+                setUploadMessage("❌");
+                setHoverMessage(`Error: ${response.data.error}`);
+                return;
+            }
+    
+            setUploadStatus("success");
+            setUploadMessage("⏳");
+            setFilename(response.data.filename);
+            setHoverMessage('PDF Processing...');
+    
+            // ✅ Wait for processing to complete
+            checkProcessingStatus(response.data.filename);
+        } catch (error) {
+            console.error("Upload failed:", error);
+            setUploadStatus("error");
+            setUploadMessage("❌");
+            setHoverMessage("Upload failed. Please try again.");
+        }
+    };
+
+    // ✅ Check processing status until it's done
+    const checkProcessingStatus = async (filename) => {
+        const interval = setInterval(async () => {
+            try {
+                const statusResponse = await axios.get(`http://127.0.0.1:5000/pdf_status/${filename}`);
+                if (statusResponse.data.status === "done") {
+                    clearInterval(interval);
+                    setUploadMessage("✅ Processing completed! Redirecting...");
+                    setTimeout(() => navigate("/pdf-chat"), 2000);
+                } else if (statusResponse.data.status === "failed") {
+                    clearInterval(interval);
+                    setUploadMessage("❌ Processing failed. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error checking status:", error);
+            }
+        }, 3000); // ✅ Check every 3 seconds
     };
 
     return (
@@ -417,12 +465,13 @@ function ChatPage() {
                         {/* ✅ Display the selected company above the chat window */}
                         <div className="chat-app-selected-company">
                             {selectedCompany ? (
-                        <div className="chat-app-selected-label-main" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-                        <div>
-                            <span className="chat-app-selected-label">Selected Company:</span> {selectedCompany}
-                        </div>
-                        <InlineReportDropdown company={selectedCompany} /> {/* ✅ Report dropdown */}
-                        </div>
+                                <>
+                                    <div className="chat-app-selected-label-main">
+                                        <span className="chat-app-selected-label">Selected Company:</span>
+                                        <span className="chat-app-selected-name">{selectedCompany}</span>
+                                    </div>
+                                    <InlineReportDropdown company={selectedCompany} className="inline-report-dropdown" />
+                                </>
                             ) : (
                                 <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
                             )}
@@ -451,6 +500,35 @@ function ChatPage() {
                                 onChange={(e) => setMessage(e.target.value)}
                                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                             />
+
+                            {/* Upload PDF Button */}
+                            <input
+                                type="file"
+                                id="pdfUpload"
+                                accept="application/pdf"
+                                style={{ display: "none" }}
+                                onChange={(e) => handleFileUpload(e)}
+                            />
+                            <button
+                                className="chat-app-upload-btn"
+                                onClick={() => document.getElementById("pdfUpload").click()}
+                            >
+                                📄 PDF
+                            </button>
+
+                            {/* Upload Status Icon with Hover Effect */}
+                            {uploadStatus && (
+                                <span 
+                                    className="upload-status-icon"
+                                    data-hover={hoverMessage} // Full message appears on hover
+                                    onMouseEnter={() => setUploadMessage(hoverMessage)} 
+                                    onMouseLeave={() => setUploadMessage(uploadStatus === "error" ? "❌" : "⏳")}
+                                >
+                                    {uploadMessage} {/* Shows only ✅, ❌, or ⏳ */}
+                                </span>
+                            )}
+
+
                             {/* ✅ Group buttons together for responsiveness */}
                             <div className="chat-app-button-group">
                                 <button onClick={sendMessage} className="chat-app-send-btn">Send</button>

@@ -3,7 +3,7 @@ import re
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from langchain_community.vectorstores import MongoDBAtlasVectorSearch
-from langchain_groq import ChatGroq
+# from langchain_mongodb import MongoDBAtlasVectorSearch
 from groq import Groq
 from bs4 import BeautifulSoup
 from langchain_community.embeddings import SentenceTransformerEmbeddings

@@ -1,25 +1,65 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { useEffect } from "react";
+import { useLoader } from "./LoaderContext";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import axios from "axios";
 
 function ForgetPassword() {
-    const navigate = useNavigate();
     const { register, handleSubmit, formState: { errors } } = useForm();
     const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+    const [resetLink, setResetLink] = useState(""); // ✅ Store reset link for testing
+
+    const { setLoading } = useLoader();
+
+    useEffect(() => {
+    const requestInterceptor = axios.interceptors.request.use((config) => {
+        setLoading(true);
+        return config;
+    });
+
+    const responseInterceptor = axios.interceptors.response.use(
+        (response) => {
+        setLoading(false);
+        return response;
+        },
+        (error) => {
+        setLoading(false);
+        return Promise.reject(error);
+        }
+    );
+
+    return () => {
+        axios.interceptors.request.eject(requestInterceptor);
+        axios.interceptors.response.eject(responseInterceptor);
+    };
+    }, [setLoading]);
 
     const onSubmit = async (data) => {
+        setMessage(""); 
+        setError("");
+    
+        console.log("📩 Sending Forget Password Request:", data); // ✅ Debugging
+    
         try {
             const response = await axios.post("http://127.0.0.1:5001/forget_password", data);
+            
+            console.log("✅ Server Response:", response.data); // ✅ Debugging
+            
             if (response.data.status === "success") {
-                setMessage("Reset link sent to your email.");
-                navigate('/login');
+                setMessage("✅ Password reset link sent to your email. Check your inbox & spam folder.");
+            } else {
+                setError("❌ " + (response.data.message || "Something went wrong."));
             }
         } catch (err) {
-            setMessage("Email not registered.");
+            console.error("❌ API Error:", err.response?.data); // ✅ Debugging
+            setError("❌ Failed to send reset link. Try again.");
         }
     };
+    
+    
 
     return (
         <section className='sec-login'>
@@ -29,9 +69,18 @@ function ForgetPassword() {
                         <div className='d-flex justify-content-center'>
                             <div className='box-size'>
                                 <p className='wel-txt'>Forgot Password</p>
-                                <p className='det-txt'>Enter your email to reset your password</p>
+                                <p className='det-txt'>Enter your email to receive a reset link.</p>
 
                                 {message && <p className="success-text">{message}</p>}
+                                {error && <p className="error-text">{error}</p>}
+
+                                {/* ✅ Show Reset Link if available */}
+                                {resetLink && (
+                                    <div className="mt-3">
+                                        <p className="info-text">Test Reset Link:</p>
+                                        <a href={resetLink} target="_blank" rel="noopener noreferrer">{resetLink}</a>
+                                    </div>
+                                )}
 
                                 <form className='form-space' onSubmit={handleSubmit(onSubmit)}>
                                     <label className='txt-lab'>Email</label>
@@ -50,6 +99,10 @@ function ForgetPassword() {
                                     {errors.email && <p className="error-text">{errors.email.message}</p>}
 
                                     <button type="submit" className='mt-4 btn-sign'>Reset Password</button>
+
+                                    <div className="mt-3">
+                                        <Link className='mb-0 mt-2 sign-txt link-line' to='/login'>Back to Login</Link>
+                                    </div>
                                 </form>
                             </div>
                         </div>

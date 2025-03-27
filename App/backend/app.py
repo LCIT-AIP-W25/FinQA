@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import uuid
-import logging
 import os
 from real_chatbot import query_llm, extract_sql_and_notes, execute_sql  # Import chatbot functions
 from real_chatbot_rag import query_llm_groq, initialize_components
@@ -12,8 +11,9 @@ import oracledb
 from groq import Groq  # ✅ Required for Groq API
 import time
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 import threading
+from PDFProcessing import FinancialRAGSystem
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -25,6 +25,11 @@ CORS(app)
 
 # Initialize thread-local storage for database sessions
 db_lock = threading.Lock()
+
+# --------------------------------------PDF Processing---------------------------------------------
+# ✅ Initialize RAG system
+rag_system = FinancialRAGSystem()
+
 #---------------------------------------Initialize RAG components----------------------------------------
 
 try:
@@ -314,7 +319,7 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     # Ensure numerical_text is always a string
     numerical_str = str(numerical_response) if numerical_response else "No numerical data available"
     
-    model_name = "mistral-saba-24b"
+    model_name = "llama-3.1-8b-instant"
     max_retries = 3
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
@@ -515,6 +520,111 @@ def handle_contextual_query(user_question, selected_company, session_id=None):
     except Exception as e:
         return {"error": str(e)}, 500
     
+
+#------------------------------------------Upload PDF---------------------------------------- 
+# ✅ Dictionary to track PDF processing status
+pdf_status = {}
+
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+import shutil  # Add this at the top with other imports
+
+@app.route("/upload_pdf", methods=["POST"])
+def upload_pdf():
+    """Handles PDF upload & tracks processing."""
+    if "file" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    company_name = request.form.get("company", "Unknown")
+
+    if not file.filename.endswith(".pdf"):
+        return jsonify({"error": "Invalid file format"}), 400
+
+    # ✅ Remove previous folders before processing
+    pdf_uploads_folder = "uploads"
+    embeddings_folder = "financial_reports_faiss_index"  # Modify if your embeddings folder is different
+    
+    try:
+        # Debugging: Print before deletion
+        print(f"Attempting to delete: {pdf_uploads_folder} and {embeddings_folder}")
+
+        if os.path.exists(pdf_uploads_folder):
+            shutil.rmtree(pdf_uploads_folder)
+            print(f"Deleted folder: {pdf_uploads_folder}")
+        
+        if os.path.exists(embeddings_folder):
+            shutil.rmtree(embeddings_folder)
+            print(f"Deleted folder: {embeddings_folder}")
+
+        # ✅ Recreate necessary folders
+        os.makedirs(pdf_uploads_folder, exist_ok=True)
+        os.makedirs(embeddings_folder, exist_ok=True)
+
+    except Exception as e:
+        print(f"❌ Error while deleting folders: {e}")
+        return jsonify({"error": f"Failed to clean up directories: {e}"}), 500
+
+    # ✅ Save the uploaded file
+    try:
+        file_path = os.path.join(pdf_uploads_folder, file.filename)
+        file.save(file_path)
+        print(f"File saved successfully: {file_path}")
+    except Exception as e:
+        print(f"❌ Error saving file: {e}")
+        return jsonify({"error": f"Failed to save file: {e}"}), 500
+
+    # ✅ Mark PDF as "Processing"
+    pdf_status[file.filename] = "processing"
+
+    # ✅ Process PDF asynchronously
+    def process():
+        try:
+            print(f"⚙️ Starting PDF processing: {file_path}")
+            success = rag_system.process_pdf(file_path, company_name)
+            pdf_status[file.filename] = "done" if success else "failed"
+            print(f"✅ PDF processing completed: {file_path}")
+        except Exception as e:
+            pdf_status[file.filename] = "failed"
+            print(f"❌ PDF processing failed: {e}")
+
+
+    processing_thread = threading.Thread(target=process)
+    processing_thread.start()
+
+    return jsonify({"message": "File uploaded! Processing in the background...", "filename": file.filename})
+
+
+# ✅ Query Financial Data
+@app.route("/query_pdf_chatbot", methods=["POST"])
+def query_pdf_chatbot():
+    try:
+        data = request.get_json()
+        print("Received data:", data)  # ✅ Debugging log
+        question = data.get("question", "")
+
+        if not question:
+            return jsonify({"response": "Please ask a valid question."})
+
+        # Query PDF system
+        response, sources = rag_system.query_financial_data(question)
+
+        print("Response generated:", response)  # ✅ Debugging log
+
+        return jsonify({"response": response, "sources": sources})
+
+    except Exception as e:
+        print("Error processing request:", str(e))
+        return jsonify({"response": "Internal server error"}), 500
+
+# ✅ API to Check PDF Processing Status
+@app.route("/pdf_status/<filename>", methods=["GET"])
+def check_pdf_status(filename):
+    """Checks if a PDF has finished processing."""
+    status = pdf_status.get(filename, "not_found")
+    return jsonify({"status": status})
+
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000, threaded=True)
