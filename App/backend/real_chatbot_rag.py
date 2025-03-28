@@ -13,7 +13,7 @@ load_dotenv()
 
 # Configuration
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_KEY_RAG = os.getenv("GROQ_API_KEY_RAG")
 MONGO_URI = os.getenv("MONGO_URI")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Using primary key for query operations
 
@@ -23,7 +23,23 @@ _collection = None
 _embeddings = None
 _vector_store = None
 
-# ------------------- Initialization (Run Once) ------------------- #
+
+# Hardcoded mapping between selected company names and their MongoDB company_id prefixes
+COMPANY_MAPPING = {
+    "AMAZON": "Amazon",
+    "AMD": "AMD",
+    "ATT": "AT&T",  # Maps "ATT" to "AT&T" in database
+    "GOOGLE": "Google",
+    "JPMORGAN": "JP Morgan",  # Maps "JPMORGAN" to "JP Morgan"
+    "MASTERCARD": "Mastercard",
+    "MCDONALDS": "McDonald",  # Note the different spelling
+    "META": "Meta",
+    "PEPSICO": "Pepsico",
+    "S&P GLOBAL": "S&P Global",  # Handles the special characters
+    "TESLA": "Tesla",
+    # Add any other companies you need to support
+}
+
 def initialize_components():
     """Initialize all components once at application startup."""
     global _initialized, _collection, _embeddings, _vector_store
@@ -53,20 +69,14 @@ def initialize_components():
         _vector_store = MongoDBAtlasVectorSearch(
             collection=_collection,
             embedding=_embeddings,
-            index_name="st_vector_index",
+            index_name="vector_index_g",
             embedding_key="embedding",
             text_key="content"
         )
         print("✅ Vector store created with config:")
-        print(f"   - Index name: st_vector_index")
+        print(f"   - Index name: vector_index_g")
         print(f"   - Embedding key: embedding")
         print(f"   - Text key: content")
-        
-        print("\n🧪 Testing vector store with sample query...")
-        test_results = _vector_store.similarity_search("test", k=1)
-        print(f"Test query returned {len(test_results)} results")
-        if test_results:
-            print(f"Sample result metadata: {test_results[0].metadata}")
         
         _initialized = True
         print("\n=== ✅ ALL COMPONENTS INITIALIZED SUCCESSFULLY ===")
@@ -79,7 +89,6 @@ def initialize_components():
         traceback.print_exc()
         return False
 
-# ------------------- MongoDB Connection ------------------- #
 def connect_to_mongo():
     """Establish connection to MongoDB Atlas (called once during init)."""
     try:
@@ -90,7 +99,7 @@ def connect_to_mongo():
         print("   Connecting to MongoDB...")
         client = MongoClient(MONGO_URI)
         db = client["Financial_Rag_DB"]
-        collection = db["test_files"]
+        collection = db["chunks_data"]
         
         print("   Verifying connection...")
         count = collection.estimated_document_count()
@@ -109,7 +118,6 @@ def connect_to_mongo():
         print(f"   ❌ Connection failed: {e}")
         return None
 
-# ------------------- Embeddings ------------------- #
 def init_embeddings():
     """Initialize the embeddings model (called once during init)."""
     try:
@@ -133,56 +141,79 @@ def init_embeddings():
     except Exception as e:
         print(f"   ❌ Initialization failed: {e}")
         return None
+    
 
-# ------------------- Document Processing ------------------- #
-def financial_preprocessor(text):
-    """Remove HTML tags and URLs (called per query)."""
-    print("\n=== DOCUMENT PREPROCESSING ===")
-    print(f"Original text length: {len(text)}")
-    text = BeautifulSoup(text, "html.parser").get_text()
-    print(f"After HTML parsing: {len(text)}")
-    text = URL_PATTERN.sub('', text)
-    print(f"After URL removal: {len(text)}")
-    return text.strip()
+def create_company_filter(selected_company):
+    """Create a MongoDB filter using the hardcoded mapping"""
+    if not selected_company or selected_company == "All":
+        return None
+    
+    # Get the standardized prefix from our mapping
+    mapped_prefix = COMPANY_MAPPING.get(selected_company.upper())
+    
+    if not mapped_prefix:
+        print(f"⚠️ No mapping found for company: {selected_company}")
+        return None
+    
+    # Create regex pattern that matches the standardized prefix followed by underscore
+    regex_pattern = f"^{re.escape(mapped_prefix)}_"
+    
+    return {"company_id": {"$regex": regex_pattern, "$options": "i"}}
 
+# Updated retrieve_documents function using the direct mapping
 def retrieve_documents(query, selected_company=None, k=4):
     """
-    Retrieve relevant documents (called per query).
-    Uses the pre-initialized vector store.
+    Retrieve documents using the direct company mapping
     """
-    print("\n=== DOCUMENT RETRIEVAL STARTED ===")
+    print(f"\n=== DOCUMENT RETRIEVAL ===")
     print(f"Query: '{query}'")
     print(f"Company filter: '{selected_company}'")
-    print(f"Requested documents: {k}")
     
     if not _initialized:
         raise RuntimeError("Components not initialized")
     
-    filter_query = None
-    if selected_company and selected_company != "All":
-        # Simplified regex pattern - just checks if company_id starts with company name
-        filter_query = {"company_id": {"$regex": f"^{re.escape(selected_company)}", "$options": "i"}}
-        print(f"Generated filter query: {filter_query}")
-    
     try:
-        print("\nExecuting similarity search...")
-        retrieved_docs = _vector_store.similarity_search(query, k=k, filter=filter_query)
-        print(f"Found {len(retrieved_docs)} documents")
+        filter_query = create_company_filter(selected_company)
+        if filter_query:
+            print(f"🔍 Using mapped filter: {filter_query}")
         
-        if not retrieved_docs:
-            print("⚠️ No documents found")
-        else:
-            print("Retrieved documents metadata:")
-            for i, doc in enumerate(retrieved_docs, 1):
-                print(f"{i}. {doc.metadata.get('company_id', 'Unknown')} - {len(doc.page_content)} chars")
+        # Get extra docs in case client-side filtering is needed
+        retrieved_docs = _vector_store.similarity_search(
+            query, 
+            k=k*2,  
+            filter=filter_query
+        )
         
-        return [
-            {"text": doc.page_content, "source": doc.metadata.get("company_id", "Unknown Source")}
+        # Additional client-side verification using the mapping
+        if selected_company and selected_company != "All":
+            mapped_prefix = COMPANY_MAPPING.get(selected_company.upper())
+            if mapped_prefix:
+                retrieved_docs = [
+                    doc for doc in retrieved_docs
+                    if str(doc.metadata.get("company_id", "")).startswith(mapped_prefix + "_")
+                ]
+        
+        # Sort and limit results
+        retrieved_docs.sort(key=lambda d: d.metadata.get("sequence", 0))
+        retrieved_docs = retrieved_docs[:k]
+        
+        # Prepare results
+        results = [
+            {
+                "text": doc.page_content,
+                "source": f"{doc.metadata.get('company_id', 'Unknown')} | Chunk: {doc.metadata.get('chunk_id', '?')}"
+            }
             for doc in retrieved_docs
         ]
+        
+        print(f"\n✅ Retrieved {len(results)} documents")
+        return results
+        
     except Exception as e:
         print(f"❌ Retrieval Error: {str(e)}")
         return []
+
+
 
 def query_llm_groq(final_query, selected_company=None, chat_history=None):
     """Queries Groq API with context and limited chat history."""
@@ -242,7 +273,7 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None):
         })
         
         print("\nSending to Groq API...")
-        client = Groq(api_key=GROQ_API_KEY)
+        client = Groq(api_key=GROQ_API_KEY_RAG)
         response = client.chat.completions.create(
             model="mistral-saba-24b",
             messages=messages,
@@ -257,9 +288,3 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None):
     except Exception as e:
         print(f"❌ Groq API Error: {str(e)}")
         return f"❌ Groq API Error: {str(e)}", []
-    
-# At the very end of real_chatbot_rag.py
-if __name__ != "__main__":
-    # Auto-initialize when imported as a module
-    print("=== SCRIPT IMPORTED - INITIALIZING ===")
-    initialize_components()

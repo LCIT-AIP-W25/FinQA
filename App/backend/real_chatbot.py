@@ -40,7 +40,7 @@ def save_progress(df, model_name, mode="w"):
     df.to_csv(output_file, mode=mode, index=False, header=header)
     logging.info("Progress saved to %s", output_file)
 
-def query_llm(user_question, ddl_content, model_name, api_key, max_retries=5, chat_history=None):
+def query_llm(user_question, ddl_content, model_name, api_key_sql, max_retries=5, chat_history=None):
     """Queries the LLM API with retry logic."""
     logging.debug("Querying LLM API using model: %s", model_name)
     # Format last 5 messages if provided
@@ -115,7 +115,7 @@ query = "{user_question}"
     while retries < max_retries:
         try:
             
-            client = Groq(api_key=api_key)
+            client = Groq(api_key=api_key_sql)
             response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": prompt}],

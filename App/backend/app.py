@@ -41,17 +41,12 @@ except Exception as e:
     # You might want to exit here if RAG is critical
 
 #----------------------------------------Groq client----------------------------------------------------#
-api_keys = os.getenv("API_KEYS")
-if not api_keys:
+
+api_key_rag = os.getenv("GROQ_API_KEY_RAG")
+api_key_sql = os.getenv("GROQ_API_KEY_SQL")
+if not api_key_sql and not api_key_rag:
     print("We are currently unable to process this request. Please try again later.")
 
-api_keys = api_keys.split(",")
-api_key = api_keys[0]
-
-try:
-    client = Groq(api_key=api_key)
-except Exception:
-    print("We are currently experiencing technical difficulties. Please try again later.")
 
 #----------------------------------------Database Setup----------------------------------------
 # ✅ SQLite DB Setup
@@ -316,10 +311,17 @@ def get_sec_reports(company):
 
 #----------------------------------------Summarization Function----------------------------------------
 def summarize_responses(user_question, numerical_response, contextual_response):
+    """Summarize and format responses with detailed logging"""
+    print("\n=== STARTING RESPONSE SUMMARIZATION ===")
+    print(f"User Question: {user_question}")
+    print(f"Numerical Response: {numerical_response}")
+    print(f"Contextual Response: {contextual_response[:200]}...")  # Show preview
+    
     # Ensure numerical_text is always a string
     numerical_str = str(numerical_response) if numerical_response else "No numerical data available"
+    print(f"\n[1/3] Formatted Numerical Response: {numerical_str}")
     
-    model_name = "llama3-70b-8192"
+    model_name = "mistral-saba-24b"
     max_retries = 3
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
@@ -347,46 +349,69 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     If you used the numerical response, always end with:
     "All monetary values are in millions."
 """
+    print(f"\n[2/3] Generated Prompt (Preview):\n{prompt[:500]}...")  # Show first 500 chars
 
     for attempt in range(max_retries):
         try:
+            print(f"\nAttempt {attempt + 1}/{max_retries}: Querying LLM...")
+            start_time = time.time()
+            client = Groq(api_key=api_key_rag)
             llm_response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "system", "content": prompt}],
-                max_tokens=300,
-                temperature=0.5
+                max_tokens=512,
+                temperature=0.3
             )
+            
+            latency = time.time() - start_time
+            print(f"  LLM Response received in {latency:.2f}s")
+            print(f"  Model: {model_name}")
+            print(f"  Tokens Used: {llm_response.usage.total_tokens if hasattr(llm_response, 'usage') else 'N/A'}")
 
             formatted_response = llm_response.choices[0].message.content.strip()
+            print(f"\n[3/3] Raw LLM Response:\n{formatted_response}")
 
             if not formatted_response or formatted_response.lower().startswith("error"):
                 raise ValueError("Invalid response received from LLM.")
 
+            print("\n=== SUMMARIZATION SUCCESSFUL ===")
             return formatted_response
+            
         except Exception as e:
             error_message = str(e).lower()
+            print(f"\n⚠️ Attempt {attempt + 1} failed with error: {error_message}")
 
+            # Handle specific error cases with logging
             if "503" in error_message or "service unavailable" in error_message:
+                print("  Detected service unavailable error")
                 if attempt == max_retries - 1:
+                    print("  Max retries reached for service unavailable")
                     return "We are currently experiencing high demand. Please try again later."
                 time.sleep((attempt + 1) * 2)
                 continue
 
             if "rate limit" in error_message or "too many requests" in error_message:
+                print("  Detected rate limiting")
                 if attempt == max_retries - 1:
+                    print("  Max retries reached for rate limiting")
                     return "We are currently handling a high number of requests. Please try again in a few minutes."
                 time.sleep((attempt + 1) * 2)
                 continue
 
             if "unauthorized" in error_message or "invalid api key" in error_message:
+                print("  Detected authorization error")
                 return "We are currently unable to process this request. Please try again later."
 
             if attempt == max_retries - 1:
+                print("  Max retries reached for generic error")
                 return "We are experiencing technical difficulties. Please try again later."
 
+            print(f"  Waiting {((attempt + 1) * 2)} seconds before retry...")
             time.sleep((attempt + 1) * 2)
 
+    print("\n=== SUMMARIZATION FAILED AFTER ALL RETRIES ===")
     return "We are experiencing technical difficulties. Please try again later."
+
 
 def get_ddl_prefix_from_db(company_name):
     """Fetch DDL prefix from the Oracle database mapping table."""
@@ -436,7 +461,6 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
         
         ddl_directory = "Oracle_DDLs"
         model_name = "llama-3.3-70b-versatile"
-        api_keys = os.getenv("API_KEYS").split(",")
         ddl_prefix = get_ddl_prefix_from_db(selected_company)
 
         # Get chat history if session_id is provided
@@ -457,8 +481,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
         with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
             ddl_content = ddl_file.read().strip()
 
-        api_key = api_keys[3]
-        llm_output = query_llm(user_question, ddl_content, model_name, api_key, chat_history=chat_history)
+        llm_output = query_llm(user_question, ddl_content, model_name, api_key_sql, chat_history=chat_history)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500
