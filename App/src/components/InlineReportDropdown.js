@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 
-// Fixed list of all quarters
 const ALL_QUARTERS = [
   "Q3 2022", "Q4 2022/Annual",
   "Q1 2023", "Q2 2023", "Q3 2023", "Q4 2023/Annual",
@@ -12,18 +11,13 @@ const InlineReportDropdown = ({ company }) => {
   const [selectedQuarter, setSelectedQuarter] = useState('');
   const [url, setUrl] = useState('');
 
-  // Fetch SEC reports when company changes
   useEffect(() => {
     if (!company) return;
 
     fetch(`http://localhost:5000/api/sec_reports/${company}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.reports) {
-          setReports(data.reports);
-        } else {
-          setReports({});
-        }
+        setReports(data.reports || {});
         setSelectedQuarter('');
         setUrl('');
       });
@@ -34,56 +28,93 @@ const InlineReportDropdown = ({ company }) => {
     setUrl(reports[quarter] || '');
   };
 
+  const getShortQuarter = (quarter) => {
+    if (!quarter) return '';
+    return quarter.includes('/Annual') 
+      ? quarter.split('/')[0].replace('Q', 'Q') 
+      : quarter.replace(' ', '\'');
+  };
+
   return (
-    <div>
-      {/* Label + Dropdown */}
-      <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "nowrap" }}>
-        <span style={{ fontWeight: "700", fontSize: "13px", whiteSpace: "nowrap" }}>
-          Financial Report
-        </span>
+    <div className="report-dropdown-container">
+      <select
+        className="quarter-select"
+        onChange={(e) => handleQuarterChange(e.target.value)}
+        value={selectedQuarter}
+      >
+        <option value="">Select Financial Quarter</option>
+        {ALL_QUARTERS.map((qtr) => (
+          <option key={qtr} value={qtr}>
+            {qtr} {reports[qtr] ? "" : " (N/A)"}
+          </option>
+        ))}
+      </select>
 
-        <select
-          className="form-select form-select-sm"
-          onChange={(e) => handleQuarterChange(e.target.value)}
-          value={selectedQuarter}
-          style={{ minWidth: "180px" }}
-        >
-          <option value="">Select Quarter</option>
-          {ALL_QUARTERS.map((qtr) => (
-            <option key={qtr} value={qtr}>
-              {qtr} {reports[qtr] ? "" : " (N/A)"}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* View Report Button */}
       {selectedQuarter && url && (
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: "flex",
-            marginTop: "5px",
-            backgroundColor: "#1a73e8",
-            color: "white",
-            padding: "2px 8px",
-            borderRadius: "3px",
-            textDecoration: "none",
-            fontWeight: "500"
-          }}
+          className="report-link"
         >
-          🔗 View {selectedQuarter} Report
+          🔗 View {getShortQuarter(selectedQuarter)} Report
         </a>
       )}
 
-      {/* No report available message */}
       {selectedQuarter && !url && (
-        <p style={{ color: "#999", fontSize: "14px", marginTop: "8px" }}>
-          No financial report found for {selectedQuarter}.
+        <p className="no-report-message">
+          No report available for {getShortQuarter(selectedQuarter)}
         </p>
       )}
+
+      <style jsx>{`
+        .report-dropdown-container {
+          width: 100%;
+          margin-bottom: 10px;
+        }
+        
+        .quarter-select {
+          width: 100%;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #ddd;
+          font-size: 14px;
+          background-color: white;
+          cursor: pointer;
+        }
+        
+        .report-link {
+          display: block;
+          margin-top: 8px;
+          background-color: #1a73e8;
+          color: white;
+          padding: 6px 12px;
+          border-radius: 4px;
+          text-decoration: none;
+          font-weight: 500;
+          font-size: 13px;
+          text-align: center;
+        }
+        
+        .no-report-message {
+          color: #999;
+          font-size: 12px;
+          margin-top: 8px;
+          text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+          .quarter-select {
+            font-size: 13px;
+            padding: 6px 10px;
+          }
+          
+          .report-link {
+            font-size: 12px;
+            padding: 5px 10px;
+          }
+        }
+      `}</style>
     </div>
   );
 };

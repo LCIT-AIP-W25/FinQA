@@ -26,7 +26,12 @@ function ChatPage() {
 
     // ✅ Function to toggle sidebar
     const toggleSidebar = () => {
-        setIsSidebarOpen((prev) => !prev);
+        if (isMetricsOpen) {
+            setIsMetricsOpen(false);
+            setTimeout(() => setIsSidebarOpen(true), 100); // Wait for close animation
+        } else {
+            setIsSidebarOpen(prev => !prev);
+        }
     };
 
     useEffect(() => {
@@ -350,6 +355,54 @@ function ChatPage() {
         }, 3000); // ✅ Check every 3 seconds
     };
 
+    // Show Metrics Window------------------------------------------------
+
+    const [companyMetrics, setCompanyMetrics] = useState([]);
+    const [metricsSearchTerm, setMetricsSearchTerm] = useState('');
+
+    const filteredMetrics = companyMetrics.filter(metric => 
+            metric.toLowerCase().includes(metricsSearchTerm.toLowerCase())
+        );
+
+    const [isMetricsOpen, setIsMetricsOpen] = useState(false);
+
+    // Add this toggle function near your other toggle functions
+    const toggleMetrics = () => {
+        if (isSidebarOpen) {
+            setIsSidebarOpen(false);
+            setTimeout(() => setIsMetricsOpen(true), 100); // Wait for close animation
+        } else {
+            setIsMetricsOpen(prev => !prev);
+        }
+        };
+
+    // Fetch company metrics when a company is selected
+    useEffect(() => {
+        async function fetchMetrics() {
+            if (!selectedCompany) return;
+
+            try {
+                const response = await axios.get(`http://127.0.0.1:5000/api/company_metrics/${selectedCompany}`);
+
+                if (Array.isArray(response.data)) {
+                    response.data = response.data[0];
+                }
+
+                if (response.data && response.data.metrics && Array.isArray(response.data.metrics)) {
+                    setCompanyMetrics(response.data.metrics);
+                } else {
+                    setCompanyMetrics([]);
+                }
+            } catch (error) {
+                console.error("Error fetching company metrics:", error);
+                setCompanyMetrics([]);
+            }
+        }
+
+        fetchMetrics();
+    }, [selectedCompany]);
+
+
     return (
         <section className="chat-app-container">
             <div className="chat-app-wrapper">
@@ -453,11 +506,14 @@ function ChatPage() {
                             </div>
                         )}
                     </div>
-
-                    {/* ✅ Menu Button (Separate from Sidebar) */}
-                    <button className="chat-app-menu-btn" onClick={toggleSidebar}>
+                    
+                    {/* Sidebar Menu Button */}
+                    <button 
+                        className="chat-app-menu-btn" 
+                        onClick={toggleSidebar}
+                    >
                         ☰
-                    </button>
+                    </button>    
 
                     {/* ✅ Chat Window Section */}
                     <div className="chat-app-window">
@@ -467,10 +523,10 @@ function ChatPage() {
                             {selectedCompany ? (
                                 <>
                                     <div className="chat-app-selected-label-main">
-                                        <span className="chat-app-selected-label">Selected Company:</span>
+                                        <span className="chat-app-selected-label">Selected Company: </span>
                                         <span className="chat-app-selected-name">{selectedCompany}</span>
                                     </div>
-                                    <InlineReportDropdown company={selectedCompany} className="inline-report-dropdown" />
+                                    
                                 </>
                             ) : (
                                 <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
@@ -536,6 +592,63 @@ function ChatPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Metrics Sidebar */}
+                    <div className={`metrics-sidebar ${isMetricsOpen ? "active" : ""}`}>
+                        
+                        <div className="metrics-header-container">
+                            <h3 className="metrics-header">Available Financial Reports & Metrics</h3>
+                            
+                            
+                            <div className="metrics-controls">
+                                    <InlineReportDropdown company={selectedCompany} />
+                                    
+                                    <div className="metrics-search">
+                                        <input
+                                        type="text"
+                                        placeholder="Search metrics..."
+                                        value={metricsSearchTerm}
+                                        onChange={(e) => setMetricsSearchTerm(e.target.value)}
+                                        className="metrics-search-input"
+                                        />
+                                    </div>
+                                    </div>
+                                    
+                                    <div className="metrics-header-com">Ask the chatbot about any metric!</div>
+                                </div>
+                        
+                        <div className="metrics-scroll-container">
+                            {filteredMetrics.length > 0 ? (
+                                <div className="metrics-container">
+                                    {filteredMetrics.map((metric, index) => (
+                                        <div 
+                                            key={index} 
+                                            className={`metric-item ${
+                                                metricsSearchTerm && 
+                                                metric.toLowerCase().includes(metricsSearchTerm.toLowerCase()) 
+                                                ? 'highlight' 
+                                                : ''
+                                            }`}
+                                        >
+                                            {metric}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="no-metrics">
+                                    {metricsSearchTerm ? "No matching metrics found" : "No metrics available"}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Metrics Menu Button */}
+                    <button 
+                        className="metrics-menu-btn" 
+                        onClick={toggleMetrics}
+                    >
+                        📊
+                    </button>
                 </div>
             </div>
         </section>

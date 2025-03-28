@@ -648,6 +648,68 @@ def check_pdf_status(filename):
     status = pdf_status.get(filename, "not_found")
     return jsonify({"status": status})
 
+#----------------------------------------Show Company Metrics----------------------------------
+def get_metrics_for_company(company_name):
+    """Fetch available metrics from all financial tables for a selected company."""
+    ddl_prefix = get_ddl_prefix_from_db(company_name)
+    
+    if not ddl_prefix:
+        print(f"DEBUG: No DDL_PREFIX found for {company_name}")
+        return {"error": f"No DDL_PREFIX found for {company_name}"}, 404
+
+    # Convert DDL_PREFIX to uppercase to match the table names in Oracle
+    ddl_prefix = ddl_prefix.upper()
+
+    tables = [
+        f"{ddl_prefix}_BALANCE_SHEET_QUARTERLY",
+        f"{ddl_prefix}_CASH_FLOW_QUARTERLY",
+        f"{ddl_prefix}_INCOME_QUARTERLY",
+        f"{ddl_prefix}_RATIO_QUARTERLY"
+    ]
+    
+    metrics_set = set()
+
+    connection = oracledb.connect(
+        user=db_config["user"],
+        password=db_config["password"],
+        dsn=db_config["dsn"],
+        config_dir=db_config["wallet_location"],
+        wallet_location=db_config["wallet_location"],
+        wallet_password=db_config["password"]
+    )
+    cursor = connection.cursor()
+
+    try:
+        for table in tables:
+            query = f'SELECT DISTINCT METRICS FROM "{table}"'
+            print(f"DEBUG: Executing query → {query}")  
+            cursor.execute(query)
+            
+            fetched_rows = cursor.fetchall()
+            print(f"DEBUG: Results from {table} → {fetched_rows}")  # Print actual results
+
+            metrics_set.update(row[0] for row in fetched_rows if row[0] is not None)
+
+    except Exception as e:
+        print(f"ERROR: Failed to fetch metrics for {company_name} → {str(e)}")
+        return {"error": str(e)}, 500
+    finally:
+        cursor.close()
+        connection.close()
+
+    return {"metrics": list(metrics_set)}, 200
+
+@app.route('/api/company_metrics/<company_name>', methods=['GET'])
+def fetch_company_metrics(company_name):
+    """API endpoint to get all available metrics for a company."""
+    company_name = company_name.upper()  # Normalize input
+    response = get_metrics_for_company(company_name)
+
+    print(f"DEBUG: API Response Sent → {response}")  # Log API output
+
+    return jsonify(response)  # ✅ Only return JSON object (removes tuple)
+
+
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000, threaded=True)
