@@ -355,53 +355,68 @@ function ChatPage() {
         }, 3000); // ✅ Check every 3 seconds
     };
 
-    // Show Metrics Window------------------------------------------------
+// Show Metrics Window------------------------------------------------
 
     const [companyMetrics, setCompanyMetrics] = useState([]);
     const [metricsSearchTerm, setMetricsSearchTerm] = useState('');
+    const [selectedMetric, setSelectedMetric] = useState(''); // New state for selected metric
 
     const filteredMetrics = companyMetrics.filter(metric => 
-            metric.toLowerCase().includes(metricsSearchTerm.toLowerCase())
-        );
+    metric.toLowerCase().includes(metricsSearchTerm.toLowerCase())
+    );
 
     const [isMetricsOpen, setIsMetricsOpen] = useState(false);
 
-    // Add this toggle function near your other toggle functions
     const toggleMetrics = () => {
-        if (isSidebarOpen) {
-            setIsSidebarOpen(false);
-            setTimeout(() => setIsMetricsOpen(true), 100); // Wait for close animation
-        } else {
-            setIsMetricsOpen(prev => !prev);
-        }
-        };
+    if (isSidebarOpen) {
+        setIsSidebarOpen(false);
+        setTimeout(() => setIsMetricsOpen(true), 100);
+    } else {
+        setIsMetricsOpen(prev => !prev);
+    }
+    };
+
+    // Handle metric selection
+    const handleMetricClick = (metric) => {
+    setSelectedMetric(metric);
+    setMessage(prev => {
+        if (!prev) return `${metric}`;
+        if (prev.trim().endsWith('?')) return `${prev} ${metric}`;
+        return `${prev} ${metric}`;
+    });
+    
+    // Auto-focus the input field
+    setTimeout(() => {
+        const input = document.querySelector('.chat-app-input');
+        if (input) input.focus();
+    }, 100);
+    };
 
     // Fetch company metrics when a company is selected
     useEffect(() => {
-        async function fetchMetrics() {
-            if (!selectedCompany) return;
+    async function fetchMetrics() {
+        if (!selectedCompany) return;
 
-            try {
-                const response = await axios.get(`http://127.0.0.1:5000/api/company_metrics/${selectedCompany}`);
+        try {
+        const response = await axios.get(`http://127.0.0.1:5000/api/company_metrics/${selectedCompany}`);
 
-                if (Array.isArray(response.data)) {
-                    response.data = response.data[0];
-                }
-
-                if (response.data && response.data.metrics && Array.isArray(response.data.metrics)) {
-                    setCompanyMetrics(response.data.metrics);
-                } else {
-                    setCompanyMetrics([]);
-                }
-            } catch (error) {
-                console.error("Error fetching company metrics:", error);
-                setCompanyMetrics([]);
-            }
+        if (Array.isArray(response.data)) {
+            response.data = response.data[0];
         }
 
-        fetchMetrics();
-    }, [selectedCompany]);
+        if (response.data && response.data.metrics && Array.isArray(response.data.metrics)) {
+            setCompanyMetrics(response.data.metrics);
+        } else {
+            setCompanyMetrics([]);
+        }
+        } catch (error) {
+        console.error("Error fetching company metrics:", error);
+        setCompanyMetrics([]);
+        }
+    }
 
+    fetchMetrics();
+    }, [selectedCompany]);
 
     return (
         <section className="chat-app-container">
@@ -617,29 +632,31 @@ function ChatPage() {
                                     <div className="metrics-header-com">Ask the chatbot about any metric!</div>
                                 </div>
                         
-                        <div className="metrics-scroll-container">
-                            {filteredMetrics.length > 0 ? (
-                                <div className="metrics-container">
-                                    {filteredMetrics.map((metric, index) => (
-                                        <div 
+                                <div className="metrics-scroll-container">
+                                    {filteredMetrics.length > 0 ? (
+                                        <div className="metrics-container">
+                                        {filteredMetrics.map((metric, index) => (
+                                            <div 
                                             key={index} 
                                             className={`metric-item ${
+                                                selectedMetric === metric ? 'selected' : 
                                                 metricsSearchTerm && 
                                                 metric.toLowerCase().includes(metricsSearchTerm.toLowerCase()) 
                                                 ? 'highlight' 
                                                 : ''
                                             }`}
-                                        >
+                                            onClick={() => handleMetricClick(metric)}
+                                            >
                                             {metric}
+                                            </div>
+                                        ))}
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="no-metrics">
-                                    {metricsSearchTerm ? "No matching metrics found" : "No metrics available"}
-                                </p>
-                            )}
-                        </div>
+                                    ) : (
+                                        <p className="no-metrics">
+                                        {metricsSearchTerm ? "No matching metrics found" : "No metrics available"}
+                                        </p>
+                                    )}
+                                    </div>
                     </div>
 
                     {/* Metrics Menu Button */}

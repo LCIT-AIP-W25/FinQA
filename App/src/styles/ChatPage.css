@@ -655,18 +655,19 @@ html, body {
     align-items: center;
     min-height: 36px;
     font-weight: 500 !important;
+    cursor: pointer;
 }
-
 .metric-item:hover {
     background: #f9fafb;
     border-color: #d1d5db;
-}
-
-/* Highlighted Search Results */
-.metric-item.highlight {
+    transform: translateY(-1px);
+  }
+  
+  .metric-item.selected {
     background-color: #eff6ff;
-    border-color: #bfdbfe;
-}
+    border-color: #3b82f6;
+    color: #1d4ed8;
+  }
 
 /* Empty State */
 .no-metrics {
