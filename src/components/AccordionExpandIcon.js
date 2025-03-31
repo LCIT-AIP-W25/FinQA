@@ -4,8 +4,6 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-// import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-// import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 export default function AccordionExpandIcon() {
     const [activeIndex, setActiveIndex] = useState(null); // State to track the active item

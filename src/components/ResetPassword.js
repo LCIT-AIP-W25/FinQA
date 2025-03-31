@@ -5,12 +5,13 @@ import { useLoader } from "./LoaderContext";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 function ResetPassword() {
-    const { token } = useParams(); // ✅ Get token from URL
+    const { token } = useParams(); 
     const navigate = useNavigate();
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState("");
     const { setLoading } = useLoader();
+    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
 
     const handleReset = async (e) => {
         e.preventDefault();
@@ -28,7 +29,7 @@ function ResetPassword() {
 
         try {
             setLoading(true);
-            const response = await axios.post("http://127.0.0.1:5001/reset_password", {
+            const response = await axios.post(`${AUTH_API_URL}/reset_password`, {
                 token,
                 password
             });

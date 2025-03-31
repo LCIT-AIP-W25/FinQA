@@ -1,10 +1,8 @@
 import os
 import re
-import time
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from langchain_community.vectorstores import MongoDBAtlasVectorSearch
-from bs4 import BeautifulSoup
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from groq_wrapper import GroqWrapper
 

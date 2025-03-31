@@ -16,6 +16,8 @@ function Signup() {
 
     const { setLoading } = useLoader();
 
+    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
+
     useEffect(() => {
         const requestInterceptor = axios.interceptors.request.use((config) => {
             setLoading(true);
@@ -45,7 +47,7 @@ function Signup() {
         setMessage("");
     
         try {
-            const response = await axios.post("http://127.0.0.1:5001/signup", {
+            const response = await axios.post(`${AUTH_API_URL}/signup`, {
                 username: data.name,
                 email: data.email,
                 password: data.password

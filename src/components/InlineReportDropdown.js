@@ -10,11 +10,12 @@ const InlineReportDropdown = ({ company }) => {
   const [reports, setReports] = useState({});
   const [selectedQuarter, setSelectedQuarter] = useState('');
   const [url, setUrl] = useState('');
+  const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
 
   useEffect(() => {
     if (!company) return;
 
-    fetch(`http://localhost:5000/api/sec_reports/${company}`)
+    fetch(`${CHATBOT_API_URL}/api/sec_reports/${company}`)
       .then((res) => res.json())
       .then((data) => {
         setReports(data.reports || {});
