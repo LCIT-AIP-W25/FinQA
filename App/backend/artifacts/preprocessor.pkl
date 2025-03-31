@@ -1,0 +1,14 @@
+
+import re
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+lemmatizer = WordNetLemmatizer()
+
+def preprocess(text):
+    """Preprocess the input text."""
+    text = text.lower()  # Lowercase
+    text = re.sub(r"[^\w\s]", '', text)  # Remove punctuation
+    tokens = word_tokenize(text)
+    tokens = [lemmatizer.lemmatize(token) for token in tokens]
+    return ' '.join(tokens)

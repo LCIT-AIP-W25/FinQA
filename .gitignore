@@ -1,0 +1,35 @@
+# Ignore configuration files with credentials
+config.json
+.env
+"App/backend/Rag/index.faiss"
+*.faiss
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore Python cache and virtual environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+.scannerwork/report-task.txt
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore database files
+*.sqlite3
+*.db
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore JetBrains (PyCharm, WebStorm, etc.) settings
+.idea/
