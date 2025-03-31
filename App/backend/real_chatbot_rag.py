@@ -7,15 +7,28 @@ from langchain_community.vectorstores import MongoDBAtlasVectorSearch
 from groq import Groq
 from bs4 import BeautifulSoup
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+import random
 
 # Load environment variables
 load_dotenv()
+def get_random_api_key(env_var):
+    keys = os.getenv(env_var)
+    if not keys:
+        return None
+    
+    # Clean and split the keys
+    key_list = [key.strip().strip('"').strip("'").strip() for key in keys.split(",")]
+    key_list = [key for key in key_list if key]  # Remove empty strings
+    
+    if not key_list:
+        return None
+    
+    return random.choice(key_list)
 
 # Configuration
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
-GROQ_API_KEY_RAG = os.getenv("GROQ_API_KEY_RAG")
 MONGO_URI = os.getenv("MONGO_URI")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Using primary key for query operations
+
 
 # Global variables for initialized components
 _initialized = False
@@ -122,6 +135,8 @@ def init_embeddings():
     """Initialize the embeddings model (called once during init)."""
     try:
         print("   Checking GOOGLE_API_KEY...")
+        GOOGLE_API_KEY = get_random_api_key("GOOGLE_API_KEY")  # Using primary key for query operations
+        print("API Google:",GOOGLE_API_KEY)
         if not GOOGLE_API_KEY:
             raise ValueError("GOOGLE_API_KEY not found in .env file")
         
@@ -271,9 +286,10 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None):
                 f"My question: {final_query}"
             )
         })
-        
+        GROQ_API_KEY_RAG = get_random_api_key("GROQ_API_KEY_RAG")
         print("\nSending to Groq API...")
         client = Groq(api_key=GROQ_API_KEY_RAG)
+        print("API Key RAG:",GROQ_API_KEY_RAG)
         response = client.chat.completions.create(
             model="mistral-saba-24b",
             messages=messages,

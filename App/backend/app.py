@@ -14,6 +14,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from PDFProcessing import FinancialRAGSystem
+import random
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -42,10 +43,25 @@ except Exception as e:
 
 #----------------------------------------Groq client----------------------------------------------------#
 
-api_key_rag = os.getenv("GROQ_API_KEY_RAG")
-api_key_sql = os.getenv("GROQ_API_KEY_SQL")
-if not api_key_sql and not api_key_rag:
-    print("We are currently unable to process this request. Please try again later.")
+# Helper function to parse and select random API key
+def get_random_api_key(env_var):
+    keys = os.getenv(env_var)
+    if not keys:
+        return None
+    
+    # Clean and split the keys
+    key_list = [key.strip().strip('"').strip("'").strip() for key in keys.split(",")]
+    key_list = [key for key in key_list if key]  # Remove empty strings
+    
+    if not key_list:
+        return None
+    
+    return random.choice(key_list)
+
+# Configuration
+
+MONGO_URI = os.getenv("MONGO_URI")
+
 
 
 #----------------------------------------Database Setup----------------------------------------
@@ -355,7 +371,9 @@ def summarize_responses(user_question, numerical_response, contextual_response):
         try:
             print(f"\nAttempt {attempt + 1}/{max_retries}: Querying LLM...")
             start_time = time.time()
-            client = Groq(api_key=api_key_rag)
+            GROQ_API_KEY_SUMMARIZE = get_random_api_key("GROQ_API_KEY_SUMMARIZE")
+            print("API Key Summarize:",GROQ_API_KEY_SUMMARIZE)
+            client = Groq(api_key=GROQ_API_KEY_SUMMARIZE)
             llm_response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "system", "content": prompt}],
@@ -462,7 +480,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
         ddl_directory = "Oracle_DDLs"
         model_name = "llama-3.3-70b-versatile"
         ddl_prefix = get_ddl_prefix_from_db(selected_company)
-
+        
         # Get chat history if session_id is provided
         chat_history = []
         if session_id:
@@ -481,7 +499,9 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
         with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
             ddl_content = ddl_file.read().strip()
 
-        llm_output = query_llm(user_question, ddl_content, model_name, api_key_sql, chat_history=chat_history)
+        GROQ_API_KEY_SQL = get_random_api_key("GROQ_API_KEY_SQL")
+        print("API Key SQL:",GROQ_API_KEY_SQL)
+        llm_output = query_llm(user_question, ddl_content, model_name, GROQ_API_KEY_SQL, chat_history=chat_history)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500

@@ -2,6 +2,8 @@ import os
 import re
 import fitz
 import pandas as pd
+import shutil
+import stat
 from dotenv import load_dotenv
 from typing import List, Tuple, Optional
 from langchain.schema import Document
@@ -11,15 +13,41 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import time
+import subprocess
+import random
 
 # Load environment variables
 load_dotenv()
 
+def get_random_api_key(env_var):
+    keys = os.getenv(env_var)
+    if not keys:
+        return None
+    
+    # Clean and split the keys
+    key_list = [key.strip().strip('"').strip("'").strip() for key in keys.split(",")]
+    key_list = [key for key in key_list if key]  # Remove empty strings
+    
+    if not key_list:
+        return None
+    
+    return random.choice(key_list)
+
+# Configuration
+
+GOOGLE_API_KEY = get_random_api_key("GOOGLE_API_KEY")
+
+
 class FinancialRAGSystem:
     def __init__(self):
         # Configuration
-        self.GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-        self.GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+        
+        self.upload_folder = "uploads"
+        self.index_name = "financial_reports_faiss_index"
+        
+        # Initialize directories
+        os.makedirs(self.upload_folder, exist_ok=True)
+        os.makedirs(self.index_name, exist_ok=True)
         
         # Initialize components with enhanced logging
         print("\n=== INITIALIZING FINANCIAL RAG SYSTEM ===")
@@ -27,7 +55,6 @@ class FinancialRAGSystem:
         self._initialize_text_splitter()
         self.vector_store = None
         self.groq_client = None
-        self.index_name = "financial_reports_faiss_index"
         
         # Initialize Groq client
         self._initialize_groq()
@@ -36,12 +63,14 @@ class FinancialRAGSystem:
         """Initialize Google embeddings with validation"""
         print("\n[1/3] Initializing embeddings...")
         try:
-            if not self.GOOGLE_API_KEY:
+            GOOGLE_API_KEY = get_random_api_key("GOOGLE_API_KEY")
+            print("API Google pdf:",GOOGLE_API_KEY)
+            if not GOOGLE_API_KEY:
                 raise ValueError("GOOGLE_API_KEY not found in environment variables")
             
             self.embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/embedding-001",
-                google_api_key=self.GOOGLE_API_KEY
+                google_api_key=GOOGLE_API_KEY
             )
             
             # Test the embeddings
@@ -78,15 +107,90 @@ class FinancialRAGSystem:
         """Initialize Groq connection with enhanced logging"""
         print("\n[3/3] Initializing Groq client...")
         try:
-            if not self.GROQ_API_KEY:
-                raise ValueError("GROQ_API_KEY not found in environment variables")
             
-            self.groq_client = Groq(api_key=self.GROQ_API_KEY)
+            GROQ_API_KEY_RAG = get_random_api_key("GROQ_API_KEY_RAG")
+            print("API PDF GROQ:",GROQ_API_KEY_RAG)
+            self.groq_client = Groq(api_key=GROQ_API_KEY_RAG)
             print("✅ Groq client initialized successfully")
-            print(f"   - API Key: {self.GROQ_API_KEY[:5]}...{self.GROQ_API_KEY[-5:]}")
         except Exception as e:
             print(f"❌ Groq initialization failed: {e}")
             raise
+
+    
+
+    def _cleanup_previous_files(self):
+        """Nuclear option for file cleanup with maximum permissions"""
+        print("\n=== MAXIMUM CLEANUP INITIATED ===")
+        
+        try:
+            # Clean uploads folder with extreme prejudice
+            if os.path.exists(self.upload_folder):
+                print(f"🔧 Applying super-clean to: {self.upload_folder}")
+                self._nuclear_clean(self.upload_folder)
+            
+            # Clean FAISS index
+            if os.path.exists(self.index_name):
+                print(f"🔧 Applying super-clean to: {self.index_name}")
+                self._nuclear_clean(self.index_name)
+            
+            print("✅ Nuclear cleanup completed successfully")
+            return True
+            
+        except Exception as e:
+            print(f"💥 Even nuclear option failed: {e}")
+            print("⚠️ Manual intervention required. Try these commands:")
+            print(f"sudo rm -rf {os.path.abspath(self.upload_folder)}")
+            print(f"sudo rm -rf {os.path.abspath(self.index_name)}")
+            return False
+
+    def _nuclear_clean(self, path):
+        """The most aggressive file cleanup possible in Python"""
+        if not os.path.exists(path):
+            return
+
+        # Try normal deletion first
+        try:
+            shutil.rmtree(path)
+            print(f"  Standard deletion succeeded for {path}")
+            return
+        except Exception as e:
+            print(f"  Standard deletion failed: {e}")
+
+        # Try changing permissions and deleting
+        try:
+            self._max_permissions(path)
+            shutil.rmtree(path)
+            print(f"  Permission-modified deletion succeeded for {path}")
+            return
+        except Exception as e:
+            print(f"  Permission-modified deletion failed: {e}")
+
+        # Try system commands as last resort
+        try:
+            if os.name == 'nt':  # Windows
+                subprocess.run(f'rmdir /s /q "{path}"', shell=True, check=True)
+            else:  # Mac/Linux
+                subprocess.run(f'rm -rf "{path}"', shell=True, check=True)
+            print(f"  System command deletion succeeded for {path}")
+        except Exception as e:
+            print(f"  System command deletion failed: {e}")
+            raise RuntimeError(f"Could not delete {path} with any method")
+
+    def _max_permissions(self, path):
+        """Apply maximum possible permissions to everything"""
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                try:
+                    os.chmod(os.path.join(root, d), 
+                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                except Exception as e:
+                    print(f"  Couldn't change dir perms for {d}: {e}")
+            for f in files:
+                try:
+                    os.chmod(os.path.join(root, f),
+                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                except Exception as e:
+                    print(f"  Couldn't change file perms for {f}: {e}")
 
     def _extract_financial_tables(self, page, page_num: int, pdf_path: str) -> List[Document]:
         """Extract and format tables from PDF page with logging"""
@@ -145,10 +249,14 @@ class FinancialRAGSystem:
 
     def process_pdf(self, pdf_path: str, company_name: str) -> bool:
         """Process PDF file and store in FAISS index with comprehensive logging"""
-        print(f"\n=== PROCESSING PDF: {pdf_path} ===")
-        print(f"Company: {company_name}")
-        
         try:
+            # Clean up previous files first
+            if not self._cleanup_previous_files():
+                return False
+                
+            print(f"\n=== PROCESSING PDF: {pdf_path} ===")
+            print(f"Company: {company_name}")
+            
             start_time = time.time()
             doc = fitz.open(pdf_path)
             all_docs = []
@@ -331,4 +439,20 @@ if __name__ == "__main__":
     print("=== FINANCIAL RAG SYSTEM STARTING ===")
     rag_system = FinancialRAGSystem()
     
+    # Example processing (replace with your actual file path)
+    pdf_path = "example.pdf"
+    company_name = "Example Corp"
     
+    if rag_system.process_pdf(pdf_path, company_name):
+        print("\nPDF processed successfully!")
+        
+        # Example query
+        query = "What were the total revenues last quarter?"
+        response, sources = rag_system.query_financial_data(query, company_name)
+        
+        print("\nResponse:", response)
+        print("\nSources:")
+        for source in sources:
+            print(f"- {source['source']} (Page {source['page']})")
+    else:
+        print("\nFailed to process PDF")
