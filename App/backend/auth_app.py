@@ -11,19 +11,19 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 
-# ✅ Load environment variables
+#  Load environment variables
 load_dotenv()
 
-# ✅ Initialize Flask App
+#  Initialize Flask App
 auth_app = Flask(__name__)
 CORS(auth_app)
 bcrypt = Bcrypt(auth_app)
 
-# ✅ SQLite Configuration
+#  SQLite Configuration
 auth_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 auth_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# ✅ Configure SendGrid SMTP for Email Sending
+#  Configure SendGrid SMTP for Email Sending
 auth_app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.sendgrid.net')
 auth_app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 auth_app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
@@ -31,28 +31,25 @@ auth_app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'apikey')
 auth_app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 auth_app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
 
-# ✅ Initialize Database & Mail
+#  Initialize Database & Mail
 db = SQLAlchemy(auth_app)
 mail = Mail(auth_app)
 
-# ✅ User Model
+#  User Model
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), nullable=False)  # ✅ No longer unique
-    email = db.Column(db.String(120), unique=True, nullable=False)  # ✅ Email must be unique
+    username = db.Column(db.String(50), nullable=False)  #  No longer unique
+    email = db.Column(db.String(120), unique=True, nullable=False)  #  Email must be unique
     password = db.Column(db.String(200), nullable=False)
-    is_verified = db.Column(db.Boolean, default=False)  # ✅ Store if the email is verified
+    is_verified = db.Column(db.Boolean, default=False)  #  Store if the email is verified
     verification_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token = db.Column(db.String(100), unique=True, nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
 
 
-# ✅ Initialize Database
+#  Initialize Database
 with auth_app.app_context():
     db.create_all()
-
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 def send_verification_email(email, verification_url):
     try:
@@ -112,15 +109,15 @@ def signup():
         if existing_user.is_verified:
             return jsonify({'status': 'error', 'message': 'Email already registered and verified. Please log in.'}), 400
         else:
-            # ✅ Allow re-signup if email is not verified (resend verification)
+            #  Allow re-signup if email is not verified (resend verification)
             verification_token = secrets.token_hex(16)
             existing_user.verification_token = verification_token
             db.session.commit()
             verification_url = f"http://127.0.0.1:5001/verify_email/{verification_token}"
-            send_verification_email(email, verification_url)  # ✅ Send new verification email
+            send_verification_email(email, verification_url)  #  Send new verification email
             return jsonify({'status': 'success', 'message': 'Verification email resent. Please check your inbox and spam folder.'})
 
-    # ✅ Hash the password
+    #  Hash the password
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     verification_token = secrets.token_hex(16)
 
@@ -128,13 +125,13 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
 
-    # ✅ Send verification email
+    #  Send verification email
     verification_url = f"http://127.0.0.1:5001/verify_email/{verification_token}"
     send_verification_email(email, verification_url)
 
     return jsonify({'status': 'success', 'message': 'Verification email sent! Please check your inbox and spam folder.'})
 
-# ✅ Email Verification Route
+#  Email Verification Route
 @auth_app.route('/verify_email/<token>', methods=['GET'])
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
@@ -161,9 +158,9 @@ def verify_email(token):
         </html>
         """, 400
 
-    # ✅ Mark email as verified
+    #  Mark email as verified
     user.is_verified = True
-    user.verification_token = None  # ✅ Clear token after successful verification
+    user.verification_token = None  #  Clear token after successful verification
     db.session.commit()
 
     return """
@@ -221,7 +218,7 @@ def forget_password():
         print(f"❌ Email {email} not found in the database!")
         return jsonify({'status': 'error', 'message': 'Email not registered.'}), 404
 
-    # ✅ Generate Secure Reset Token
+    #  Generate Secure Reset Token
     reset_token = secrets.token_hex(16)
     expiry_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
 
@@ -231,7 +228,7 @@ def forget_password():
 
     reset_url = f"http://localhost:3000/reset_password/{reset_token}"
 
-    # ✅ HTML Email Template with Clickable Button
+    #  HTML Email Template with Clickable Button
     email_content = f"""
     <html>
     <body style="font-family: Arial, sans-serif; color: #333; background-color: #f8f9fa; padding: 20px;">
@@ -266,13 +263,13 @@ def forget_password():
     </html>
     """
 
-    # ✅ Send Email Using SendGrid Web API
+    #  Send Email Using SendGrid Web API
     try:
         message = Mail(
             from_email=os.getenv('MAIL_DEFAULT_SENDER'),
             to_emails=user.email,
             subject="Password Reset Request",
-            html_content=email_content  # ✅ Use HTML content
+            html_content=email_content  #  Use HTML content
         )
 
         sg = SendGridAPIClient(os.getenv('MAIL_PASSWORD'))
@@ -295,7 +292,7 @@ def reset_password():
 
     print(f"📩 Reset Request Received: Token={reset_token}, New Password={new_password}")
 
-    # ✅ Validate input
+    #  Validate input
     if not reset_token or not new_password:
         print("❌ Missing Token or Password!")
         return jsonify({'status': 'error', 'message': 'Token and new password are required.'}), 400
@@ -306,16 +303,16 @@ def reset_password():
         print("❌ Invalid Reset Token!")
         return jsonify({'status': 'error', 'message': 'Invalid reset token.'}), 400
 
-    # ✅ Ensure the token hasn't expired
+    #  Ensure the token hasn't expired
     if user.reset_token_expiry and user.reset_token_expiry < datetime.datetime.utcnow():
         print("❌ Expired Reset Token!")
         return jsonify({'status': 'error', 'message': 'Reset token has expired. Request a new one.'}), 400
 
-    # ✅ Hash the new password before storing
+    #  Hash the new password before storing
     hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
     user.password = hashed_password
 
-    # ✅ Clear the reset token to prevent reuse
+    #  Clear the reset token to prevent reuse
     user.reset_token = None
     user.reset_token_expiry = None
     db.session.commit()
@@ -324,6 +321,6 @@ def reset_password():
     return jsonify({'status': 'success', 'message': 'Password reset successful. You can now login.'})
 
 
-# ✅ Run Authentication App
+#  Run Authentication App
 if __name__ == '__main__':
-    auth_app.run(port=5001, debug=True)
+    auth_app.run(port=5001, debug=False)

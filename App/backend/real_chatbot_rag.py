@@ -4,38 +4,23 @@ import time
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from langchain_community.vectorstores import MongoDBAtlasVectorSearch
-from groq import Groq
 from bs4 import BeautifulSoup
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-import random
+from groq_wrapper import GroqWrapper
 
 # Load environment variables
 load_dotenv()
-def get_random_api_key(env_var):
-    keys = os.getenv(env_var)
-    if not keys:
-        return None
-    
-    # Clean and split the keys
-    key_list = [key.strip().strip('"').strip("'").strip() for key in keys.split(",")]
-    key_list = [key for key in key_list if key]  # Remove empty strings
-    
-    if not key_list:
-        return None
-    
-    return random.choice(key_list)
 
 # Configuration
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
 MONGO_URI = os.getenv("MONGO_URI")
-
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Using primary key for query operations
 
 # Global variables for initialized components
 _initialized = False
 _collection = None
 _embeddings = None
 _vector_store = None
-
 
 # Hardcoded mapping between selected company names and their MongoDB company_id prefixes
 COMPANY_MAPPING = {
@@ -135,8 +120,6 @@ def init_embeddings():
     """Initialize the embeddings model (called once during init)."""
     try:
         print("   Checking GOOGLE_API_KEY...")
-        GOOGLE_API_KEY = get_random_api_key("GOOGLE_API_KEY")  # Using primary key for query operations
-        print("API Google:",GOOGLE_API_KEY)
         if not GOOGLE_API_KEY:
             raise ValueError("GOOGLE_API_KEY not found in .env file")
         
@@ -175,7 +158,6 @@ def create_company_filter(selected_company):
     
     return {"company_id": {"$regex": regex_pattern, "$options": "i"}}
 
-# Updated retrieve_documents function using the direct mapping
 def retrieve_documents(query, selected_company=None, k=4):
     """
     Retrieve documents using the direct company mapping
@@ -227,8 +209,6 @@ def retrieve_documents(query, selected_company=None, k=4):
     except Exception as e:
         print(f"❌ Retrieval Error: {str(e)}")
         return []
-
-
 
 def query_llm_groq(final_query, selected_company=None, chat_history=None):
     """Queries Groq API with context and limited chat history."""
@@ -286,11 +266,9 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None):
                 f"My question: {final_query}"
             )
         })
-        GROQ_API_KEY_RAG = get_random_api_key("GROQ_API_KEY_RAG")
+        
         print("\nSending to Groq API...")
-        client = Groq(api_key=GROQ_API_KEY_RAG)
-        print("API Key RAG:",GROQ_API_KEY_RAG)
-        response = client.chat.completions.create(
+        response, error = GroqWrapper.make_rag_request(
             model="mistral-saba-24b",
             messages=messages,
             temperature=0.3,
@@ -299,7 +277,15 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None):
             stream=False,
         )
         
+        if error:
+            print(f"❌ Groq API Error: {error}")
+            return f"❌ Groq API Error: {error}", []
+        
         print("✅ LLM response received")
+        if hasattr(response, '_metadata'):
+            print(f"  Used API Key: {response._metadata['api_key']}")
+            print(f"  Latency: {response._metadata['latency']:.2f}s")
+        
         return response.choices[0].message.content, relevant_docs
     except Exception as e:
         print(f"❌ Groq API Error: {str(e)}")
