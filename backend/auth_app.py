@@ -10,7 +10,6 @@ import datetime
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-
 #  Load environment variables
 load_dotenv()
 
@@ -199,7 +198,6 @@ def login():
 
 
 # 🔑 Forget Password Route
-from sendgrid.helpers.mail import Mail, Email, To, Content
 
 @auth_app.route('/forget_password', methods=['POST'])
 def forget_password():
@@ -323,4 +321,5 @@ def reset_password():
 
 #  Run Authentication App
 if __name__ == '__main__':
-    auth_app.run(port=5001, debug=False)
+    port = int(os.environ.get("PORT", 10001))  # Default to 10001 if PORT is not set
+    auth_app.run(debug=False, host='0.0.0.0', port=port)

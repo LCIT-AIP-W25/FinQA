@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLoader } from "./LoaderContext"; // ✅ Import global loader
+import { useLoader } from "./LoaderContext"; // Import global loader
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,6 +15,7 @@ function Login() {
 
 
     const { setLoading } = useLoader();
+    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
 
     useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use((config) => {
@@ -41,7 +42,7 @@ function Login() {
 
     const onSubmit = async (data) => {
         try {
-            const response = await axios.post("http://127.0.0.1:5001/login", data);
+            const response = await axios.post(`${AUTH_API_URL}/login`, data);
             if (response.data.status === "success") {
                 localStorage.setItem("user", JSON.stringify(response.data)); // Store user session
                 localStorage.setItem("userId", response.data.user_id); // Store userId for chat history
@@ -87,7 +88,7 @@ function Login() {
                                         
                                         <div
                                             style={{
-                                                position: "relative",  // ✅ Set relative position for parent container
+                                                position: "relative",  // Set relative position for parent container
                                                 width: "100%",
                                             }}
                                         >

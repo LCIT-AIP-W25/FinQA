@@ -24,7 +24,9 @@ function ChatPage() {
 
     const { setLoading } = useLoader();
 
-    // ✅ Function to toggle sidebar
+    const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
+
+    //  Function to toggle sidebar
     const toggleSidebar = () => {
         if (isMetricsOpen) {
             setIsMetricsOpen(false);
@@ -35,7 +37,7 @@ function ChatPage() {
     };
 
     useEffect(() => {
-        // ✅ Add a global request interceptor
+        //  Add a global request interceptor
         const requestInterceptor = axios.interceptors.request.use((config) => {
             // 🚀 Skip loader for PDF upload & processing
             if (!config.url.includes("/upload_pdf") && !config.url.includes("/pdf_status")) {
@@ -44,7 +46,7 @@ function ChatPage() {
             return config;
         });
     
-        // ✅ Add a global response interceptor
+        //  Add a global response interceptor
         const responseInterceptor = axios.interceptors.response.use(
             (response) => {
                 // 🚀 Skip disabling loader for PDF requests (they never triggered it)
@@ -61,7 +63,7 @@ function ChatPage() {
             }
         );
     
-        // ✅ Cleanup interceptors on unmount
+        //  Cleanup interceptors on unmount
         return () => {
             axios.interceptors.request.eject(requestInterceptor);
             axios.interceptors.response.eject(responseInterceptor);
@@ -70,7 +72,7 @@ function ChatPage() {
     
 
 
-    // ✅ Auto-scroll to the latest message
+    //  Auto-scroll to the latest message
     const scrollToBottom = () => {
         if (chatEndRef.current) {
             chatEndRef.current.parentNode.scrollTop = chatEndRef.current.parentNode.scrollHeight;
@@ -78,12 +80,12 @@ function ChatPage() {
     };
 
 
-    // ✅ Fetch company names from API on component mount
+    //  Fetch company names from API on component mount
     useEffect(() => {
             async function fetchCompanies() {
                 try {
-                    const response = await axios.get("http://127.0.0.1:5000/api/companies");
-                    setCompanyList(response.data);  // ✅ Store fetched company names
+                    const response = await axios.get(`${CHATBOT_API_URL}/api/companies`);
+                    setCompanyList(response.data);  //  Store fetched company names
                 } catch (error) {
                     console.error("Error fetching company names:", error);
                 }
@@ -91,9 +93,9 @@ function ChatPage() {
             fetchCompanies();
         }, []);
 
-    // ✅ Initialize session ID or generate a new one
+    //  Initialize session ID or generate a new one
     useEffect(() => {
-        // ✅ Fetch user data from localStorage
+        //  Fetch user data from localStorage
         const storedUser = JSON.parse(localStorage.getItem("user"));
         if (storedUser && storedUser.username) {
             setUser(storedUser); // Set user if found
@@ -101,7 +103,7 @@ function ChatPage() {
             navigate("/login"); // Redirect to login if not found
         }
     
-        // ✅ Initialize session ID
+        //  Initialize session ID
         const storedSessionId = localStorage.getItem("sessionId");
         const userId = localStorage.getItem("userId");
     
@@ -113,7 +115,7 @@ function ChatPage() {
             loadChatSession(storedSessionId);
         }
     
-        // ✅ Fetch all chat sessions from the server
+        //  Fetch all chat sessions from the server
         fetchAllChatSessions();
     }, []);
       
@@ -123,16 +125,16 @@ function ChatPage() {
     }, [currentChat]);
 
 
-    // ✅ Fetch all chat sessions for displaying history
+    //  Fetch all chat sessions for displaying history
     const fetchAllChatSessions = async () => {
         try {
             const userId = localStorage.getItem("userId");
-            const response = await axios.get(`http://127.0.0.1:5000/get_all_sessions/${userId}`);
+            const response = await axios.get(`${CHATBOT_API_URL}/get_all_sessions/${userId}`);
             
             // Filter out empty chats (sessions with no messages)
             const validSessions = await Promise.all(
                 response.data.map(async (chat) => {
-                    const chatMessages = await axios.get(`http://127.0.0.1:5000/get_chats/${chat.session_id}`);
+                    const chatMessages = await axios.get(`${CHATBOT_API_URL}/get_chats/${chat.session_id}`);
                     return chatMessages.data.length > 0 ? chat : null;  // Only keep sessions with messages
                 })
             );
@@ -154,7 +156,7 @@ function ChatPage() {
     
         await saveChatToBackend(userMessage);
     
-        // ✅ Check if company is selected
+        //  Check if company is selected
         if (!selectedCompany) {
             const errorMessage = { sender: "bot", message: "Please select a company before sending a message." };
             setCurrentChat((prevChat) => [...prevChat, errorMessage]);
@@ -164,15 +166,15 @@ function ChatPage() {
         }
     
         try {
-            // ✅ Make API call to the chatbot
-            const response = await axios.post("http://127.0.0.1:5000/query_chatbot", {
+            //  Make API call to the chatbot
+            const response = await axios.post(`${CHATBOT_API_URL}/query_chatbot`, {
                 question: message,
                 session_id: sessionId,
                 user_id: user.user_id,
                 selected_company: selectedCompany
             });
     
-            // ✅ Handle chatbot response
+            //  Handle chatbot response
             const botMessage = response.data.response
                 ? { sender: "bot", message: response.data.response }
                 : { sender: "bot", message: "I'm not sure how to respond to that." };
@@ -182,7 +184,7 @@ function ChatPage() {
         } catch (error) {
             console.error("Error sending message:", error); // Log technical error
     
-            // ✅ User-friendly error message
+            //  User-friendly error message
             const errorMessage = { sender: "bot", message: "Oops! Something went wrong. Please try again later." };
             setCurrentChat((prevChat) => [...prevChat, errorMessage]);
             await saveChatToBackend(errorMessage);
@@ -193,11 +195,11 @@ function ChatPage() {
     
     
 
-    // ✅ Save message to backend (SQLite)
+    //  Save message to backend (SQLite)
     const saveChatToBackend = async (chatMessage) => {
         try {
             const userId = localStorage.getItem("userId");
-            await axios.post("http://127.0.0.1:5000/save_chat", {
+            await axios.post(`${CHATBOT_API_URL}/save_chat`, {
                 sender: chatMessage.sender,
                 message: chatMessage.message,
                 session_id: sessionId,
@@ -208,11 +210,11 @@ function ChatPage() {
         }
     };    
 
-    // ✅ Start a new chat (Generate a new session)
+    //  Start a new chat (Generate a new session)
     const startNewChat = async () => {
         try {
             const userId = localStorage.getItem("userId");
-            const response = await axios.post("http://127.0.0.1:5000/new_session", { user_id: userId });
+            const response = await axios.post(`${CHATBOT_API_URL}/new_session`, { user_id: userId });
     
             const newSessionId = response.data.session_id;
             localStorage.setItem("sessionId", newSessionId);
@@ -228,7 +230,7 @@ function ChatPage() {
 
     const loadChatSession = async (selectedSessionId) => {
         try {
-            const response = await axios.get(`http://127.0.0.1:5000/get_chat/${selectedSessionId}`);
+            const response = await axios.get(`${CHATBOT_API_URL}/get_chat/${selectedSessionId}`);
             setSessionId(selectedSessionId);
             setCurrentChat(response.data.messages);  // Load the fetched messages
         } catch (error) {
@@ -236,13 +238,13 @@ function ChatPage() {
         }
     };
     
-    // ✅ Delete a chat session
+    //  Delete a chat session
     const deleteChatSession = async (sessionIdToDelete) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this chat?");
         if (!confirmDelete) return;
     
         try {
-            await axios.delete(`http://127.0.0.1:5000/delete_chat/${sessionIdToDelete}`);
+            await axios.delete(`${CHATBOT_API_URL}/delete_chat/${sessionIdToDelete}`);
     
             // Remove from chat history immediately
             setChatHistory((prevHistory) =>
@@ -260,7 +262,7 @@ function ChatPage() {
         }
     };       
 
-    // ✅ Handle Sign Out
+    //  Handle Sign Out
     const handleSignOut = () => {
         localStorage.removeItem("user"); // Remove user data from local storage
         localStorage.removeItem("sessionId"); // Remove session ID
@@ -310,7 +312,7 @@ function ChatPage() {
         formData.append("company", "Unknown");
     
         try {
-            const response = await axios.post("http://127.0.0.1:5000/upload_pdf", formData, {
+            const response = await axios.post(`${CHATBOT_API_URL}/upload_pdf`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
     
@@ -326,7 +328,7 @@ function ChatPage() {
             setFilename(response.data.filename);
             setHoverMessage('PDF Processing...');
     
-            // ✅ Wait for processing to complete
+            //  Wait for processing to complete
             checkProcessingStatus(response.data.filename);
         } catch (error) {
             console.error("Upload failed:", error);
@@ -336,11 +338,11 @@ function ChatPage() {
         }
     };
 
-    // ✅ Check processing status until it's done
+    //  Check processing status until it's done
     const checkProcessingStatus = async (filename) => {
         const interval = setInterval(async () => {
             try {
-                const statusResponse = await axios.get(`http://127.0.0.1:5000/pdf_status/${filename}`);
+                const statusResponse = await axios.get(`${CHATBOT_API_URL}/pdf_status/${filename}`);
                 if (statusResponse.data.status === "done") {
                     clearInterval(interval);
                     setUploadMessage("✅ Processing completed! Redirecting...");
@@ -352,7 +354,7 @@ function ChatPage() {
             } catch (error) {
                 console.error("Error checking status:", error);
             }
-        }, 3000); // ✅ Check every 3 seconds
+        }, 3000); //  Check every 3 seconds
     };
 
 // Show Metrics Window------------------------------------------------
@@ -398,7 +400,7 @@ function ChatPage() {
         if (!selectedCompany) return;
 
         try {
-        const response = await axios.get(`http://127.0.0.1:5000/api/company_metrics/${selectedCompany}`);
+        const response = await axios.get(`${CHATBOT_API_URL}/api/company_metrics/${selectedCompany}`);
 
         if (Array.isArray(response.data)) {
             response.data = response.data[0];
@@ -670,8 +672,6 @@ function ChatPage() {
             </div>
         </section>
     );
-
-
 
 }
 

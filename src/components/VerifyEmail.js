@@ -6,11 +6,12 @@ function VerifyEmail() {
     const { token } = useParams();
     const navigate = useNavigate();
     const [message, setMessage] = useState("");
+    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
 
     useEffect(() => {
         const verify = async () => {
             try {
-                const response = await axios.get(`http://127.0.0.1:5001/verify_email/${token}`);
+                const response = await axios.get(`${AUTH_API_URL}/verify_email/${token}`);
                 
                 if (response.status === 200) {
                     setMessage("✅ Email verified! Redirecting to login...");

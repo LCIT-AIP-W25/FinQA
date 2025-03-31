@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import uuid
 import os
-from real_chatbot import query_llm, extract_sql_and_notes, execute_sql
+from real_chatbot import query_llm, extract_sql_and_notes
 from real_chatbot_rag import query_llm_groq, initialize_components
 from dotenv import load_dotenv
 import oracledb
@@ -17,6 +17,33 @@ from groq_wrapper import GroqWrapper
 from groq_key_manager import key_manager
 import shutil
 import stat
+import logging
+
+import nltk
+nltk.download('wordnet')
+nltk.download('punkt')
+
+# Configure Oracle Wallet location
+WALLET_DIR = "/opt/wallet"
+os.environ["TNS_ADMIN"] = WALLET_DIR
+
+def get_db_connection():
+    # Load credentials from environment variables (set in Render Secrets)
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
+
+    # Establish connection using the wallet
+    connection = oracledb.connect(
+        user=db_user,
+        password=db_password,
+        dsn=db_dsn,
+        config_dir=WALLET_DIR,  # Points to /opt/wallet
+        wallet_location=WALLET_DIR,
+        wallet_password=os.getenv("WALLET_PASSWORD")  # Optional (if ewallet.p12 is used)
+    )
+    return connection
+
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -281,14 +308,8 @@ def fetch_companies():
 def get_sec_reports(company):
     company = company.upper()
 
-    connection = oracledb.connect(
-        user=db_config["user"],
-        password=db_config["password"],
-        dsn=db_config["dsn"],
-        config_dir=db_config["wallet_location"],
-        wallet_location=db_config["wallet_location"],
-        wallet_password=db_config["password"]
-    )
+    connection = get_db_connection()
+
     cursor = connection.cursor()
 
     query = """
@@ -430,14 +451,8 @@ def summarize_responses(user_question, numerical_response, contextual_response):
 
 def get_ddl_prefix_from_db(company_name):
     """Fetch DDL prefix from the Oracle database mapping table."""
-    connection = oracledb.connect(
-            user=db_config["user"],
-            password=db_config["password"],
-            dsn=db_config["dsn"],
-            config_dir=db_config["wallet_location"],
-            wallet_location=db_config["wallet_location"],
-            wallet_password=db_config["password"]
-            )
+    connection = get_db_connection()
+
     cursor = connection.cursor()
 
     query = "SELECT DDL_PREFIX FROM COMPANY_MAPPING WHERE LOWER(COMPANY_NAME) = LOWER(:company_name)"
@@ -451,14 +466,8 @@ def get_ddl_prefix_from_db(company_name):
 
 def get_company_names_from_db():
     """Fetch distinct company names from the COMPANY_MAPPING table."""
-    connection = oracledb.connect(
-        user=db_config["user"],
-        password=db_config["password"],
-        dsn=db_config["dsn"],
-        config_dir=db_config["wallet_location"],
-        wallet_location=db_config["wallet_location"],
-        wallet_password=db_config["password"]
-    )
+    connection = get_db_connection()
+
     cursor = connection.cursor()
     query = "SELECT DISTINCT UPPER(COMPANY_NAME) FROM COMPANY_MAPPING"
     cursor.execute(query)
@@ -469,10 +478,53 @@ def get_company_names_from_db():
     
     return companies
 
+def execute_sql(query, connection=None):
+    """Executes the SQL query and handles errors.
+       Returns (results, columns, exec_time, error_msg)"""
+    conn = None
+    try:
+        # Create new connection if none provided
+        own_connection = connection is None
+        if own_connection:
+            conn = get_db_connection()
+        else:
+            conn = connection
+        
+        cursor = conn.cursor()
+        start_time = time.time()
+        cursor.execute(query.rstrip(";"))
+        
+        # Only fetch if it's a SELECT query
+        if query.strip().lower().startswith("select"):
+            results = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description] if cursor.description else []
+        else:
+            results = []
+            columns = []
+            conn.commit()  # Commit for DML operations
+            
+        execution_time = round(time.time() - start_time, 4)
+        return results, columns, execution_time, ""
+        
+    except oracledb.DatabaseError as e:
+        logging.error("Database error: %s", e)
+        return None, None, None, str(e)
+    finally:
+        try:
+            if 'cursor' in locals():
+                cursor.close()
+            if own_connection and conn:
+                conn.close()
+        except Exception as e:
+            logging.warning("Error closing connection: %s", e)
+
+
 def handle_numerical_query(user_question, selected_company, session_id=None):
     try:
         if not selected_company:
             return {"error": "No company selected for numerical query"}, 400
+        
+        connection = get_db_connection()
         
         ddl_directory = "Oracle_DDLs"
         model_name = "llama-3.3-70b-versatile"
@@ -515,7 +567,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
                 if re.search(pattern, sql_query, re.IGNORECASE):
                     return {"error": "Failed to run SQL query due to security concerns."}, 500
 
-            results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
+            results, columns, exec_time, error_msg = execute_sql(sql_query, connection)
             if results:
                 # Properly format the numerical results
                 if isinstance(results[0], (list, tuple)):  # Handle row results
@@ -716,14 +768,8 @@ def get_metrics_for_company(company_name):
     
     metrics_set = set()
 
-    connection = oracledb.connect(
-        user=db_config["user"],
-        password=db_config["password"],
-        dsn=db_config["dsn"],
-        config_dir=db_config["wallet_location"],
-        wallet_location=db_config["wallet_location"],
-        wallet_password=db_config["password"]
-    )
+    connection = get_db_connection()
+
     cursor = connection.cursor()
 
     try:
@@ -749,14 +795,15 @@ def get_metrics_for_company(company_name):
 @app.route('/api/company_metrics/<company_name>', methods=['GET'])
 def fetch_company_metrics(company_name):
     """API endpoint to get all available metrics for a company."""
-    company_name = company_name.upper()  # Normalize input
+    company_name = company_name.upper() 
     response = get_metrics_for_company(company_name)
 
     print(f"DEBUG: API Response Sent → {response}")  # Log API output
 
-    return jsonify(response)  # Only return JSON object (removes tuple)
+    return jsonify(response) 
 
 
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
-    app.run(debug=False, host='127.0.0.1', port=5000, threaded=True)
+    port = int(os.environ.get("PORT", 10000))  # Default to 10000 if PORT is not set
+    app.run(debug=False, host='0.0.0.0', port=port)

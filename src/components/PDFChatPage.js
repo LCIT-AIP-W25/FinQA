@@ -1,22 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import "../styles/ChatPage.css"; // ✅ Uses same styles as ChatPage
+import "../styles/ChatPage.css"; // Uses same styles as ChatPage
 
 const PDFChatPage = () => {
     const [message, setMessage] = useState("");
     const [currentChat, setCurrentChat] = useState([]);
     const [loading, setLoading] = useState(false);
-    const chatEndRef = useRef(null); // ✅ Auto-scroll reference
+    const chatEndRef = useRef(null); // Auto-scroll reference
+    const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
 
-    // ✅ Scroll to bottom on new messages
+    // Scroll to bottom on new messages
     useEffect(() => {
         if (chatEndRef.current) {
             chatEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [currentChat]);
 
-    // ✅ Send user question & get response from backend
+    // Send user question & get response from backend
     const sendMessage = async () => {
         if (!message.trim()) return;
     
@@ -26,11 +27,11 @@ const PDFChatPage = () => {
         setLoading(true);
     
         try {
-            const response = await axios.post("http://127.0.0.1:5000/query_pdf_chatbot", {
+            const response = await axios.post(`${CHATBOT_API_URL}/query_pdf_chatbot`, {
                 question: message,
             });
     
-            console.log("Response received:", response.data);  // ✅ Add this for debugging
+            console.log("Response received:", response.data);  
     
             const botMessage = response.data.response
                 ? { sender: "bot", message: response.data.response }

@@ -10,9 +10,11 @@ function ForgetPassword() {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
-    const [resetLink, setResetLink] = useState(""); // ✅ Store reset link for testing
+    const [resetLink, setResetLink] = useState(""); 
 
     const { setLoading } = useLoader();
+
+    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
 
     useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use((config) => {
@@ -41,12 +43,12 @@ function ForgetPassword() {
         setMessage(""); 
         setError("");
     
-        console.log("📩 Sending Forget Password Request:", data); // ✅ Debugging
+        console.log("📩 Sending Forget Password Request:", data); 
     
         try {
-            const response = await axios.post("http://127.0.0.1:5001/forget_password", data);
+            const response = await axios.post(`${AUTH_API_URL}/forget_password`, data);
             
-            console.log("✅ Server Response:", response.data); // ✅ Debugging
+            console.log("✅ Server Response:", response.data); 
             
             if (response.data.status === "success") {
                 setMessage("✅ Password reset link sent to your email. Check your inbox & spam folder.");
@@ -54,7 +56,7 @@ function ForgetPassword() {
                 setError("❌ " + (response.data.message || "Something went wrong."));
             }
         } catch (err) {
-            console.error("❌ API Error:", err.response?.data); // ✅ Debugging
+            console.error("❌ API Error:", err.response?.data); 
             setError("❌ Failed to send reset link. Try again.");
         }
     };
