@@ -5,12 +5,11 @@ import pandas as pd
 from dotenv import load_dotenv
 from typing import List, Tuple, Optional
 from langchain.schema import Document
-from langchain_groq import ChatGroq
-from groq import Groq
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import time
+from groq_wrapper import GroqWrapper
 
 # Load environment variables
 load_dotenv()
@@ -18,7 +17,6 @@ load_dotenv()
 class FinancialRAGSystem:
     def __init__(self):
         # Configuration
-        self.GROQ_API_KEY = os.getenv("GROQ_API_KEY")
         self.GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
         
         # Initialize components with enhanced logging
@@ -26,10 +24,9 @@ class FinancialRAGSystem:
         self._initialize_embeddings()
         self._initialize_text_splitter()
         self.vector_store = None
-        self.groq_client = None
         self.index_name = "financial_reports_faiss_index"
         
-        # Initialize Groq client
+        # Initialize Groq client through wrapper
         self._initialize_groq()
 
     def _initialize_embeddings(self):
@@ -75,15 +72,11 @@ class FinancialRAGSystem:
         print(f"   - Separators: ['\\n\\n', '\\n', '(?<=\\. )', ' ', '']")
 
     def _initialize_groq(self):
-        """Initialize Groq connection with enhanced logging"""
+        """Initialize Groq connection through wrapper with enhanced logging"""
         print("\n[3/3] Initializing Groq client...")
         try:
-            if not self.GROQ_API_KEY:
-                raise ValueError("GROQ_API_KEY not found in environment variables")
-            
-            self.groq_client = Groq(api_key=self.GROQ_API_KEY)
-            print("✅ Groq client initialized successfully")
-            print(f"   - API Key: {self.GROQ_API_KEY[:5]}...{self.GROQ_API_KEY[-5:]}")
+            print("   Using GroqWrapper for API key management")
+            print("✅ Groq client will be initialized per-request through wrapper")
         except Exception as e:
             print(f"❌ Groq initialization failed: {e}")
             raise
@@ -280,10 +273,10 @@ class FinancialRAGSystem:
             ])
             print(f"  Context length: {len(context)} characters")
 
-            # Query Groq API
+            # Query Groq API through wrapper
             print("\nQuerying Groq API...")
             llm_start = time.time()
-            response = self.groq_client.chat.completions.create(
+            response, error = GroqWrapper.make_rag_request(
                 model="llama-3.3-70b-versatile",
                 messages=[
                     {
@@ -302,7 +295,14 @@ class FinancialRAGSystem:
                 temperature=0.3,
                 max_tokens=1024
             )
+            
+            if error:
+                raise Exception(error)
+                
             print(f"  LLM response received in {(time.time() - llm_start):.2f}s")
+            if hasattr(response, '_metadata'):
+                print(f"  Used API Key: {response._metadata['api_key']}")
+                print(f"  Latency: {response._metadata['latency']:.2f}s")
 
             # Prepare sources
             sources = [{
@@ -330,5 +330,3 @@ if __name__ == "__main__":
     # Initialize system
     print("=== FINANCIAL RAG SYSTEM STARTING ===")
     rag_system = FinancialRAGSystem()
-    
-    

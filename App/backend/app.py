@@ -4,20 +4,30 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import uuid
 import os
-from real_chatbot import query_llm, extract_sql_and_notes, execute_sql  # Import chatbot functions
+from real_chatbot import query_llm, extract_sql_and_notes, execute_sql
 from real_chatbot_rag import query_llm_groq, initialize_components
 from dotenv import load_dotenv
 import oracledb
-from groq import Groq  # ✅ Required for Groq API
 import time
 import re
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from PDFProcessing import FinancialRAGSystem
+from groq_wrapper import GroqWrapper
+from groq_key_manager import key_manager
+import shutil
+import stat
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize key manager
+key_manager.initialize_keys(
+    rag_keys=os.getenv("GROQ_API_KEY_RAG").split(","),
+    sql_keys=os.getenv("GROQ_API_KEY_SQL").split(","),
+    summarize_keys=os.getenv("GROQ_API_KEY_SUMMARIZE").split(",")
+)
 
 #----------------------------------------Flask App Initialization----------------------------------------
 app = Flask(__name__)
@@ -26,11 +36,9 @@ CORS(app)
 # Initialize thread-local storage for database sessions
 db_lock = threading.Lock()
 
-# --------------------------------------PDF Processing---------------------------------------------
-# ✅ Initialize RAG system
-rag_system = FinancialRAGSystem()
-
 #---------------------------------------Initialize RAG components----------------------------------------
+# Initialize RAG system
+rag_system = FinancialRAGSystem()
 
 try:
     if not initialize_components():
@@ -40,16 +48,8 @@ except Exception as e:
     print(f"❌ Failed to initialize components: {e}")
     # You might want to exit here if RAG is critical
 
-#----------------------------------------Groq client----------------------------------------------------#
-
-api_key_rag = os.getenv("GROQ_API_KEY_RAG")
-api_key_sql = os.getenv("GROQ_API_KEY_SQL")
-if not api_key_sql and not api_key_rag:
-    print("We are currently unable to process this request. Please try again later.")
-
-
 #----------------------------------------Database Setup----------------------------------------
-# ✅ SQLite DB Setup
+# SQLite DB Setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -68,7 +68,7 @@ db_config = {
 }
 
 #----------------------------------------Database Models----------------------------------------
-# ✅ Chat Model
+# Chat Model
 class ChatSession(db.Model):
     id = db.Column(db.String(50), primary_key=True)
     title = db.Column(db.String(100))
@@ -80,13 +80,13 @@ class Chat(db.Model):
     message = db.Column(db.Text)
     session_id = db.Column(db.String(50), db.ForeignKey('chat_session.id'))
 
-# ✅ Initialize the DB
+# Initialize the DB
 with app.app_context():
     db.create_all()
 
 #----------------------------------------Routes----------------------------------------
 
-# ✅ Route to Save Chat Message
+# Route to Save Chat Message
 @app.route('/save_chat', methods=['POST'])
 def save_chat():
     data = request.get_json()
@@ -113,7 +113,7 @@ def save_chat():
             db.session.rollback()
             return jsonify({"status": "Error", "message": str(e)}), 500
 
-# ✅ Route to Create New Chat Session
+# Route to Create New Chat Session
 @app.route('/new_session', methods=['POST'])
 def new_session():
     data = request.get_json()
@@ -130,7 +130,7 @@ def new_session():
             db.session.rollback()
             return jsonify({"status": "Error", "message": str(e)}), 500
 
-# ✅ Route to Get Chat Sessions for a Specific User
+# Route to Get Chat Sessions for a Specific User
 @app.route('/get_sessions/<user_id>', methods=['GET'])
 def get_sessions(user_id):
     with db_lock:
@@ -141,7 +141,7 @@ def get_sessions(user_id):
         except Exception as e:
             return jsonify({"status": "Error", "message": str(e)}), 500
 
-# ✅ Route to Get Chat Messages for a Session
+# Route to Get Chat Messages for a Session
 @app.route('/get_chats/<session_id>', methods=['GET'])
 def get_chats(session_id):
     with db_lock:
@@ -152,7 +152,7 @@ def get_chats(session_id):
         except Exception as e:
             return jsonify({"status": "Error", "message": str(e)}), 500
 
-# ✅ Route to Get All Chat Sessions
+# Route to Get All Chat Sessions
 @app.route('/get_all_sessions/<user_id>', methods=['GET'])
 def get_all_sessions(user_id):
     with db_lock:
@@ -163,7 +163,7 @@ def get_all_sessions(user_id):
         except Exception as e:
             return jsonify({"status": "Error", "message": str(e)}), 500
 
-# ✅ Route to Delete a Chat Session
+# Route to Delete a Chat Session
 @app.route('/delete_chat/<session_id>', methods=['DELETE'])
 def delete_chat(session_id):
     with db_lock:
@@ -176,7 +176,7 @@ def delete_chat(session_id):
             db.session.rollback()
             return jsonify({"status": "Error deleting chat", "error": str(e)}), 500
 
-# ✅ Route to Cleanup Empty Sessions
+# Route to Cleanup Empty Sessions
 @app.route('/cleanup_empty_sessions', methods=['DELETE'])
 def cleanup_empty_sessions():
     with db_lock:
@@ -194,7 +194,7 @@ def cleanup_empty_sessions():
             db.session.rollback()
             return jsonify({"status": "Error during cleanup", "error": str(e)}), 500
 
-# ✅ Route to Get a Specific Chat Session
+# Route to Get a Specific Chat Session
 @app.route('/get_chat/<session_id>', methods=['GET'])
 def get_chat(session_id):
     with db_lock:
@@ -306,10 +306,20 @@ def get_sec_reports(company):
 
     reports = {row[0]: row[1] for row in result}
     return jsonify({"company": company, "reports": reports})
-    
+
+#----------------------------------------Key Metrics Endpoint----------------------------------------
+@app.route('/api/key_metrics', methods=['GET'])
+def get_key_metrics():
+    """Endpoint to check key usage statistics"""
+    try:
+        stats = key_manager.get_usage_stats()
+        return jsonify(stats), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 #----------------------------------------Utility Functions----------------------------------------
 
-#----------------------------------------Summarization Function----------------------------------------
+#Summarization Function
 def summarize_responses(user_question, numerical_response, contextual_response):
     """Summarize and format responses with detailed logging"""
     print("\n=== STARTING RESPONSE SUMMARIZATION ===")
@@ -355,20 +365,25 @@ def summarize_responses(user_question, numerical_response, contextual_response):
         try:
             print(f"\nAttempt {attempt + 1}/{max_retries}: Querying LLM...")
             start_time = time.time()
-            client = Groq(api_key=api_key_rag)
-            llm_response = client.chat.completions.create(
+            
+            # Use the wrapper instead of direct Groq client
+            response, error = GroqWrapper.make_summarize_request(
                 model=model_name,
                 messages=[{"role": "system", "content": prompt}],
                 max_tokens=512,
                 temperature=0.3
             )
             
+            if error:
+                raise Exception(error)
+                
             latency = time.time() - start_time
             print(f"  LLM Response received in {latency:.2f}s")
             print(f"  Model: {model_name}")
-            print(f"  Tokens Used: {llm_response.usage.total_tokens if hasattr(llm_response, 'usage') else 'N/A'}")
+            print(f"  Tokens Used: {response.usage.total_tokens if hasattr(response, 'usage') else 'N/A'}")
+            print(f"  Used API Key: {response._metadata['api_key'] if hasattr(response, '_metadata') else 'Unknown'}")
 
-            formatted_response = llm_response.choices[0].message.content.strip()
+            formatted_response = response.choices[0].message.content.strip()
             print(f"\n[3/3] Raw LLM Response:\n{formatted_response}")
 
             if not formatted_response or formatted_response.lower().startswith("error"):
@@ -481,7 +496,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
         with open(ddl_file_path, "r", encoding="utf-8") as ddl_file:
             ddl_content = ddl_file.read().strip()
 
-        llm_output = query_llm(user_question, ddl_content, model_name, api_key_sql, chat_history=chat_history)
+        llm_output = query_llm(user_question, ddl_content, model_name, key_manager.get_sql_key(), chat_history=chat_history)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500
@@ -516,7 +531,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
         return {"error": str(e)}, 500
     
     
-# ✅ Handle Contextual (RAG-based) Queries
+# Handle Contextual (RAG-based) Queries
 def handle_contextual_query(user_question, selected_company, session_id=None):
     """Handle contextual queries using MongoDB Atlas Vector Search with conversation history."""
     try:
@@ -544,18 +559,45 @@ def handle_contextual_query(user_question, selected_company, session_id=None):
         return {"error": str(e)}, 500
     
 
-#------------------------------------------Upload PDF---------------------------------------- 
-# ✅ Dictionary to track PDF processing status
+#------------------------------------------PDF Processing---------------------------------------- 
+# Dictionary to track PDF processing status
 pdf_status = {}
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-import shutil  # Add this at the top with other imports
+def robust_delete(path):
+    """
+    Cross-platform folder deletion that handles:
+    - Permission issues
+    - Locked files
+    - Read-only files
+    - Retries with delays
+    """
+    def on_error(func, path, exc_info):
+        # Try changing permissions and retrying
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+
+    if not os.path.exists(path):
+        return
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            shutil.rmtree(path, onerror=on_error)
+            print(f"✅ Successfully deleted {path}")
+            return
+        except Exception as e:
+            print(f"⚠️ Attempt {attempt + 1} failed for {path}: {str(e)}")
+            if attempt < max_retries - 1:
+                time.sleep(1 * (attempt + 1))  # Exponential backoff
+            else:
+                raise Exception(f"Failed to delete {path} after {max_retries} attempts")
 
 @app.route("/upload_pdf", methods=["POST"])
 def upload_pdf():
-    """Handles PDF upload & tracks processing."""
+    """Robust PDF upload handler with cross-platform folder management"""
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -565,66 +607,71 @@ def upload_pdf():
     if not file.filename.endswith(".pdf"):
         return jsonify({"error": "Invalid file format"}), 400
 
-    # ✅ Remove previous folders before processing
-    pdf_uploads_folder = "uploads"
-    embeddings_folder = "financial_reports_faiss_index"  # Modify if your embeddings folder is different
-    
+    # Folder management
+    folders_to_manage = {
+        "uploads": UPLOAD_FOLDER,
+        "embeddings": "financial_reports_faiss_index"
+    }
+
     try:
-        # Debugging: Print before deletion
-        print(f"Attempting to delete: {pdf_uploads_folder} and {embeddings_folder}")
+        # Handle folder cleanup
+        for name, path in folders_to_manage.items():
+            print(f"🔄 Managing {name} folder at {path}")
+            try:
+                robust_delete(path)
+                os.makedirs(path, exist_ok=True)
+                print(f"✅ Successfully recreated {path}")
+            except Exception as e:
+                print(f"❌ Critical error handling {path}: {e}")
+                return jsonify({
+                    "error": f"Could not initialize {name} directory",
+                    "details": str(e)
+                }), 500
 
-        if os.path.exists(pdf_uploads_folder):
-            shutil.rmtree(pdf_uploads_folder)
-            print(f"Deleted folder: {pdf_uploads_folder}")
-        
-        if os.path.exists(embeddings_folder):
-            shutil.rmtree(embeddings_folder)
-            print(f"Deleted folder: {embeddings_folder}")
-
-        # ✅ Recreate necessary folders
-        os.makedirs(pdf_uploads_folder, exist_ok=True)
-        os.makedirs(embeddings_folder, exist_ok=True)
-
-    except Exception as e:
-        print(f"❌ Error while deleting folders: {e}")
-        return jsonify({"error": f"Failed to clean up directories: {e}"}), 500
-
-    # ✅ Save the uploaded file
-    try:
-        file_path = os.path.join(pdf_uploads_folder, file.filename)
-        file.save(file_path)
-        print(f"File saved successfully: {file_path}")
-    except Exception as e:
-        print(f"❌ Error saving file: {e}")
-        return jsonify({"error": f"Failed to save file: {e}"}), 500
-
-    # ✅ Mark PDF as "Processing"
-    pdf_status[file.filename] = "processing"
-
-    # ✅ Process PDF asynchronously
-    def process():
+        # Handle file upload
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
         try:
-            print(f"⚙️ Starting PDF processing: {file_path}")
-            success = rag_system.process_pdf(file_path, company_name)
-            pdf_status[file.filename] = "done" if success else "failed"
-            print(f"✅ PDF processing completed: {file_path}")
+            file.save(file_path)
+            print(f"✅ File saved successfully: {file_path}")
         except Exception as e:
-            pdf_status[file.filename] = "failed"
-            print(f"❌ PDF processing failed: {e}")
+            print(f"❌ Error saving file: {e}")
+            return jsonify({"error": f"Failed to save file: {e}"}), 500
+
+        # Process in background
+        pdf_status[file.filename] = "processing"
+        
+        def process():
+            try:
+                print(f"⚙️ Starting PDF processing: {file_path}")
+                success = rag_system.process_pdf(file_path, company_name)
+                pdf_status[file.filename] = "done" if success else "failed"
+                print(f"✅ PDF processing completed with status: {pdf_status[file.filename]}")
+            except Exception as e:
+                pdf_status[file.filename] = "failed"
+                print(f"❌ PDF processing failed: {e}")
+
+        threading.Thread(target=process).start()
+        
+        return jsonify({
+            "message": "File uploaded! Processing in background...",
+            "filename": file.filename,
+            "status_check": f"/pdf_status/{file.filename}"
+        })
+
+    except Exception as e:
+        print(f"❌ Unexpected error in upload_pdf: {e}")
+        return jsonify({
+            "error": "PDF processing failed",
+            "details": str(e)
+        }), 500
 
 
-    processing_thread = threading.Thread(target=process)
-    processing_thread.start()
-
-    return jsonify({"message": "File uploaded! Processing in the background...", "filename": file.filename})
-
-
-# ✅ Query Financial Data
+# Query Financial Data
 @app.route("/query_pdf_chatbot", methods=["POST"])
 def query_pdf_chatbot():
     try:
         data = request.get_json()
-        print("Received data:", data)  # ✅ Debugging log
+        print("Received data:", data)  # Debugging log
         question = data.get("question", "")
 
         if not question:
@@ -633,7 +680,7 @@ def query_pdf_chatbot():
         # Query PDF system
         response, sources = rag_system.query_financial_data(question)
 
-        print("Response generated:", response)  # ✅ Debugging log
+        print("Response generated:", response)  # Debugging log
 
         return jsonify({"response": response, "sources": sources})
 
@@ -641,7 +688,7 @@ def query_pdf_chatbot():
         print("Error processing request:", str(e))
         return jsonify({"response": "Internal server error"}), 500
 
-# ✅ API to Check PDF Processing Status
+# API to Check PDF Processing Status
 @app.route("/pdf_status/<filename>", methods=["GET"])
 def check_pdf_status(filename):
     """Checks if a PDF has finished processing."""
@@ -707,9 +754,9 @@ def fetch_company_metrics(company_name):
 
     print(f"DEBUG: API Response Sent → {response}")  # Log API output
 
-    return jsonify(response)  # ✅ Only return JSON object (removes tuple)
+    return jsonify(response)  # Only return JSON object (removes tuple)
 
 
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000, threaded=True)
+    app.run(debug=False, host='127.0.0.1', port=5000, threaded=True)
