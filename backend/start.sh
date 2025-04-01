@@ -1,16 +1,12 @@
 #!/bin/bash
-
-# 1. Fail immediately if any command fails
 set -e
 
-# 2. Set up the Oracle Wallet
-mkdir -p /opt/wallet
-echo "$ORACLE_WALLET_BASE64" | base64 --decode > /opt/wallet/oracle_wallet.zip
-unzip -o /opt/wallet/oracle_wallet.zip -d /opt/wallet/
-chmod 600 /opt/wallet/* 
+# Use Render's persistent storage path instead of /opt
+WALLET_DIR="/opt/render/project/src/wallet"
+mkdir -p $WALLET_DIR
+echo "$ORACLE_WALLET_BASE64" | base64 --decode > $WALLET_DIR/oracle_wallet.zip
+unzip -o $WALLET_DIR/oracle_wallet.zip -d $WALLET_DIR/
+chmod 600 $WALLET_DIR/*
 
-# 3. Configure Oracle Environment
-export TNS_ADMIN=/opt/wallet  
-
-# 4. Start Gunicorn with your app
-exec gunicorn -w 3 app:app --bind 0.0.0.0:10000
+export TNS_ADMIN=$WALLET_DIR
+exec gunicorn -w 3 app:app --bind 0.0.0.0:$PORT

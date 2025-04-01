@@ -20,7 +20,7 @@ import stat
 import logging
 
 # Configure Oracle Wallet location
-WALLET_DIR = "/opt/wallet"
+WALLET_DIR = "/opt/render/project/src/wallet"
 os.environ["TNS_ADMIN"] = WALLET_DIR
 
 def get_db_connection():
