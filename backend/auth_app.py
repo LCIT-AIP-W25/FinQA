@@ -13,6 +13,9 @@ from sendgrid.helpers.mail import Mail
 #  Load environment variables
 load_dotenv()
 
+AUTH_API_URL = "https://finqa-auth-app-ac1o.onrender.com";
+Frontend_URL = "https://finqaai.netlify.app"
+
 #  Initialize Flask App
 auth_app = Flask(__name__)
 CORS(auth_app)
@@ -112,7 +115,7 @@ def signup():
             verification_token = secrets.token_hex(16)
             existing_user.verification_token = verification_token
             db.session.commit()
-            verification_url = f"http://127.0.0.1:5001/verify_email/{verification_token}"
+            verification_url = f"{AUTH_API_URL}/verify_email/{verification_token}"
             send_verification_email(email, verification_url)  #  Send new verification email
             return jsonify({'status': 'success', 'message': 'Verification email resent. Please check your inbox and spam folder.'})
 
@@ -125,7 +128,7 @@ def signup():
     db.session.commit()
 
     #  Send verification email
-    verification_url = f"http://127.0.0.1:5001/verify_email/{verification_token}"
+    verification_url = f"{AUTH_API_URL}/verify_email/{verification_token}"
     send_verification_email(email, verification_url)
 
     return jsonify({'status': 'success', 'message': 'Verification email sent! Please check your inbox and spam folder.'})
@@ -152,10 +155,10 @@ def verify_email(token):
             <body style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
                 <h2 style="color: #28a745;">✅ Email Already Verified!</h2>
                 <p>You can log in now.</p>
-                <a href="http://localhost:3000/login">Go to Login</a>
+                <a href="{frontend_url}/login">Go to Login</a>
             </body>
         </html>
-        """, 400
+        """.format(frontend_url=Frontend_URL), 400
 
     #  Mark email as verified
     user.is_verified = True
@@ -165,15 +168,15 @@ def verify_email(token):
     return """
     <html>
         <head>
-            <meta http-equiv="refresh" content="3;url=http://localhost:3000/login">
+            <meta http-equiv="refresh" content="3;url={frontend_url}/login">
         </head>
         <body style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
             <h2 style="color: #28a745;">✅ Email Verified Successfully!</h2>
             <p>You will be redirected to the login page shortly.</p>
-            <p>If not redirected, <a href="http://localhost:3000/login">click here</a>.</p>
+            <p>If not redirected, <a href="{frontend_url}/login">click here</a>.</p>
         </body>
     </html>
-    """, 200
+    """.format(frontend_url=Frontend_URL), 200
 
 
 # 🔐 Login Route
@@ -224,7 +227,7 @@ def forget_password():
     user.reset_token_expiry = expiry_time
     db.session.commit()
 
-    reset_url = f"http://localhost:3000/reset_password/{reset_token}"
+    reset_url = f"{Frontend_URL}/reset_password/{reset_token}"
 
     #  HTML Email Template with Clickable Button
     email_content = f"""

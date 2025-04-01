@@ -14,7 +14,8 @@ function ForgetPassword() {
 
     const { setLoading } = useLoader();
 
-    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
+    const AUTH_API_URL = "https://finqa-auth-app-ac1o.onrender.com";
+    
 
     useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use((config) => {
