@@ -5,25 +5,27 @@ set -eo pipefail
 WALLET_DIR="/opt/render/project/src/wallet"
 mkdir -p "$WALLET_DIR"
 
-# Debug info
 echo "=== Starting Wallet Setup ==="
-echo "Working directory: $(pwd)"
 echo "Wallet directory: $WALLET_DIR"
 
-# Base64 decode with validation
-echo "$ORACLE_WALLET_BASE64" | base64 -di > "$WALLET_DIR/oracle_wallet.zip"
+# ✅ Correctly decode Base64 wallet from Render's Secret File (NOT an env var)
+base64 -d /etc/secrets/ORACLE_WALLET_BASE64 > "$WALLET_DIR/oracle_wallet.zip"
 
-# Verify and extract
+# Debugging: Check file size
+ls -lh "$WALLET_DIR/oracle_wallet.zip"
+
+# Verify if it's a valid ZIP file
 if ! unzip -tq "$WALLET_DIR/oracle_wallet.zip"; then
   echo "❌ ERROR: Invalid ZIP file"
   file "$WALLET_DIR/oracle_wallet.zip"
   exit 1
 fi
 
+# Extract the wallet and set permissions
 unzip -oq "$WALLET_DIR/oracle_wallet.zip" -d "$WALLET_DIR/"
 chmod 600 "$WALLET_DIR"/*
 
-# Verify extracted files
+# Debugging: Show extracted files
 echo "=== Wallet Contents ==="
 ls -la "$WALLET_DIR"
 
