@@ -19,10 +19,6 @@ import shutil
 import stat
 import logging
 
-import nltk
-nltk.download('wordnet')
-nltk.download('punkt')
-
 # Configure Oracle Wallet location
 WALLET_DIR = "/opt/wallet"
 os.environ["TNS_ADMIN"] = WALLET_DIR

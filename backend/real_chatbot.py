@@ -4,8 +4,6 @@ import re
 import random
 import httpx
 from groq import Groq
-import nltk
-nltk.download('punkt_tab')
 
 
 def extract_sql_and_notes(llm_output):
