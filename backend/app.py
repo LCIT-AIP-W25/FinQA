@@ -37,6 +37,8 @@ def get_db_connection():
         config_dir=WALLET_DIR,  # Points to /opt/wallet
         wallet_location=WALLET_DIR,
         wallet_password=db_password  # Optional (if ewallet.p12 is used)
+        retry_count=3,
+        retry_delay=1
     )
     return connection
 
