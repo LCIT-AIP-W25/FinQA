@@ -50,4 +50,4 @@ done
 
 # Start application
 echo "=== Starting Application ==="
-exec gunicorn app:app --workers=3 --worker-class=gevent --timeout 90 --bind 0.0.0.0:$PORT
+exec gunicorn app:app --workers=1 --worker-class=gevent --timeout 90 --bind 0.0.0.0:$PORT
