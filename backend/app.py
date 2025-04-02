@@ -19,29 +19,27 @@ import shutil
 import stat
 import logging
 
-# Configure Oracle Wallet location
-WALLET_DIR = "/opt/render/project/src/wallet"
-os.environ["TNS_ADMIN"] = WALLET_DIR
+# ---------------------------------------DB Connect------------------------------------------------------
 
 def get_db_connection():
     # Load credentials from environment variables (set in Render Secrets)
     db_user = os.getenv("DB_USER")
     db_password = os.getenv("DB_PASSWORD")
     db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
+    db_wallet = os.getenv("DB_WALLET_LOCATION")
 
     # Establish connection using the wallet
     connection = oracledb.connect(
         user=db_user,
         password=db_password,
         dsn=db_dsn,
-        config_dir=WALLET_DIR,  # Points to /opt/wallet
-        wallet_location=WALLET_DIR,
+        config_dir=db_wallet,  # Points to /opt/wallet
+        wallet_location=db_wallet,
         wallet_password=db_password,  # Optional (if ewallet.p12 is used)
         retry_count=3,
         retry_delay=1
     )
     return connection
-
 
 #----------------------------------------Environment Setup----------------------------------------
 # Load environment variables from .env file
@@ -83,14 +81,6 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True
 }
 db = SQLAlchemy(app)
-
-# Retrieve database configuration
-db_config = {
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "dsn": os.getenv("DB_DSN"),
-    "wallet_location": os.getenv("DB_WALLET_LOCATION"),
-}
 
 #----------------------------------------Database Models----------------------------------------
 # Chat Model
