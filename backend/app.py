@@ -20,25 +20,25 @@ import stat
 import logging
 
 # Configure Oracle Wallet location
-# WALLET_DIR = "/opt/render/project/src/wallet"
-# os.environ["TNS_ADMIN"] = WALLET_DIR
+WALLET_DIR = "/opt/render/project/src/wallet"
+os.environ["TNS_ADMIN"] = WALLET_DIR
 
 def get_db_connection():
     # Load credentials from environment variables (set in Render Secrets)
     db_user = os.getenv("DB_USER")
     db_password = os.getenv("DB_PASSWORD")
     db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
-    config_dir_ = "Wallet_testdb"
-    wallet_location = "Wallet_testdb"
 
     # Establish connection using the wallet
     connection = oracledb.connect(
         user=db_user,
         password=db_password,
         dsn=db_dsn,
-        config_dir=config_dir_,  # Points to /opt/wallet
-        wallet_location=wallet_location,
-        wallet_password=db_password
+        config_dir=WALLET_DIR,  # Points to /opt/wallet
+        wallet_location=WALLET_DIR,
+        wallet_password=db_password,  # Optional (if ewallet.p12 is used)
+        retry_count=3,
+        retry_delay=1
     )
     return connection
 
