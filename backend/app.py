@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import uuid
 import os
-from real_chatbot import query_llm, extract_sql_and_notes
+from real_chatbot import query_llm, extract_sql_and_notes, execute_sql
 from real_chatbot_rag import query_llm_groq, initialize_components
 from dotenv import load_dotenv
 import oracledb
@@ -17,7 +17,31 @@ from groq_wrapper import GroqWrapper
 from groq_key_manager import key_manager
 import shutil
 import stat
+from datetime import datetime as dt
+import psutil
 import logging
+
+# Configure logging once
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def log_memory(tag="MEMORY"):
+    process = psutil.Process(os.getpid())
+    mem = psutil.virtual_memory()
+    rss = process.memory_info().rss / (1024 * 1024)  # Convert to MB
+    logging.info(f"[{tag}] Total: {mem.total / (1024 ** 3):.1f} GB | Used: {mem.used / (1024 ** 3):.1f} GB | Free: {mem.free / (1024 ** 3):.1f} GB")
+    logging.info(f"[{tag}] Process RSS: {rss:.1f} MB | Threads: {process.num_threads()}")
+
+
+#----------------------------------------Environment Setup----------------------------------------
+# Load environment variables from .env file
+load_dotenv()
+
+# Initialize key manager
+key_manager.initialize_keys(
+    rag_keys=os.getenv("GROQ_API_KEY_RAG").split(","),
+    sql_keys=os.getenv("GROQ_API_KEY_SQL").split(","),
+    summarize_keys=os.getenv("GROQ_API_KEY_SUMMARIZE").split(",")
+)
 
 # ---------------------------------------DB Connect------------------------------------------------------
 
@@ -41,46 +65,63 @@ def get_db_connection():
     )
     return connection
 
-#----------------------------------------Environment Setup----------------------------------------
-# Load environment variables from .env file
-load_dotenv()
-
-# Initialize key manager
-key_manager.initialize_keys(
-    rag_keys=os.getenv("GROQ_API_KEY_RAG").split(","),
-    sql_keys=os.getenv("GROQ_API_KEY_SQL").split(","),
-    summarize_keys=os.getenv("GROQ_API_KEY_SUMMARIZE").split(",")
-)
-
 #----------------------------------------Flask App Initialization----------------------------------------
 app = Flask(__name__)
+log_memory("Startup")
+
 CORS(app)
-
-# Initialize thread-local storage for database sessions
-db_lock = threading.Lock()
-
-#---------------------------------------Initialize RAG components----------------------------------------
-# Initialize RAG system
-rag_system = FinancialRAGSystem()
-
-try:
-    if not initialize_components():
-        raise RuntimeError("Failed to initialize RAG components")
-    print("✅ All components initialized successfully")
-except Exception as e:
-    print(f"❌ Failed to initialize components: {e}")
-    # You might want to exit here if RAG is critical
-
-#----------------------------------------Database Setup----------------------------------------
-# SQLite DB Setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 20,
+    'pool_size': 10,
     'max_overflow': 0,
     'pool_pre_ping': True
 }
+
 db = SQLAlchemy(app)
+db_lock = threading.Lock()
+
+#---------------------------------------Initialize RAG components----------------------------------------
+# Lazy initialization of RAG system and components
+rag_system = None
+components_initialized = False
+
+@app.before_request
+def ensure_components():
+    global rag_system, components_initialized
+    if not components_initialized:
+        rag_system = FinancialRAGSystem()
+        if initialize_components():
+            components_initialized = True
+            log_memory("RAG Initialized")
+        else:
+            raise RuntimeError("RAG initialization failed")
+        
+@app.route('/health', methods=['GET'])
+def health_check():
+    status = {"timestamp": dt.utcnow().isoformat()}
+
+    process = psutil.Process(os.getpid())
+    mem = psutil.virtual_memory()
+    status["memory"] = {
+        "total_gb": round(mem.total / (1024 ** 3), 2),
+        "used_gb": round(mem.used / (1024 ** 3), 2),
+        "rss_mb": round(process.memory_info().rss / (1024 * 1024), 1),
+        "threads": process.num_threads()
+    }
+
+    status["rag_initialized"] = "✅" if components_initialized else "❌"
+
+    try:
+        conn = get_db_connection()
+        conn.ping()
+        conn.close()
+        status["oracle_db"] = "✅ Connected"
+    except Exception as e:
+        status["oracle_db"] = f"❌ Failed: {str(e)}"
+
+    return jsonify(status), 200
+
 
 #----------------------------------------Database Models----------------------------------------
 # Chat Model
@@ -227,9 +268,8 @@ def get_chat(session_id):
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
 def query_chatbot():
+    log_memory("Before query_chatbot")
     data = request.get_json()
-    print("Received data:", data)
-
     user_question = data.get("question")
     session_id = data.get("session_id")
     user_id = data.get("user_id")
@@ -239,54 +279,25 @@ def query_chatbot():
         return jsonify({"error": "Invalid request data - Missing required fields"}), 400
 
     try:
-        # Get chat history within the main thread context
         with db_lock:
             chat_messages = Chat.query.filter_by(session_id=session_id).order_by(Chat.id).all()
             chat_history = [{'sender': msg.sender, 'message': msg.message} for msg in chat_messages]
 
-        # Create a new app context for thread safety
-        def run_in_context(fn, *args):
-            with app.app_context():
-                return fn(*args)
+        numerical_data, numerical_status = handle_numerical_query(user_question, selected_company, session_id)
+        contextual_data, contextual_status = handle_contextual_query(user_question, selected_company, session_id)
 
-        # Use ThreadPoolExecutor to run both queries concurrently
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            # Pass the pre-fetched chat_history to avoid context issues
-            future_num = executor.submit(
-                run_in_context, 
-                handle_numerical_query, 
-                user_question, 
-                selected_company, 
-                session_id
-            )
-            future_ctx = executor.submit(
-                run_in_context, 
-                handle_contextual_query, 
-                user_question, 
-                selected_company, 
-                session_id
-            )
-
-            # Wait for both futures to complete
-            numerical_data, numerical_status = future_num.result()
-            contextual_data, contextual_status = future_ctx.result()
-
-        # Process results
         numerical_text = numerical_data.get('response') if numerical_status == 200 else str(numerical_data.get('error'))
         contextual_text = contextual_data.get('response') if contextual_status == 200 else str(contextual_data.get('error'))
 
-        print("SQL Output:", numerical_text)
-        print("RAG Output:", contextual_text)
-        
-        # Run summarizer
         summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
 
+        log_memory("After query_chatbot")
         return jsonify({"response": summarized_response}), 200
 
     except Exception as e:
         print(f"Error in query_chatbot: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-    
+        return jsonify({"error": "Internal server error"}), 500    
+
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
     """API Endpoint to get company names"""
@@ -466,53 +477,18 @@ def get_company_names_from_db():
     
     return companies
 
-def execute_sql(query, connection=None):
-    """Executes the SQL query and handles errors.
-       Returns (results, columns, exec_time, error_msg)"""
-    conn = None
-    try:
-        # Create new connection if none provided
-        own_connection = connection is None
-        if own_connection:
-            conn = get_db_connection()
-        else:
-            conn = connection
-        
-        cursor = conn.cursor()
-        start_time = time.time()
-        cursor.execute(query.rstrip(";"))
-        
-        # Only fetch if it's a SELECT query
-        if query.strip().lower().startswith("select"):
-            results = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-        else:
-            results = []
-            columns = []
-            conn.commit()  # Commit for DML operations
-            
-        execution_time = round(time.time() - start_time, 4)
-        return results, columns, execution_time, ""
-        
-    except oracledb.DatabaseError as e:
-        logging.error("Database error: %s", e)
-        return None, None, None, str(e)
-    finally:
-        try:
-            if 'cursor' in locals():
-                cursor.close()
-            if own_connection and conn:
-                conn.close()
-        except Exception as e:
-            logging.warning("Error closing connection: %s", e)
-
+# Retrieve database configuration
+db_config = {
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "dsn": os.getenv("DB_DSN"),
+    "wallet_location": os.getenv("DB_WALLET_LOCATION"),
+}
 
 def handle_numerical_query(user_question, selected_company, session_id=None):
     try:
         if not selected_company:
             return {"error": "No company selected for numerical query"}, 400
-        
-        connection = get_db_connection()
         
         ddl_directory = "Oracle_DDLs"
         model_name = "llama-3.3-70b-versatile"
@@ -555,16 +531,12 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
                 if re.search(pattern, sql_query, re.IGNORECASE):
                     return {"error": "Failed to run SQL query due to security concerns."}, 500
 
-            results, columns, exec_time, error_msg = execute_sql(sql_query, connection)
+            results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
             if results:
-                # Properly format the numerical results
-                if isinstance(results[0], (list, tuple)):  # Handle row results
-                    formatted_results = str(results[0][0]) if results[0] else "No data found"
-                else:  # Handle scalar results
-                    formatted_results = str(results[0]) if results else "No data found"
+                formatted_results = results
+                
+                print(formatted_results)
                 return {"response": formatted_results}, 200
-            else:
-                return {"error": error_msg}, 500
         else:
             return {"error": "Failed to extract SQL query from LLM response."}, 500
     except Exception as e:
@@ -783,15 +755,15 @@ def get_metrics_for_company(company_name):
 @app.route('/api/company_metrics/<company_name>', methods=['GET'])
 def fetch_company_metrics(company_name):
     """API endpoint to get all available metrics for a company."""
-    company_name = company_name.upper() 
+    company_name = company_name.upper()  # Normalize input
     response = get_metrics_for_company(company_name)
 
     print(f"DEBUG: API Response Sent → {response}")  # Log API output
 
-    return jsonify(response) 
+    return jsonify(response)  # Only return JSON object (removes tuple)
 
 
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))  # Default to 10000 if PORT is not set
-    app.run(debug=False, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
