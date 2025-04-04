@@ -485,7 +485,7 @@ html, body {
       padding-left: calc(20px + env(safe-area-inset-left));
       padding-right: calc(20px + env(safe-area-inset-right));
       margin-left: 0px;
-      height: calc(100vh - 60px - 40px);
+      height: calc(100vh - 60px - 50px);
     }
   
     .chat-app-messages {
