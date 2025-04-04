@@ -1,15 +1,14 @@
 /* -------------------- Global Styles -------------------- */
 html, body {
   height: 100%;
-  overflow: hidden;
 }
 
 /* -------------------- Main Layout -------------------- */
 .PDF-chat-app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow: auto;
 }
 
 .PDF-chat-app-content {
@@ -159,7 +158,7 @@ html, body {
   padding: 20px;
   height: calc(100vh - 60px);
   overflow-y: auto;
-  margin-left: 50px;
+  margin-left: 0px;
   /* margin: 0; No sidebar margins */
   box-sizing: border-box;
 }
@@ -464,7 +463,7 @@ html, body {
       padding-top: calc(20px + env(safe-area-inset-top));
       padding-left: calc(20px + env(safe-area-inset-left));
       padding-right: calc(20px + env(safe-area-inset-right)); */
-      margin-left: 50px;
+      margin-left: 0px;
   }
 
   .PDF-chat-app-input-section {
