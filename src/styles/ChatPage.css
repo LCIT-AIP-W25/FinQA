@@ -1,7 +1,7 @@
 /* -------------------- Global Styles -------------------- */
 html, body {
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 /* -------------------- Main Layout -------------------- */
@@ -9,7 +9,7 @@ html, body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: auto;
+    overflow: hidden;
 }
 
 .chat-app-content {
@@ -18,6 +18,14 @@ html, body {
     overflow: hidden;
     position: relative; /* ensure floating panels anchor correctly */
   }
+
+  .chat-app-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
 
 /* -------------------- Header -------------------- */
 .chat-app-header {
@@ -477,6 +485,7 @@ html, body {
       padding-left: calc(20px + env(safe-area-inset-left));
       padding-right: calc(20px + env(safe-area-inset-right));
       margin-left: 0px;
+      height: calc(100vh - 60px - 40px);
     }
   
     .chat-app-messages {
