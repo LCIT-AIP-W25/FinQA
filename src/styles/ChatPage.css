@@ -1,7 +1,7 @@
 /* -------------------- Global Styles -------------------- */
 html, body {
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
 }
 
 /* -------------------- Main Layout -------------------- */
@@ -9,7 +9,7 @@ html, body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow: hidden;
+    overflow: auto;
 }
 
 .chat-app-content {
@@ -153,6 +153,7 @@ html, body {
     overflow-y: auto;
     margin-left: 50px;
     /* margin: 0; No sidebar margins */
+    box-sizing: border-box;
   }
 
 /* -------------------- Chat History -------------------- */
@@ -355,6 +356,7 @@ html, body {
     position: relative;
     bottom: 0;
     gap: 10px;
+    box-sizing: border-box;
 }
 
 .chat-app-input {
@@ -566,10 +568,10 @@ html, body {
   /* Tablet (501px–767px): input + buttons inline */
   @media (min-width: 501px) and (max-width: 767px) {
     .chat-app-window {
-        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+        /* padding-bottom: calc(70px + env(safe-area-inset-bottom));
         padding-top: calc(20px + env(safe-area-inset-top));
         padding-left: calc(20px + env(safe-area-inset-left));
-        padding-right: calc(20px + env(safe-area-inset-right));
+        padding-right: calc(20px + env(safe-area-inset-right)); */
         margin-left: 50px;
     }
   

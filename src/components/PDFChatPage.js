@@ -8,6 +8,7 @@ const PDFChatPage = () => {
     const [currentChat, setCurrentChat] = useState([]);
     const [loading, setLoading] = useState(false);
     const chatEndRef = useRef(null); //  Auto-scroll reference
+    const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
 
     //  Scroll to bottom on new messages
     useEffect(() => {
@@ -26,7 +27,7 @@ const PDFChatPage = () => {
         setLoading(true);
     
         try {
-            const response = await axios.post("http://127.0.0.1:5000/query_pdf_chatbot", {
+            const response = await axios.post(`${CHATBOT_API_URL}/query_pdf_chatbot`, {
                 question: message,
             });
     
