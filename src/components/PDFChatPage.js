@@ -56,7 +56,7 @@ const PDFChatPage = () => {
                         <Link to="/chat">
                             <img className="PDF-chat-app-logo-img" src="/images/wes.png" alt="Logo" />
                         </Link>
-                        <h2 className="PDF-chat-app-header-title">WealthWiz AI Chat (PDF Mode)</h2>
+                        <h2 className="PDF-chat-app-header-title">WealthWiz AI (PDF Mode)</h2>
                     </div>
 
                     {/* ✅ Profile & Back Button */}
