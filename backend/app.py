@@ -70,7 +70,8 @@ app = Flask(__name__)
 log_memory("Startup")
 
 CORS(app)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('POSTGRES_URI')
+# 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 10,

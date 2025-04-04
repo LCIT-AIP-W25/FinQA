@@ -22,7 +22,8 @@ CORS(auth_app)
 bcrypt = Bcrypt(auth_app)
 
 #  SQLite Configuration
-auth_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+auth_app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('POSTGRES_URI')
+# 'sqlite:///users.db'
 auth_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #  Configure SendGrid SMTP for Email Sending
