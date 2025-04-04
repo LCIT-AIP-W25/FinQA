@@ -18,8 +18,11 @@
   align-items: center;
   background: #f4f4f4;
   padding: 20px;
+  height: calc(100vh - 60px);
   overflow-y: auto;
-  margin-left: 0; /* ✅ remove sidebar gap */
+  margin-left: 0px;
+  /* margin: 0; No sidebar margins */
+  box-sizing: border-box;
 }
 
 /* -------------------- Header -------------------- */
@@ -33,30 +36,30 @@
   height: 60px;
 }
 
-.chat-app-logo {
+.PDF-chat-app-logo {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.chat-app-logo-img {
+.PDF-chat-app-logo-img {
   width: 45px;
   height: auto;
 }
 
-.chat-app-header-title {
+.PDF-chat-app-header-title {
   font-size: 18px;
   font-weight: bold;
   color: #333;
   margin: 0;
 }
 
-.chat-app-user-section {
+.PDF-chat-app-user-section {
   display: flex;
   align-items: center;
 }
 
-.chat-app-back-btn {
+.PDF-chat-app-back-btn {
   font-size: 14px;
   color: #2563eb;
   text-decoration: none;
@@ -66,13 +69,14 @@
   transition: all 0.2s ease-in-out;
 }
 
-.chat-app-back-btn:hover {
+.PDf-chat-app-back-btn:hover {
   background-color: #2563eb;
   color: white;
 }
 
 /* -------------------- Messages -------------------- */
-.chat-app-messages {
+.PDF-chat-app-messages {
+  flex-grow: 1;
   width: 100%;
   max-width: 800px;
   padding: 20px;
@@ -80,14 +84,15 @@
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   overflow-y: hidden;
-  min-height: 120px;
+  min-height: 100px;
+  scroll-padding-bottom: 100px;
 }
 
-.chat-app-messages.has-messages {
+.PDF-chat-app-messages.has-messages {
   overflow-y: auto;
 }
 
-.chat-app-placeholder {
+.PDF-chat-app-placeholder {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -98,8 +103,8 @@
   text-align: center;
 }
 
-.chat-app-user-message,
-.chat-app-bot-message {
+.PDF-chat-app-user-message,
+.PDF-chat-app-bot-message {
   padding: 14px 20px;
   border-radius: 18px;
   margin: 12px 16px;
@@ -109,14 +114,14 @@
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
-.chat-app-user-message {
+.PDF-chat-app-user-message {
   background-color: #fafafa;
   text-align: right;
   color: #2f2f2f;
   margin-left: auto;
 }
 
-.chat-app-bot-message {
+.PDF-chat-app-bot-message {
   background-color: #e9f0fd;
   text-align: left;
   color: #2f2f2f;
@@ -124,7 +129,7 @@
 }
 
 /* -------------------- Input Section -------------------- */
-.chat-app-input-section {
+.PDF-chat-app-input-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -134,12 +139,13 @@
   background-color: white;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  margin-top: 10px;
+  position: relative;
+  bottom: 0;
   gap: 10px;
   box-sizing: border-box;
 }
 
-.chat-app-input {
+.PDF-chat-app-input {
   flex-grow: 1;
   padding: 10px;
   border-radius: 5px;
@@ -148,30 +154,39 @@
   font-size: 14px;
 }
 
-.chat-button {
+.PDF-chat-app-input-section input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.PDF-chat-button {
   padding: 10px 20px;
   font-size: 0.875rem;
   font-weight: 500;
   border: none;
-  border-radius: 999px;
+  border-radius: 999px; /* pill shape */
   cursor: pointer;
   transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   min-width: 100px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.chat-button.send {
+.PDF-chat-button.send {
   background-color: #2563eb;
   color: white;
 }
 
-.chat-button.send:hover {
+.PDF-chat-button.send:hover {
   background-color: #1e40af;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 /* -------------------- Mobile (≤500px) -------------------- */
 @media (max-width: 500px) {
   .PDF-chat-app-window {
@@ -179,26 +194,26 @@
     margin-left: 0;
   }
 
-  .chat-app-header-title {
+  .PDF-chat-app-header-title {
     font-size: 14px;
   }
 
-  .chat-app-messages {
+  .PDF-chat-app-messages {
     padding: 12px;
     max-width: 100%;
     box-shadow: none;
     border-radius: 6px;
   }
 
-  .chat-app-user-message,
-  .chat-app-bot-message {
+  .PDF-chat-app-user-message,
+  .PDF-chat-app-bot-message {
     font-size: 0.85rem;
     padding: 10px 14px;
     max-width: 85%;
     margin: 8px 12px;
   }
 
-  .chat-app-input-section {
+  .PDF-chat-app-input-section {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
@@ -207,19 +222,19 @@
     max-width: 100%;
   }
 
-  .chat-app-input {
+  .PDF-chat-app-input {
     font-size: 0.85rem;
     width: 100%;
   }
 
-  .chat-button {
+  .PDF-chat-button {
     font-size: 0.85rem;
     width: 100%;
     padding: 8px 10px;
     min-width: 0;
   }
 
-  .chat-app-back-btn {
+  .PDF-chat-app-back-btn {
     font-size: 12px;
     padding: 6px 10px;
   }
@@ -227,13 +242,13 @@
 
 /* -------------------- Tablet (501px–767px) -------------------- */
 @media (min-width: 501px) and (max-width: 767px) {
-  .chat-app-input-section {
+  .PDF-chat-app-input-section {
     flex-direction: row;
     gap: 10px;
     padding-bottom: 16px;
   }
 
-  .chat-button {
+  .PDF-chat-button {
     max-width: 120px;
     font-size: 0.85rem;
     padding: 8px 12px;
@@ -242,13 +257,13 @@
 
 /* -------------------- Desktop (≥768px) -------------------- */
 @media (min-width: 768px) {
-  .chat-app-button-group {
+  .PDF-chat-app-button-group {
     flex-direction: row;
     justify-content: flex-end;
     gap: 10px;
   }
 
-  .chat-button {
+  .PDF-chat-button {
     width: auto;
   }
 }
