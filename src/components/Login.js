@@ -118,8 +118,8 @@ function Login() {
 
                                     <div className="d-flex justify-content-between mt-2">
                                         <div>
-                                            <input className="form-check-input" type="checkbox" id="rememberMe" />
-                                            <label className="form-check-label ml-2">Remember me</label>
+                                            {/* <input className="form-check-input" type="checkbox" id="rememberMe" />
+                                            <label className="form-check-label ml-2">Remember me</label> */}
                                         </div>
                                         <Link className='link-line' to='/forget'>
                                             Forgot password?

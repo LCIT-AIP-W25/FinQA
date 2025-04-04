@@ -1,0 +1,161 @@
+/* CompanyReportPanel.css */
+.company-report-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+  padding: 16px;
+  overflow-y: auto; 
+  box-sizing: border-box;
+  gap: 18px;
+  scroll-padding-bottom: 100px;
+}
+
+/* Section Headers */
+.panel-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #202142;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Sections */
+.company-section,
+.report-section,
+.upload-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Company Input */
+.company-search-input {
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.2s ease;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.company-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Scrollable Company List with limited height */
+.company-list {
+  max-height: 120px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #fafafa;
+}
+
+.company-item {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  color: #374151;
+  transition: background-color 0.2s ease;
+}
+
+.company-item:hover {
+  background: #f1f5f9;
+}
+
+.company-item.selected {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  font-weight: bold;
+  color: #1d4ed8;
+}
+
+/* Report Section */
+.report-section {
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.report-section .panel-title {
+  margin-bottom: 12px;
+}
+
+.report-section .inline-report-dropdown {
+  width: 100%;
+}
+
+.upload-section {
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+  gap: 12px;
+  align-items: center;
+  text-align: center;
+}
+
+.upload-section .panel-title {
+  margin-bottom: 4px;
+}
+
+.panel-subtext {
+  font-size: 12px;
+  color: #777;
+  font-style: italic;
+  margin: -6px 0 12px;
+  text-align: center;
+}
+
+.upload-section .chat-app-upload-btn {
+  padding: 8px 12px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.upload-section .chat-app-upload-btn:hover {
+  background-color: #2563eb;
+}
+
+.upload-status-icon {
+  display: inline-block;
+  font-size: 1.2rem;
+  cursor: default;
+  position: relative;
+  margin-top: 6px;
+}
+
+.upload-status-icon::after {
+  content: attr(data-hover);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.upload-status-icon:hover::after {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .company-report-panel {
+    padding-bottom: 80px;
+  }
+}

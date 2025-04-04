@@ -766,4 +766,4 @@ def fetch_company_metrics(company_name):
 #----------------------------------------Main Execution----------------------------------------
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))  # Default to 10000 if PORT is not set
-    app.run(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port)

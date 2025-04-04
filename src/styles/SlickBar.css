@@ -1,0 +1,52 @@
+/* SlickBar.css */
+.slick-bar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 50px;
+    height: calc(100vh - 60px);
+    background-color: #202142;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12px;
+    z-index: 250;
+    border-right: 1px solid #333;
+  }
+  
+  .slick-bar button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .slick-bar button:hover {
+    color: #3b82f6;
+  }
+  
+  /* Responsive (Mobile & Tablets) */
+  @media (max-width: 500px) {
+    .slick-bar {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      flex-direction: row;
+      justify-content: space-around;
+      padding-top: 0;
+      padding-bottom: env(safe-area-inset-bottom);
+      border-right: none;
+      border-top: 1px solid #333;
+    }
+  
+    .slick-bar button {
+      font-size: 18px;
+      margin: 0 10px;
+    }
+  }
+  
