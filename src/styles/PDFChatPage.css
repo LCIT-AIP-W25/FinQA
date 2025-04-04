@@ -7,8 +7,8 @@ html, body {
 .PDF-chat-app-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  overflow: auto;
+  height: calc(var(--vh, 1vh) * 100);
+  overflow: hidden;
 }
 
 .PDF-chat-app-content {
@@ -160,12 +160,12 @@ html, body {
   align-items: center;
   background: #f4f4f4;
   padding: 20px;
-  height: auto;
+  height: calc(var(--vh, 1vh) * 100 - 60px);
   overflow-y: auto;
   margin-left: 0px;
   /* margin: 0; No sidebar margins */
   box-sizing: border-box;
-  /* padding-top: 80px; */
+  padding-top: 30px;
 }
 
 /* -------------------- Chat History -------------------- */

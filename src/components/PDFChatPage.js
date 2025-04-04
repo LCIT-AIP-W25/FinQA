@@ -10,6 +10,23 @@ const PDFChatPage = () => {
     const chatEndRef = useRef(null); //  Auto-scroll reference
     const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
 
+
+    useEffect(() => {
+        const setViewportHeight = () => {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+      
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        return () => window.removeEventListener('resize', setViewportHeight);
+      }, []);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+      }, []);
+      
+
     //  Scroll to bottom on new messages
     useEffect(() => {
         if (chatEndRef.current) {
