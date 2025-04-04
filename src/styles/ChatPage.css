@@ -8,7 +8,7 @@ html, body {
 .chat-app-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     overflow: hidden;
 }
 
@@ -157,7 +157,7 @@ html, body {
     align-items: center;
     background: #f4f4f4;
     padding: 20px;
-    height: calc(100vh - 60px);
+    height: calc(var(--vh, 1vh) * 100 - 60px);
     overflow-y: auto;
     margin-left: 50px;
     /* margin: 0; No sidebar margins */
