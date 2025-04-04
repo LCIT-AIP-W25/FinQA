@@ -19,9 +19,10 @@ html, body {
 }
 
 .PDF-chat-app-wrapper {
-  height: 100%;
+  margin-top: 60px; /* match fixed header height */
   display: flex;
   flex-direction: column;
+  height: calc(100vh - 60px); /* total visible height minus header */
   overflow: hidden;
 }
 
@@ -36,7 +37,10 @@ html, body {
   border-bottom: 1px solid #ddd;
   height: 60px;
   flex-shrink: 0;
-  position: relative;
+  position: fixed;       /* 🧠 Make it stick to the top */
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
 }
 
@@ -156,11 +160,12 @@ html, body {
   align-items: center;
   background: #f4f4f4;
   padding: 20px;
-  height: calc(100vh - 60px);
+  height: auto;
   overflow-y: auto;
   margin-left: 0px;
   /* margin: 0; No sidebar margins */
   box-sizing: border-box;
+  /* padding-top: 80px; */
 }
 
 /* -------------------- Chat History -------------------- */
@@ -308,7 +313,7 @@ html, body {
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   position: relative;
-  bottom: 0;
+  /* bottom: 0; */
   gap: 10px;
   box-sizing: border-box;
 }
@@ -383,7 +388,7 @@ html, body {
   .PDF-chat-app-window {
     padding: 12px;
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
-    padding-top: calc(20px + env(safe-area-inset-top));
+    padding-top: 80px;
     padding-left: calc(20px + env(safe-area-inset-left));
     padding-right: calc(20px + env(safe-area-inset-right));
     margin-left: 0px;

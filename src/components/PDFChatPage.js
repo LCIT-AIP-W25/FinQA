@@ -69,7 +69,7 @@ const PDFChatPage = () => {
                 <div className="PDF-chat-app-window">
                     <div className={`PDF-chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
                         {currentChat.length === 0 ? (
-                            <p className="PDF-chat-app-placeholder">Ask something about the uploaded PDF...</p>
+                            <p className="PDF-chat-app-placeholder">Ask anything about the uploaded PDF...</p>
                         ) : (
                             currentChat.map((msg, idx) => (
                                 <p key={idx} className={msg.sender === "user" ? "PDF-chat-app-user-message" : "PDF-chat-app-bot-message"}>
