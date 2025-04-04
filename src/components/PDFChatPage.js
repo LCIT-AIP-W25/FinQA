@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import "../styles/ChatPage.css"; //  Uses same styles as ChatPage
+import "../styles/PDFChatPage.css"; 
 
 const PDFChatPage = () => {
     const [message, setMessage] = useState("");
@@ -48,10 +48,10 @@ const PDFChatPage = () => {
     
 
     return (
-        <section className="chat-app-container">
-            <div className="chat-app-wrapper">
+        <section className="PDF-chat-app-container">
+            <div className="PDF-chat-app-wrapper">
                 {/* ✅ Header Section */}
-                <div className="chat-app-header">
+                <div className="PDF-chat-app-header">
                     <div className="chat-app-logo">
                         <Link to="/chat">
                             <img className="chat-app-logo-img" src="/images/wes.png" alt="Logo" />
@@ -66,7 +66,7 @@ const PDFChatPage = () => {
                 </div>
 
                 {/* ✅ Chat Window */}
-                <div className="chat-app-window">
+                <div className="PDF-chat-app-window">
                     <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
                         {currentChat.length === 0 ? (
                             <p className="chat-app-placeholder">Ask something about the uploaded PDF...</p>
