@@ -29,7 +29,7 @@ function App() {
           <Route path='/forget' element={<Forget />} />
           <Route path="/reset_password/:token" element={<ResetPassword />} />
           <Route path="/verify_email/:token" element={<VerifyEmail />} />
-          <Route path="/pdf-chat" element={<PDFChatPage />} />
+          <Route path='/pdf-chat' element={<ProtectedRoute><PDFChatPage /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>
     </LoaderProvider>

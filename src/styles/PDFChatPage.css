@@ -372,11 +372,41 @@ html, body {
   color: #111827;
 }
 
+
 .PDF-chat-button.new:hover {
   background-color: #e5e7eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
+
+.PDF-chat-app-back-btn {
+  padding: 8px 16px;
+  background-color: #e2e8f0;
+  color: #1a202c;
+  text-decoration: none;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+
+.PDF-chat-app-back-btn:hover {
+  background-color: #cbd5e1;
+  color: #111;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 500px) {
+  .PDF-chat-app-back-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    box-shadow: none;
+  }
+}
+
 
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -386,9 +416,8 @@ html, body {
 /* -------------------- Mobile Responsiveness -------------------- */
 @media (max-width: 500px) {
   .PDF-chat-app-window {
-    padding: 12px;
+    /* padding: 12px; */
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
-    padding-top: 80px;
     padding-left: calc(20px + env(safe-area-inset-left));
     padding-right: calc(20px + env(safe-area-inset-right));
     margin-left: 0px;

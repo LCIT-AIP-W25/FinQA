@@ -61,7 +61,7 @@ const PDFChatPage = () => {
 
                     {/* ✅ Profile & Back Button */}
                     <div className="PDF-chat-app-user-section">
-                        <Link to="/chat" className="PDF-chat-app-back-btn">⬅ Go Back</Link>
+                        <Link to="/chat" className="PDF-chat-app-back-btn">⬅ Back</Link>
                     </div>
                 </div>
 
