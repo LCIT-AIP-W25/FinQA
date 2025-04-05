@@ -217,8 +217,6 @@ function ChatPage() {
     
         setMessage(""); // Clear input field
     };
-    
-    
 
     //  Save message to backend (SQLite)
     const saveChatToBackend = async (chatMessage) => {
@@ -230,6 +228,9 @@ function ChatPage() {
                 session_id: sessionId,
                 user_id: userId
             });
+
+            // Update chat history after saving message
+            await fetchAllChatSessions();
         } catch (error) {
             console.error("Error saving chat:", error);
         }
@@ -514,6 +515,7 @@ function ChatPage() {
                             uploadMessage={uploadMessage}
                             hoverMessage={hoverMessage}
                             setUploadMessage={setUploadMessage}
+                            setShowCompanyPanel={setShowCompanyPanel} 
                             />
                         </FloatingPanel>
                         )}
@@ -532,6 +534,7 @@ function ChatPage() {
                             loadChatSession={loadChatSession}
                             deleteChatSession={deleteChatSession}
                             getOrGenerateTitle={getOrGenerateTitle}
+                            setShowChatSidebar={setShowChatSidebar}
                             />
                         </FloatingPanel>
                         )}
@@ -545,6 +548,7 @@ function ChatPage() {
                             filteredMetrics={filteredMetrics}
                             selectedMetric={selectedMetric}
                             handleMetricClick={handleMetricClick}
+                            setShowMetricsSidebar={setShowMetricsSidebar}
                             />
                         </FloatingPanel>
                         )}

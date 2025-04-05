@@ -8,7 +8,8 @@ function MetricsSidebar({
   setMetricsSearchTerm,
   filteredMetrics,
   selectedMetric,
-  handleMetricClick
+  handleMetricClick,
+  setShowMetricsSidebar
 }) {
   return (
     <div className="metrics-sidebar">
@@ -44,7 +45,13 @@ function MetricsSidebar({
                   ? 'highlight' 
                   : ''
                 }`}
-                onClick={() => handleMetricClick(metric)}
+                onClick={() => {
+                  handleMetricClick(metric);
+                  if (window.innerWidth < 768) {
+                    setShowMetricsSidebar(false);  // Auto-close on mobile
+                  }
+                }}
+                
               >
                 {metric}
               </div>

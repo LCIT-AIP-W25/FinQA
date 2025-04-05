@@ -13,6 +13,7 @@ function CompanyReportPanel({
   uploadMessage,
   hoverMessage,
   setUploadMessage,
+  setShowCompanyPanel 
 }) {
   return (
     <div className="company-report-panel">
@@ -37,7 +38,12 @@ function CompanyReportPanel({
                 className={`company-item ${
                   selectedCompany === company ? "selected" : ""
                 }`}
-                onClick={() => setSelectedCompany(company)}
+                onClick={() => {
+                  setSelectedCompany(company);
+                  if (window.innerWidth < 768) {
+                    setShowCompanyPanel(false);  // Auto-close on mobile
+                  }
+                }}
               >
                 {company}
               </div>

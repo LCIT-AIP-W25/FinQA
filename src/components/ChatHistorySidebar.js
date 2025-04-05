@@ -13,7 +13,8 @@ function ChatHistorySidebar({
   sessionId,
   loadChatSession,
   deleteChatSession,
-  getOrGenerateTitle
+  getOrGenerateTitle,
+  setShowChatSidebar
 }) {
   return (
     <div className={className}>
@@ -28,7 +29,12 @@ function ChatHistorySidebar({
             <div
               key={chat.session_id}
               className={`chat-app-chat-item ${sessionId === chat.session_id ? "active" : ""}`}
-              onClick={() => loadChatSession(chat.session_id)}
+              onClick={() => {
+                loadChatSession(chat.session_id);
+                if (window.innerWidth < 768) {
+                  setShowChatSidebar(false);  // Auto-close on mobile
+                }
+              }}              
             >
               <div className="chat-app-chat-content">
                 <p className="chat-app-chat-title">

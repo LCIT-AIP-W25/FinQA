@@ -9,6 +9,7 @@ import secrets
 import datetime
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+import threading
 
 #  Load environment variables
 load_dotenv()
@@ -84,20 +85,22 @@ def send_verification_email(email, verification_url):
             html_content=email_content
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
-
-        if response.status_code in [200, 202]:
-            print(f"✅ Verification email sent to {email}")
-            return True
-        else:
-            print(f"❌ SendGrid failed with status code {response.status_code}")
-            return False
+        # ✅ Send email in the background
+        threading.Thread(target=async_send_email, args=(message, sendgrid_api_key)).start()
+        return True
 
     except Exception as e:
         print(f"❌ Email sending failed: {str(e)}")
         return False
 
+
+def async_send_email(message, api_key):
+    try:
+        sg = SendGridAPIClient(api_key)
+        response = sg.send(message)
+        print(f"✅ Async email sent! Status Code: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Async email failed: {str(e)}")
 
 # 🔐 Signup Route (with Email Verification)
 @auth_app.route('/signup', methods=['POST'])
@@ -274,10 +277,10 @@ def forget_password():
             html_content=email_content  #  Use HTML content
         )
 
-        sg = SendGridAPIClient(os.getenv('MAIL_PASSWORD'))
-        response = sg.send(message)
+        threading.Thread(target=async_send_email, args=(message, os.getenv('MAIL_PASSWORD'))).start()
 
-        print(f"✅ Email sent successfully! Status Code: {response.status_code}")
+        print("📤 Password reset email sent (queued for async sending).")
+        
         return jsonify({'status': 'success', 'message': 'Password reset link sent to your email.', 'reset_url': reset_url})
 
     except Exception as e:
