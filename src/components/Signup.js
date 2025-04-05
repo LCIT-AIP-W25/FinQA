@@ -54,7 +54,7 @@ function Signup() {
             });
     
             if (response.data.status === "success") {
-                setMessage("✅ Verification email sent! Check your inbox & spam folder.");
+                setMessage("✅ Please check your inbox/spam. Email may take up to 2 minutes.");
             } else {
                 setError("❌ " + response.data.message);
             }
