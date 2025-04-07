@@ -53,9 +53,9 @@ function CompanyReportPanel({
 
       {/* Inline Report Dropdown */}
       <div className="report-section">
-        <h5 className="panel-title">Download Official Financial Reports</h5>
+        <h5 className="panel-title">Browse Official Financial Reports</h5>
         <p className="panel-subtext">
-          Please select a company to download reports.
+          Please select a company to browse reports.
         </p>
         <div className="inline-report-dropdown">
           <InlineReportDropdown company={selectedCompany} />

@@ -130,12 +130,14 @@ class ChatSession(db.Model):
     id = db.Column(db.String(50), primary_key=True)
     title = db.Column(db.String(100))
     user_id = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
 
 class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender = db.Column(db.String(10))  # 'user' or 'bot'
     message = db.Column(db.Text)
     session_id = db.Column(db.String(50), db.ForeignKey('chat_session.id'))
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
 
 # Initialize the DB
 with app.app_context():
@@ -215,7 +217,7 @@ def get_all_sessions(user_id):
     with db_lock:
         try:
             sessions = ChatSession.query.filter_by(user_id=user_id).all()
-            session_list = [{'session_id': session.id, 'title': session.title} for session in sessions]
+            session_list = [{'session_id': session.id, 'title': session.title, 'created_at': session.created_at.isoformat()} for session in sessions]
             return jsonify(session_list)
         except Exception as e:
             return jsonify({"status": "Error", "message": str(e)}), 500

@@ -38,8 +38,9 @@ function ChatHistorySidebar({
             >
               <div className="chat-app-chat-content">
                 <p className="chat-app-chat-title">
-                  {getOrGenerateTitle(chat.session_id, chat.messages)}
-                </p>
+                    {getOrGenerateTitle(chat.session_id, chat.messages)}
+                    {chat.created_at && new Date(chat.created_at + 'Z').toLocaleString()}
+                  </p>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

@@ -310,7 +310,7 @@ function ChatPage() {
         newTitle = firstMessage.slice(0, 20); // First 20 characters of the first message
         } else {
         // Use timestamp if no messages
-        newTitle = `Chat - ${new Date().toLocaleString()}`;
+        newTitle = `Chat - `;
         }
     
         // Save the new title

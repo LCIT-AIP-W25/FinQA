@@ -29,7 +29,7 @@ function MetricsSidebar({
           </div>
         </div>
         
-        <div className="metrics-header-com">Ask the chatbot about any metric!</div>
+        <div className="metrics-header-com">Select a company to view available metrics and ask the chatbot for details.</div>
       </div>
       
       <div className="metrics-scroll-container">
