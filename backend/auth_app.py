@@ -10,6 +10,7 @@ import datetime
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 import threading
+from sqlalchemy import text
 
 #  Load environment variables
 load_dotenv()
@@ -328,7 +329,7 @@ def reset_password():
 @auth_app.route('/health/db', methods=['GET'])
 def health_check():
     try:
-        db.session.execute("SELECT 1")
+        db.session.execute(text("SELECT 1"))
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
