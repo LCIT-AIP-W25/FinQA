@@ -14,8 +14,8 @@ import threading
 #  Load environment variables
 load_dotenv()
 
-AUTH_API_URL = "https://finqa-auth-app-ac1o.onrender.com";
-Frontend_URL = "https://finqaai.netlify.app"
+AUTH_API_URL = os.getenv("REACT_APP_AUTH_API_URL")
+Frontend_URL = os.getenv("REACT_APP_Frontend_URL")
 
 #  Initialize Flask App
 auth_app = Flask(__name__)

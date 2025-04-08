@@ -27,7 +27,7 @@ function ChatPage() {
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
 
-    const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
+    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL;
     // const CHATBOT_API_URL = "http://127.0.0.1:5000"
 
     const { setLoading } = useLoader();

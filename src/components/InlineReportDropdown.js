@@ -10,7 +10,7 @@ const InlineReportDropdown = ({ company }) => {
   const [reports, setReports] = useState({});
   const [selectedQuarter, setSelectedQuarter] = useState('');
   const [url, setUrl] = useState('');
-  const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
+  const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL;
 
   useEffect(() => {
     if (!company) return;

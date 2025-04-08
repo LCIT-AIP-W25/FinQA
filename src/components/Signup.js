@@ -16,7 +16,7 @@ function Signup() {
 
     const { setLoading } = useLoader();
 
-    const AUTH_API_URL = "https://finqa-auth-app-ac1o.onrender.com";
+    const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL;
 
     useEffect(() => {
         const requestInterceptor = axios.interceptors.request.use((config) => {

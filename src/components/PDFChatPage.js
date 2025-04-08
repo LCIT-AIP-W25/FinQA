@@ -8,7 +8,7 @@ const PDFChatPage = () => {
     const [currentChat, setCurrentChat] = useState([]);
     const [loading, setLoading] = useState(false);
     const chatEndRef = useRef(null); //  Auto-scroll reference
-    const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
+    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL;
 
 
     useEffect(() => {
