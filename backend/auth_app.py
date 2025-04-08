@@ -325,6 +325,13 @@ def reset_password():
     print("✅ Password Reset Successful!")
     return jsonify({'status': 'success', 'message': 'Password reset successful. You can now login.'})
 
+@auth_app.route('/health/db', methods=['GET'])
+def health_check():
+    try:
+        db.session.execute("SELECT 1")
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 #  Run Authentication App
 if __name__ == '__main__':
