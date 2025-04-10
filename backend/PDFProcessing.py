@@ -9,6 +9,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import time
 from groq_wrapper import GroqWrapper
 from pymongo import MongoClient
+from typing import List, Tuple
 
 # Load environment variables
 load_dotenv()
