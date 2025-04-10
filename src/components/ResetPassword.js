@@ -11,7 +11,7 @@ function ResetPassword() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [message, setMessage] = useState("");
     const { setLoading } = useLoader();
-    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
+    const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL;
 
     const handleReset = async (e) => {
         e.preventDefault();

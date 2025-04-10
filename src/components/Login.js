@@ -15,7 +15,7 @@ function Login() {
 
 
     const { setLoading } = useLoader();
-    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
+    const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL || "http://127.0.0.1:5001";
 
     useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use((config) => {
@@ -46,6 +46,11 @@ function Login() {
             if (response.data.status === "success") {
                 localStorage.setItem("user", JSON.stringify(response.data)); // Store user session
                 localStorage.setItem("userId", response.data.user_id); // Store userId for chat history
+                localStorage.setItem("pdfChat_userId", response.data.user_id);
+                
+                // Clear any stale PDF info from old users
+                localStorage.removeItem("pdfChat_filename");
+
                 navigate('/Chat'); // Redirect after successful login
             }
         } catch (err) {
@@ -118,8 +123,8 @@ function Login() {
 
                                     <div className="d-flex justify-content-between mt-2">
                                         <div>
-                                            <input className="form-check-input" type="checkbox" id="rememberMe" />
-                                            <label className="form-check-label ml-2">Remember me</label>
+                                            {/* <input className="form-check-input" type="checkbox" id="rememberMe" />
+                                            <label className="form-check-label ml-2">Remember me</label> */}
                                         </div>
                                         <Link className='link-line' to='/forget'>
                                             Forgot password?

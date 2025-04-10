@@ -3,7 +3,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/ChatPage.css"; 
-import InlineReportDropdown from "./InlineReportDropdown";
+import ChatHistorySidebar from "./ChatHistorySidebar";
+import MetricsSidebar from "./MetricsSidebar";
+import SlickBar from "./SlickBar";           
+import FloatingPanel from "./FloatingPanel"; 
+import CompanyReportPanel from "./CompanyReportPanel";
 
 
 function ChatPage() {
@@ -16,30 +20,48 @@ function ChatPage() {
     const [selectedCompany, setSelectedCompany] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [companyList, setCompanyList] = useState([]);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showChatSidebar, setShowChatSidebar] = useState(false);
+    const [showMetricsSidebar, setShowMetricsSidebar] = useState(false);
+    const [showCompanyPanel, setShowCompanyPanel] = useState(() => window.innerWidth >= 768);
 
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
 
+    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL || "http://127.0.0.1:5000";
+    // const CHATBOT_API_URL = "http://127.0.0.1:5000"
 
     const { setLoading } = useLoader();
 
-    const CHATBOT_API_URL = "https://finqa-app-w15r.onrender.com";
+    useEffect(() => {
+        const setViewportHeight = () => {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+      
+        setViewportHeight();
+        window.addEventListener('resize', setViewportHeight);
+        return () => window.removeEventListener('resize', setViewportHeight);
+      }, []);
 
-    //  Function to toggle sidebar
-    const toggleSidebar = () => {
-        if (isMetricsOpen) {
-            setIsMetricsOpen(false);
-            setTimeout(() => setIsSidebarOpen(true), 100); // Wait for close animation
-        } else {
-            setIsSidebarOpen(prev => !prev);
-        }
-    };
+    useEffect(() => {
+        window.scrollTo(0, 0);
+      }, []);
+      
+    useEffect(() => {
+        const handleResize = () => {
+          if (window.innerWidth < 768) {
+            setShowCompanyPanel(false);
+          }
+        };
+      
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+      }, []);
 
     useEffect(() => {
         //  Add a global request interceptor
         const requestInterceptor = axios.interceptors.request.use((config) => {
-            // 🚀 Skip loader for PDF upload & processing
+            // Skip loader for PDF upload & processing
             if (!config.url.includes("/upload_pdf") && !config.url.includes("/pdf_status")) {
                 setLoading(true);
             }
@@ -49,7 +71,7 @@ function ChatPage() {
         //  Add a global response interceptor
         const responseInterceptor = axios.interceptors.response.use(
             (response) => {
-                // 🚀 Skip disabling loader for PDF requests (they never triggered it)
+                // Skip disabling loader for PDF requests (they never triggered it)
                 if (!response.config.url.includes("/upload_pdf") && !response.config.url.includes("/pdf_status")) {
                     setLoading(false);
                 }
@@ -70,15 +92,12 @@ function ChatPage() {
         };
     }, [setLoading]);
     
-
-
     //  Auto-scroll to the latest message
     const scrollToBottom = () => {
         if (chatEndRef.current) {
             chatEndRef.current.parentNode.scrollTop = chatEndRef.current.parentNode.scrollHeight;
         }
     };
-
 
     //  Fetch company names from API on component mount
     useEffect(() => {
@@ -144,8 +163,7 @@ function ChatPage() {
         } catch (error) {
             console.error("Error fetching user-specific chat sessions:", error);
         }
-    };
-      
+    }; 
 
     const sendMessage = async () => { //newly added today
         if (!message.trim()) return;
@@ -192,8 +210,6 @@ function ChatPage() {
     
         setMessage(""); // Clear input field
     };
-    
-    
 
     //  Save message to backend (SQLite)
     const saveChatToBackend = async (chatMessage) => {
@@ -205,6 +221,9 @@ function ChatPage() {
                 session_id: sessionId,
                 user_id: userId
             });
+
+            // Update chat history after saving message
+            await fetchAllChatSessions();
         } catch (error) {
             console.error("Error saving chat:", error);
         }
@@ -262,12 +281,14 @@ function ChatPage() {
         }
     };       
 
-    //  Handle Sign Out
     const handleSignOut = () => {
-        localStorage.removeItem("user"); // Remove user data from local storage
-        localStorage.removeItem("sessionId"); // Remove session ID
-        navigate("/login"); // Redirect to login page
-    };
+        localStorage.removeItem("user");              // full user info
+        localStorage.removeItem("userId");            // used by chatbot
+        localStorage.removeItem("sessionId");         // current chat session
+        localStorage.removeItem("pdfChat_userId");    // used by PDF Q&A
+        localStorage.removeItem("pdfChat_filename");  // uploaded PDF
+        navigate("/login");                           // redirect to login
+    };    
     
         // Store custom titles dynamically in localStorage
     const getOrGenerateTitle = (sessionId, chatMessages) => {
@@ -284,7 +305,7 @@ function ChatPage() {
         newTitle = firstMessage.slice(0, 20); // First 20 characters of the first message
         } else {
         // Use timestamp if no messages
-        newTitle = `Chat - ${new Date().toLocaleString()}`;
+        newTitle = `Chat - `;
         }
     
         // Save the new title
@@ -306,10 +327,11 @@ function ChatPage() {
         setUploadStatus("loading");
         setUploadMessage("⏳ Uploading...");
         setHoverMessage("Uploading PDF...");
-    
+        
+        const userId = localStorage.getItem("userId");
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("company", "Unknown");
+        formData.append("user_id", userId);
     
         try {
             const response = await axios.post(`${CHATBOT_API_URL}/upload_pdf`, formData, {
@@ -329,7 +351,11 @@ function ChatPage() {
             setHoverMessage('PDF Processing...');
     
             //  Wait for processing to complete
+            
+            localStorage.setItem("pdfChat_userId", userId);
+            localStorage.setItem("pdfChat_filename", response.data.filename);
             checkProcessingStatus(response.data.filename);
+
         } catch (error) {
             console.error("Upload failed:", error);
             setUploadStatus("error");
@@ -342,7 +368,9 @@ function ChatPage() {
     const checkProcessingStatus = async (filename) => {
         const interval = setInterval(async () => {
             try {
-                const statusResponse = await axios.get(`${CHATBOT_API_URL}/pdf_status/${filename}`);
+                const userId = localStorage.getItem("userId");
+                const statusResponse = await axios.get(`${CHATBOT_API_URL}/pdf_status/${userId}/${filename}`);
+
                 if (statusResponse.data.status === "done") {
                     clearInterval(interval);
                     setUploadMessage("✅ Processing completed! Redirecting...");
@@ -366,17 +394,6 @@ function ChatPage() {
     const filteredMetrics = companyMetrics.filter(metric => 
     metric.toLowerCase().includes(metricsSearchTerm.toLowerCase())
     );
-
-    const [isMetricsOpen, setIsMetricsOpen] = useState(false);
-
-    const toggleMetrics = () => {
-    if (isSidebarOpen) {
-        setIsSidebarOpen(false);
-        setTimeout(() => setIsMetricsOpen(true), 100);
-    } else {
-        setIsMetricsOpen(prev => !prev);
-    }
-    };
 
     // Handle metric selection
     const handleMetricClick = (metric) => {
@@ -423,7 +440,7 @@ function ChatPage() {
     return (
         <section className="chat-app-container">
             <div className="chat-app-wrapper">
-                {/* ✅ Header Section with User Info */}
+                {/* Header Section with User Info */}
                 <div className="chat-app-header">
                     <div className="chat-app-logo">
                         <Link to="/chat">
@@ -453,7 +470,7 @@ function ChatPage() {
                                                     <p className="chat-app-profile-name">Hi, {user.username}!</p>
                                                 </div>
                                                 <hr />
-                                                <button className="chat-app-dropdown-item">My Profile</button>
+                                                {/* <button className="chat-app-dropdown-item">My Profile</button> */}
                                                 <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}>Sign Out</button>
                                             </div>
                                         )}
@@ -465,77 +482,83 @@ function ChatPage() {
                         </div>
                     </div>
                 </div>
+                <SlickBar
+                    onToggleCompany={() => {
+                        setShowCompanyPanel(prev => !prev);
+                        setShowChatSidebar(false);
+                        setShowMetricsSidebar(false);
+                    }}
+                    onToggleChat={() => {
+                        setShowChatSidebar(prev => !prev);
+                        setShowCompanyPanel(false);
+                        setShowMetricsSidebar(false);
+                    }}
+                    onToggleMetrics={() => {
+                        setShowMetricsSidebar(prev => !prev);
+                        setShowCompanyPanel(false);
+                        setShowChatSidebar(false);
+                    }}
+                    />
 
                 <div className="chat-app-content">
 
-
-                    {/* ✅ Sidebar Section */}
-                    <div className={`chat-app-sidebar ${isSidebarOpen ? "active" : ""}`}>
-                        <div className="chat-app-company-search">
-                            <input
-                                type="text"
-                                placeholder="Search company..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="chat-app-search-input"
+                {showCompanyPanel && (
+                        <FloatingPanel onClose={() => setShowCompanyPanel(false)}>
+                            <CompanyReportPanel
+                            searchTerm={searchTerm}
+                            setSearchTerm={setSearchTerm}
+                            companyList={companyList}
+                            selectedCompany={selectedCompany}
+                            setSelectedCompany={setSelectedCompany}
+                            handleFileUpload={handleFileUpload}
+                            uploadStatus={uploadStatus}
+                            uploadMessage={uploadMessage}
+                            hoverMessage={hoverMessage}
+                            setUploadMessage={setUploadMessage}
+                            setShowCompanyPanel={setShowCompanyPanel} 
                             />
-                            <div className="chat-app-company-list">
-                                {companyList
-                                .filter(company => company.toLowerCase().includes(searchTerm.toLowerCase()))
-                                .map((company) => (
-                                    <div
-                                    key={company}
-                                    className={`chat-app-company-item ${selectedCompany === company ? 'selected' : ''}`}
-                                    onClick={() => setSelectedCompany(company)}
-                                    >
-                                    {company}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <h5 className="chat-app-chat-history-header">Chat History</h5>
-                        {chatHistory.length === 0 ? (
-                            <p>No previous chats</p>
-                        ) : (
-                            <div className="chat-app-chat-history">
-                                {chatHistory.map((chat) => (
-                                    <div
-                                        key={chat.session_id}
-                                        className={`chat-app-chat-item ${sessionId === chat.session_id ? "active" : ""}`}
-                                        onClick={() => loadChatSession(chat.session_id)}
-                                    >
-                                        <div className="chat-app-chat-content">
-                                            <p className="chat-app-chat-title">
-                                                {getOrGenerateTitle(chat.session_id, chat.messages)}
-                                            </p>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteChatSession(chat.session_id);
-                                                }}
-                                                className="chat-app-delete-btn"
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        </FloatingPanel>
                         )}
-                    </div>
-                    
-                    {/* Sidebar Menu Button */}
-                    <button 
-                        className="chat-app-menu-btn" 
-                        onClick={toggleSidebar}
-                    >
-                        ☰
-                    </button>    
 
-                    {/* ✅ Chat Window Section */}
+
+                    {showChatSidebar && (
+                        <FloatingPanel onClose={() => setShowChatSidebar(false)} position="left">
+                            <ChatHistorySidebar
+                            searchTerm={searchTerm}
+                            setSearchTerm={setSearchTerm}
+                            companyList={companyList}
+                            selectedCompany={selectedCompany}
+                            setSelectedCompany={setSelectedCompany}
+                            chatHistory={chatHistory}
+                            sessionId={sessionId}
+                            loadChatSession={loadChatSession}
+                            deleteChatSession={deleteChatSession}
+                            getOrGenerateTitle={getOrGenerateTitle}
+                            setShowChatSidebar={setShowChatSidebar}
+                            />
+                        </FloatingPanel>
+                        )}
+
+                    {showMetricsSidebar && (
+                        <FloatingPanel onClose={() => setShowMetricsSidebar(false)} position="left">
+                            <MetricsSidebar
+                            selectedCompany={selectedCompany}
+                            metricsSearchTerm={metricsSearchTerm}
+                            setMetricsSearchTerm={setMetricsSearchTerm}
+                            filteredMetrics={filteredMetrics}
+                            selectedMetric={selectedMetric}
+                            handleMetricClick={handleMetricClick}
+                            setShowMetricsSidebar={setShowMetricsSidebar}
+                            />
+                        </FloatingPanel>
+                        )}
+
+  
+
+                    {/* Chat Window Section */}
                     <div className="chat-app-window">
 
-                        {/* ✅ Display the selected company above the chat window */}
+                        {/* Display the selected company above the chat window */}
                         <div className="chat-app-selected-company">
                             {selectedCompany ? (
                                 <>
@@ -563,7 +586,7 @@ function ChatPage() {
                             <div ref={chatEndRef}></div>
                         </div>
 
-                        {/* ✅ Chat Input Box */}
+                        {/* Chat Input Box */}
                         <div className="chat-app-input-section">
                             <input
                                 type="text"
@@ -574,100 +597,16 @@ function ChatPage() {
                                 onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                             />
 
-                            {/* Upload PDF Button */}
-                            <input
-                                type="file"
-                                id="pdfUpload"
-                                accept="application/pdf"
-                                style={{ display: "none" }}
-                                onChange={(e) => handleFileUpload(e)}
-                            />
-                            <button
-                                className="chat-app-upload-btn"
-                                onClick={() => document.getElementById("pdfUpload").click()}
-                            >
-                                📄 PDF
-                            </button>
 
-                            {/* Upload Status Icon with Hover Effect */}
-                            {uploadStatus && (
-                                <span 
-                                    className="upload-status-icon"
-                                    data-hover={hoverMessage} // Full message appears on hover
-                                    onMouseEnter={() => setUploadMessage(hoverMessage)} 
-                                    onMouseLeave={() => setUploadMessage(uploadStatus === "error" ? "❌" : "⏳")}
-                                >
-                                    {uploadMessage} {/* Shows only ✅, ❌, or ⏳ */}
-                                </span>
-                            )}
-
-
-                            {/* ✅ Group buttons together for responsiveness */}
+                            {/* Group buttons together for responsiveness */}
                             <div className="chat-app-button-group">
-                                <button onClick={sendMessage} className="chat-app-send-btn">Send</button>
-                                <button onClick={startNewChat} className="chat-app-new-chat-btn">New Chat</button>
+                                <button onClick={sendMessage} className="chat-button send">✉️ Send</button>
+                                <button onClick={startNewChat} className="chat-button new">🔄 New Chat</button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Metrics Sidebar */}
-                    <div className={`metrics-sidebar ${isMetricsOpen ? "active" : ""}`}>
-                        
-                        <div className="metrics-header-container">
-                            <h3 className="metrics-header">Available Financial Reports & Metrics</h3>
-                            
-                            
-                            <div className="metrics-controls">
-                                    <InlineReportDropdown company={selectedCompany} />
-                                    
-                                    <div className="metrics-search">
-                                        <input
-                                        type="text"
-                                        placeholder="Search metrics..."
-                                        value={metricsSearchTerm}
-                                        onChange={(e) => setMetricsSearchTerm(e.target.value)}
-                                        className="metrics-search-input"
-                                        />
-                                    </div>
-                                    </div>
-                                    
-                                    <div className="metrics-header-com">Ask the chatbot about any metric!</div>
-                                </div>
-                        
-                                <div className="metrics-scroll-container">
-                                    {filteredMetrics.length > 0 ? (
-                                        <div className="metrics-container">
-                                        {filteredMetrics.map((metric, index) => (
-                                            <div 
-                                            key={index} 
-                                            className={`metric-item ${
-                                                selectedMetric === metric ? 'selected' : 
-                                                metricsSearchTerm && 
-                                                metric.toLowerCase().includes(metricsSearchTerm.toLowerCase()) 
-                                                ? 'highlight' 
-                                                : ''
-                                            }`}
-                                            onClick={() => handleMetricClick(metric)}
-                                            >
-                                            {metric}
-                                            </div>
-                                        ))}
-                                        </div>
-                                    ) : (
-                                        <p className="no-metrics">
-                                        {metricsSearchTerm ? "No matching metrics found" : "No metrics available"}
-                                        </p>
-                                    )}
-                                    </div>
-                    </div>
 
-                    {/* Metrics Menu Button */}
-                    <button 
-                        className="metrics-menu-btn" 
-                        onClick={toggleMetrics}
-                    >
-                        📊
-                    </button>
                 </div>
             </div>
         </section>

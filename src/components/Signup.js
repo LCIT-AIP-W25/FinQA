@@ -16,7 +16,7 @@ function Signup() {
 
     const { setLoading } = useLoader();
 
-    const AUTH_API_URL = "https://finqa-auth-app-w15r.onrender.com";
+    const AUTH_API_URL = process.env.REACT_APP_AUTH_API_URL;
 
     useEffect(() => {
         const requestInterceptor = axios.interceptors.request.use((config) => {
@@ -54,7 +54,7 @@ function Signup() {
             });
     
             if (response.data.status === "success") {
-                setMessage("✅ Verification email sent! Check your inbox & spam folder.");
+                setMessage("✅ Please check your inbox/spam. Email may take up to 2 minutes.");
             } else {
                 setError("❌ " + response.data.message);
             }

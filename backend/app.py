@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import uuid
 import os
-from real_chatbot import query_llm, extract_sql_and_notes
+from real_chatbot import query_llm, extract_sql_and_notes, execute_sql
 from real_chatbot_rag import query_llm_groq, initialize_components
 from dotenv import load_dotenv
 import oracledb
@@ -17,32 +17,19 @@ from groq_wrapper import GroqWrapper
 from groq_key_manager import key_manager
 import shutil
 import stat
+from datetime import datetime as dt
+import psutil
 import logging
 
-import nltk
-nltk.download('wordnet')
-nltk.download('punkt')
+# Configure logging once
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Configure Oracle Wallet location
-WALLET_DIR = "/opt/wallet"
-os.environ["TNS_ADMIN"] = WALLET_DIR
-
-def get_db_connection():
-    # Load credentials from environment variables (set in Render Secrets)
-    db_user = os.getenv("DB_USER")
-    db_password = os.getenv("DB_PASSWORD")
-    db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
-
-    # Establish connection using the wallet
-    connection = oracledb.connect(
-        user=db_user,
-        password=db_password,
-        dsn=db_dsn,
-        config_dir=WALLET_DIR,  # Points to /opt/wallet
-        wallet_location=WALLET_DIR,
-        wallet_password=os.getenv("WALLET_PASSWORD")  # Optional (if ewallet.p12 is used)
-    )
-    return connection
+def log_memory(tag="MEMORY"):
+    process = psutil.Process(os.getpid())
+    mem = psutil.virtual_memory()
+    rss = process.memory_info().rss / (1024 * 1024)  # Convert to MB
+    logging.info(f"[{tag}] Total: {mem.total / (1024 ** 3):.1f} GB | Used: {mem.used / (1024 ** 3):.1f} GB | Free: {mem.free / (1024 ** 3):.1f} GB")
+    logging.info(f"[{tag}] Process RSS: {rss:.1f} MB | Threads: {process.num_threads()}")
 
 
 #----------------------------------------Environment Setup----------------------------------------
@@ -56,43 +43,86 @@ key_manager.initialize_keys(
     summarize_keys=os.getenv("GROQ_API_KEY_SUMMARIZE").split(",")
 )
 
+# ---------------------------------------DB Connect------------------------------------------------------
+
+def get_db_connection():
+    # Load credentials from environment variables (set in Render Secrets)
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
+    db_wallet = os.getenv("DB_WALLET_LOCATION")
+
+    # Establish connection using the wallet
+    connection = oracledb.connect(
+        user=db_user,
+        password=db_password,
+        dsn=db_dsn,
+        config_dir=db_wallet,  # Points to /opt/wallet
+        wallet_location=db_wallet,
+        wallet_password=db_password,  # Optional (if ewallet.p12 is used)
+        retry_count=3,
+        retry_delay=1
+    )
+    return connection
+
 #----------------------------------------Flask App Initialization----------------------------------------
 app = Flask(__name__)
+log_memory("Startup")
+
 CORS(app)
-
-# Initialize thread-local storage for database sessions
-db_lock = threading.Lock()
-
-#---------------------------------------Initialize RAG components----------------------------------------
-# Initialize RAG system
-rag_system = FinancialRAGSystem()
-
-try:
-    if not initialize_components():
-        raise RuntimeError("Failed to initialize RAG components")
-    print("✅ All components initialized successfully")
-except Exception as e:
-    print(f"❌ Failed to initialize components: {e}")
-    # You might want to exit here if RAG is critical
-
-#----------------------------------------Database Setup----------------------------------------
-# SQLite DB Setup
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///chats.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('POSTGRES_URI')
+# 'sqlite:///chats.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 20,
+    'pool_size': 10,
     'max_overflow': 0,
     'pool_pre_ping': True
 }
-db = SQLAlchemy(app)
 
-# Retrieve database configuration
-db_config = {
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "dsn": os.getenv("DB_DSN"),
-    "wallet_location": os.getenv("DB_WALLET_LOCATION"),
-}
+db = SQLAlchemy(app)
+db_lock = threading.Lock()
+
+#---------------------------------------Initialize RAG components----------------------------------------
+# Lazy initialization of RAG system and components
+rag_system = None
+components_initialized = False
+
+@app.before_request
+def ensure_components():
+    global rag_system, components_initialized
+    if not components_initialized:
+        rag_system = FinancialRAGSystem()
+        if initialize_components():
+            components_initialized = True
+            log_memory("RAG Initialized")
+        else:
+            raise RuntimeError("RAG initialization failed")
+        
+@app.route('/health', methods=['GET'])
+def health_check():
+    status = {"timestamp": dt.utcnow().isoformat()}
+
+    process = psutil.Process(os.getpid())
+    mem = psutil.virtual_memory()
+    status["memory"] = {
+        "total_gb": round(mem.total / (1024 ** 3), 2),
+        "used_gb": round(mem.used / (1024 ** 3), 2),
+        "rss_mb": round(process.memory_info().rss / (1024 * 1024), 1),
+        "threads": process.num_threads()
+    }
+
+    status["rag_initialized"] = "✅" if components_initialized else "❌"
+
+    try:
+        conn = get_db_connection()
+        conn.ping()
+        conn.close()
+        status["oracle_db"] = "✅ Connected"
+    except Exception as e:
+        status["oracle_db"] = f"❌ Failed: {str(e)}"
+
+    return jsonify(status), 200
+
 
 #----------------------------------------Database Models----------------------------------------
 # Chat Model
@@ -100,12 +130,14 @@ class ChatSession(db.Model):
     id = db.Column(db.String(50), primary_key=True)
     title = db.Column(db.String(100))
     user_id = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
 
 class Chat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender = db.Column(db.String(10))  # 'user' or 'bot'
     message = db.Column(db.Text)
     session_id = db.Column(db.String(50), db.ForeignKey('chat_session.id'))
+    created_at = db.Column(db.DateTime, default=dt.utcnow)
 
 # Initialize the DB
 with app.app_context():
@@ -185,7 +217,7 @@ def get_all_sessions(user_id):
     with db_lock:
         try:
             sessions = ChatSession.query.filter_by(user_id=user_id).all()
-            session_list = [{'session_id': session.id, 'title': session.title} for session in sessions]
+            session_list = [{'session_id': session.id, 'title': session.title, 'created_at': session.created_at.isoformat()} for session in sessions]
             return jsonify(session_list)
         except Exception as e:
             return jsonify({"status": "Error", "message": str(e)}), 500
@@ -239,9 +271,8 @@ def get_chat(session_id):
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
 def query_chatbot():
+    log_memory("Before query_chatbot")
     data = request.get_json()
-    print("Received data:", data)
-
     user_question = data.get("question")
     session_id = data.get("session_id")
     user_id = data.get("user_id")
@@ -251,54 +282,25 @@ def query_chatbot():
         return jsonify({"error": "Invalid request data - Missing required fields"}), 400
 
     try:
-        # Get chat history within the main thread context
         with db_lock:
             chat_messages = Chat.query.filter_by(session_id=session_id).order_by(Chat.id).all()
             chat_history = [{'sender': msg.sender, 'message': msg.message} for msg in chat_messages]
 
-        # Create a new app context for thread safety
-        def run_in_context(fn, *args):
-            with app.app_context():
-                return fn(*args)
+        numerical_data, numerical_status = handle_numerical_query(user_question, selected_company, session_id)
+        contextual_data, contextual_status = handle_contextual_query(user_question, selected_company, session_id)
 
-        # Use ThreadPoolExecutor to run both queries concurrently
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            # Pass the pre-fetched chat_history to avoid context issues
-            future_num = executor.submit(
-                run_in_context, 
-                handle_numerical_query, 
-                user_question, 
-                selected_company, 
-                session_id
-            )
-            future_ctx = executor.submit(
-                run_in_context, 
-                handle_contextual_query, 
-                user_question, 
-                selected_company, 
-                session_id
-            )
-
-            # Wait for both futures to complete
-            numerical_data, numerical_status = future_num.result()
-            contextual_data, contextual_status = future_ctx.result()
-
-        # Process results
         numerical_text = numerical_data.get('response') if numerical_status == 200 else str(numerical_data.get('error'))
         contextual_text = contextual_data.get('response') if contextual_status == 200 else str(contextual_data.get('error'))
 
-        print("SQL Output:", numerical_text)
-        print("RAG Output:", contextual_text)
-        
-        # Run summarizer
         summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
 
+        log_memory("After query_chatbot")
         return jsonify({"response": summarized_response}), 200
 
     except Exception as e:
         print(f"Error in query_chatbot: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
-    
+        return jsonify({"error": "Internal server error"}), 500    
+
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
     """API Endpoint to get company names"""
@@ -478,53 +480,18 @@ def get_company_names_from_db():
     
     return companies
 
-def execute_sql(query, connection=None):
-    """Executes the SQL query and handles errors.
-       Returns (results, columns, exec_time, error_msg)"""
-    conn = None
-    try:
-        # Create new connection if none provided
-        own_connection = connection is None
-        if own_connection:
-            conn = get_db_connection()
-        else:
-            conn = connection
-        
-        cursor = conn.cursor()
-        start_time = time.time()
-        cursor.execute(query.rstrip(";"))
-        
-        # Only fetch if it's a SELECT query
-        if query.strip().lower().startswith("select"):
-            results = cursor.fetchall()
-            columns = [desc[0] for desc in cursor.description] if cursor.description else []
-        else:
-            results = []
-            columns = []
-            conn.commit()  # Commit for DML operations
-            
-        execution_time = round(time.time() - start_time, 4)
-        return results, columns, execution_time, ""
-        
-    except oracledb.DatabaseError as e:
-        logging.error("Database error: %s", e)
-        return None, None, None, str(e)
-    finally:
-        try:
-            if 'cursor' in locals():
-                cursor.close()
-            if own_connection and conn:
-                conn.close()
-        except Exception as e:
-            logging.warning("Error closing connection: %s", e)
-
+# Retrieve database configuration
+db_config = {
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "dsn": os.getenv("DB_DSN"),
+    "wallet_location": os.getenv("DB_WALLET_LOCATION"),
+}
 
 def handle_numerical_query(user_question, selected_company, session_id=None):
     try:
         if not selected_company:
             return {"error": "No company selected for numerical query"}, 400
-        
-        connection = get_db_connection()
         
         ddl_directory = "Oracle_DDLs"
         model_name = "llama-3.3-70b-versatile"
@@ -567,16 +534,12 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
                 if re.search(pattern, sql_query, re.IGNORECASE):
                     return {"error": "Failed to run SQL query due to security concerns."}, 500
 
-            results, columns, exec_time, error_msg = execute_sql(sql_query, connection)
+            results, columns, exec_time, error_msg = execute_sql(sql_query, db_config)
             if results:
-                # Properly format the numerical results
-                if isinstance(results[0], (list, tuple)):  # Handle row results
-                    formatted_results = str(results[0][0]) if results[0] else "No data found"
-                else:  # Handle scalar results
-                    formatted_results = str(results[0]) if results else "No data found"
+                formatted_results = results
+                
+                print(formatted_results)
                 return {"response": formatted_results}, 200
-            else:
-                return {"error": error_msg}, 500
         else:
             return {"error": "Failed to extract SQL query from LLM response."}, 500
     except Exception as e:
@@ -649,102 +612,96 @@ def robust_delete(path):
 
 @app.route("/upload_pdf", methods=["POST"])
 def upload_pdf():
-    """Robust PDF upload handler with cross-platform folder management"""
+    """User-isolated PDF upload and processing"""
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
-    company_name = request.form.get("company", "Unknown")
+    user_id = str(request.form.get("user_id"))  # 🧠 Must be passed from frontend!
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id in request"}), 400
 
     if not file.filename.endswith(".pdf"):
         return jsonify({"error": "Invalid file format"}), 400
 
-    # Folder management
-    folders_to_manage = {
-        "uploads": UPLOAD_FOLDER,
-        "embeddings": "financial_reports_faiss_index"
-    }
+    # Save under a user-specific folder
+    user_upload_folder = os.path.join(UPLOAD_FOLDER, user_id)
+    os.makedirs(user_upload_folder, exist_ok=True)
+
+    file_path = os.path.join(user_upload_folder, file.filename)
 
     try:
-        # Handle folder cleanup
-        for name, path in folders_to_manage.items():
-            print(f"🔄 Managing {name} folder at {path}")
-            try:
-                robust_delete(path)
-                os.makedirs(path, exist_ok=True)
-                print(f"✅ Successfully recreated {path}")
-            except Exception as e:
-                print(f"❌ Critical error handling {path}: {e}")
-                return jsonify({
-                    "error": f"Could not initialize {name} directory",
-                    "details": str(e)
-                }), 500
-
-        # Handle file upload
-        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        try:
-            file.save(file_path)
-            print(f"✅ File saved successfully: {file_path}")
-        except Exception as e:
-            print(f"❌ Error saving file: {e}")
-            return jsonify({"error": f"Failed to save file: {e}"}), 500
-
-        # Process in background
-        pdf_status[file.filename] = "processing"
-        
-        def process():
-            try:
-                print(f"⚙️ Starting PDF processing: {file_path}")
-                success = rag_system.process_pdf(file_path, company_name)
-                pdf_status[file.filename] = "done" if success else "failed"
-                print(f"✅ PDF processing completed with status: {pdf_status[file.filename]}")
-            except Exception as e:
-                pdf_status[file.filename] = "failed"
-                print(f"❌ PDF processing failed: {e}")
-
-        threading.Thread(target=process).start()
-        
-        return jsonify({
-            "message": "File uploaded! Processing in background...",
-            "filename": file.filename,
-            "status_check": f"/pdf_status/{file.filename}"
-        })
-
+        # Save PDF to user folder
+        file.save(file_path)
+        print(f"✅ Saved PDF for user '{user_id}' at {file_path}")
     except Exception as e:
-        print(f"❌ Unexpected error in upload_pdf: {e}")
-        return jsonify({
-            "error": "PDF processing failed",
-            "details": str(e)
-        }), 500
+        print(f"❌ Error saving PDF: {e}")
+        return jsonify({"error": f"Failed to save file: {e}"}), 500
+
+    # Track status by user+filename combo
+    status_key = f"{user_id}:{file.filename}"
+    pdf_status[status_key] = "processing"
+
+    # Background processing thread
+    def process():
+        try:
+            print(f"⚙️ Processing PDF for user: {user_id}")
+            success = rag_system.process_pdf(file_path, user_id)
+            pdf_status[status_key] = "done" if success else "failed"
+        except Exception as e:
+            pdf_status[status_key] = "failed"
+            print(f"❌ PDF processing failed: {e}")
+
+    threading.Thread(target=process).start()
+
+    return jsonify({
+        "message": "File uploaded! Processing in background...",
+        "filename": file.filename,
+        "user_id": user_id,
+        "status_check": f"/pdf_status/{user_id}/{file.filename}"
+    })
 
 
-# Query Financial Data
 @app.route("/query_pdf_chatbot", methods=["POST"])
 def query_pdf_chatbot():
     try:
         data = request.get_json()
-        print("Received data:", data)  # Debugging log
+        print("Received data:", data)
+
         question = data.get("question", "")
+        user_id = data.get("user_id")
+        filename = data.get("filename")
 
-        if not question:
-            return jsonify({"response": "Please ask a valid question."})
+        if not question or not user_id or not filename:
+            return jsonify({"response": "Missing required fields: question, user_id, or filename"}), 400
 
-        # Query PDF system
-        response, sources = rag_system.query_financial_data(question)
+        print(f"📥 Querying for user: {user_id}, file: {filename}, question: {question}")
 
-        print("Response generated:", response)  # Debugging log
+        # Query MongoDB vector store
+        response, sources = rag_system.query_financial_data(
+            query=question,
+            user_id=user_id,
+            filename=filename
+        )
 
-        return jsonify({"response": response, "sources": sources})
+        print("✅ Response generated from Groq LLM")
+        return jsonify({
+            "response": response,
+            "sources": sources
+        })
 
     except Exception as e:
-        print("Error processing request:", str(e))
+        print("❌ Error processing query:", str(e))
         return jsonify({"response": "Internal server error"}), 500
 
+
 # API to Check PDF Processing Status
-@app.route("/pdf_status/<filename>", methods=["GET"])
-def check_pdf_status(filename):
-    """Checks if a PDF has finished processing."""
-    status = pdf_status.get(filename, "not_found")
+@app.route("/pdf_status/<user_id>/<filename>", methods=["GET"])
+def check_pdf_status(user_id, filename):
+    """Check PDF processing status for a specific user and file."""
+    status_key = f"{user_id}:{filename}"
+    status = pdf_status.get(status_key, "not_found")
     return jsonify({"status": status})
 
 #----------------------------------------Show Company Metrics----------------------------------
@@ -795,12 +752,12 @@ def get_metrics_for_company(company_name):
 @app.route('/api/company_metrics/<company_name>', methods=['GET'])
 def fetch_company_metrics(company_name):
     """API endpoint to get all available metrics for a company."""
-    company_name = company_name.upper() 
+    company_name = company_name.upper()  # Normalize input
     response = get_metrics_for_company(company_name)
 
     print(f"DEBUG: API Response Sent → {response}")  # Log API output
 
-    return jsonify(response) 
+    return jsonify(response)  # Only return JSON object (removes tuple)
 
 
 #----------------------------------------Main Execution----------------------------------------

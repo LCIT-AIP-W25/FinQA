@@ -9,9 +9,14 @@ import secrets
 import datetime
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+import threading
+from sqlalchemy import text
 
 #  Load environment variables
 load_dotenv()
+
+AUTH_API_URL = os.getenv("REACT_APP_AUTH_API_URL")
+Frontend_URL = os.getenv("REACT_APP_Frontend_URL")
 
 #  Initialize Flask App
 auth_app = Flask(__name__)
@@ -19,7 +24,8 @@ CORS(auth_app)
 bcrypt = Bcrypt(auth_app)
 
 #  SQLite Configuration
-auth_app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+auth_app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('POSTGRES_URI')
+# 'sqlite:///users.db'
 auth_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 #  Configure SendGrid SMTP for Email Sending
@@ -80,20 +86,22 @@ def send_verification_email(email, verification_url):
             html_content=email_content
         )
 
-        sg = SendGridAPIClient(sendgrid_api_key)
-        response = sg.send(message)
-
-        if response.status_code in [200, 202]:
-            print(f"✅ Verification email sent to {email}")
-            return True
-        else:
-            print(f"❌ SendGrid failed with status code {response.status_code}")
-            return False
+        # ✅ Send email in the background
+        threading.Thread(target=async_send_email, args=(message, sendgrid_api_key)).start()
+        return True
 
     except Exception as e:
         print(f"❌ Email sending failed: {str(e)}")
         return False
 
+
+def async_send_email(message, api_key):
+    try:
+        sg = SendGridAPIClient(api_key)
+        response = sg.send(message)
+        print(f"✅ Async email sent! Status Code: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Async email failed: {str(e)}")
 
 # 🔐 Signup Route (with Email Verification)
 @auth_app.route('/signup', methods=['POST'])
@@ -112,7 +120,7 @@ def signup():
             verification_token = secrets.token_hex(16)
             existing_user.verification_token = verification_token
             db.session.commit()
-            verification_url = f"http://127.0.0.1:5001/verify_email/{verification_token}"
+            verification_url = f"{AUTH_API_URL}/verify_email/{verification_token}"
             send_verification_email(email, verification_url)  #  Send new verification email
             return jsonify({'status': 'success', 'message': 'Verification email resent. Please check your inbox and spam folder.'})
 
@@ -125,7 +133,7 @@ def signup():
     db.session.commit()
 
     #  Send verification email
-    verification_url = f"http://127.0.0.1:5001/verify_email/{verification_token}"
+    verification_url = f"{AUTH_API_URL}/verify_email/{verification_token}"
     send_verification_email(email, verification_url)
 
     return jsonify({'status': 'success', 'message': 'Verification email sent! Please check your inbox and spam folder.'})
@@ -152,10 +160,10 @@ def verify_email(token):
             <body style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
                 <h2 style="color: #28a745;">✅ Email Already Verified!</h2>
                 <p>You can log in now.</p>
-                <a href="http://localhost:3000/login">Go to Login</a>
+                <a href="{frontend_url}/login">Go to Login</a>
             </body>
         </html>
-        """, 400
+        """.format(frontend_url=Frontend_URL), 400
 
     #  Mark email as verified
     user.is_verified = True
@@ -165,15 +173,15 @@ def verify_email(token):
     return """
     <html>
         <head>
-            <meta http-equiv="refresh" content="3;url=http://localhost:3000/login">
+            <meta http-equiv="refresh" content="3;url={frontend_url}/login">
         </head>
         <body style="text-align: center; font-family: Arial, sans-serif; margin-top: 50px;">
             <h2 style="color: #28a745;">✅ Email Verified Successfully!</h2>
             <p>You will be redirected to the login page shortly.</p>
-            <p>If not redirected, <a href="http://localhost:3000/login">click here</a>.</p>
+            <p>If not redirected, <a href="{frontend_url}/login">click here</a>.</p>
         </body>
     </html>
-    """, 200
+    """.format(frontend_url=Frontend_URL), 200
 
 
 # 🔐 Login Route
@@ -224,7 +232,7 @@ def forget_password():
     user.reset_token_expiry = expiry_time
     db.session.commit()
 
-    reset_url = f"http://localhost:3000/reset_password/{reset_token}"
+    reset_url = f"{Frontend_URL}/reset_password/{reset_token}"
 
     #  HTML Email Template with Clickable Button
     email_content = f"""
@@ -270,10 +278,10 @@ def forget_password():
             html_content=email_content  #  Use HTML content
         )
 
-        sg = SendGridAPIClient(os.getenv('MAIL_PASSWORD'))
-        response = sg.send(message)
+        threading.Thread(target=async_send_email, args=(message, os.getenv('MAIL_PASSWORD'))).start()
 
-        print(f"✅ Email sent successfully! Status Code: {response.status_code}")
+        print("📤 Password reset email sent (queued for async sending).")
+        
         return jsonify({'status': 'success', 'message': 'Password reset link sent to your email.', 'reset_url': reset_url})
 
     except Exception as e:
@@ -318,6 +326,13 @@ def reset_password():
     print("✅ Password Reset Successful!")
     return jsonify({'status': 'success', 'message': 'Password reset successful. You can now login.'})
 
+@auth_app.route('/health/db', methods=['GET'])
+def health_check():
+    try:
+        db.session.execute(text("SELECT 1"))
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 #  Run Authentication App
 if __name__ == '__main__':
