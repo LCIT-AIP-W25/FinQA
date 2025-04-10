@@ -612,102 +612,96 @@ def robust_delete(path):
 
 @app.route("/upload_pdf", methods=["POST"])
 def upload_pdf():
-    """Robust PDF upload handler with cross-platform folder management"""
+    """User-isolated PDF upload and processing"""
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
-    company_name = request.form.get("company", "Unknown")
+    user_id = str(request.form.get("user_id"))  # 🧠 Must be passed from frontend!
+
+    if not user_id:
+        return jsonify({"error": "Missing user_id in request"}), 400
 
     if not file.filename.endswith(".pdf"):
         return jsonify({"error": "Invalid file format"}), 400
 
-    # Folder management
-    folders_to_manage = {
-        "uploads": UPLOAD_FOLDER,
-        "embeddings": "financial_reports_faiss_index"
-    }
+    # Save under a user-specific folder
+    user_upload_folder = os.path.join(UPLOAD_FOLDER, user_id)
+    os.makedirs(user_upload_folder, exist_ok=True)
+
+    file_path = os.path.join(user_upload_folder, file.filename)
 
     try:
-        # Handle folder cleanup
-        for name, path in folders_to_manage.items():
-            print(f"🔄 Managing {name} folder at {path}")
-            try:
-                robust_delete(path)
-                os.makedirs(path, exist_ok=True)
-                print(f"✅ Successfully recreated {path}")
-            except Exception as e:
-                print(f"❌ Critical error handling {path}: {e}")
-                return jsonify({
-                    "error": f"Could not initialize {name} directory",
-                    "details": str(e)
-                }), 500
-
-        # Handle file upload
-        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-        try:
-            file.save(file_path)
-            print(f"✅ File saved successfully: {file_path}")
-        except Exception as e:
-            print(f"❌ Error saving file: {e}")
-            return jsonify({"error": f"Failed to save file: {e}"}), 500
-
-        # Process in background
-        pdf_status[file.filename] = "processing"
-        
-        def process():
-            try:
-                print(f"⚙️ Starting PDF processing: {file_path}")
-                success = rag_system.process_pdf(file_path, company_name)
-                pdf_status[file.filename] = "done" if success else "failed"
-                print(f"✅ PDF processing completed with status: {pdf_status[file.filename]}")
-            except Exception as e:
-                pdf_status[file.filename] = "failed"
-                print(f"❌ PDF processing failed: {e}")
-
-        threading.Thread(target=process).start()
-        
-        return jsonify({
-            "message": "File uploaded! Processing in background...",
-            "filename": file.filename,
-            "status_check": f"/pdf_status/{file.filename}"
-        })
-
+        # Save PDF to user folder
+        file.save(file_path)
+        print(f"✅ Saved PDF for user '{user_id}' at {file_path}")
     except Exception as e:
-        print(f"❌ Unexpected error in upload_pdf: {e}")
-        return jsonify({
-            "error": "PDF processing failed",
-            "details": str(e)
-        }), 500
+        print(f"❌ Error saving PDF: {e}")
+        return jsonify({"error": f"Failed to save file: {e}"}), 500
+
+    # Track status by user+filename combo
+    status_key = f"{user_id}:{file.filename}"
+    pdf_status[status_key] = "processing"
+
+    # Background processing thread
+    def process():
+        try:
+            print(f"⚙️ Processing PDF for user: {user_id}")
+            success = rag_system.process_pdf(file_path, user_id)
+            pdf_status[status_key] = "done" if success else "failed"
+        except Exception as e:
+            pdf_status[status_key] = "failed"
+            print(f"❌ PDF processing failed: {e}")
+
+    threading.Thread(target=process).start()
+
+    return jsonify({
+        "message": "File uploaded! Processing in background...",
+        "filename": file.filename,
+        "user_id": user_id,
+        "status_check": f"/pdf_status/{user_id}/{file.filename}"
+    })
 
 
-# Query Financial Data
 @app.route("/query_pdf_chatbot", methods=["POST"])
 def query_pdf_chatbot():
     try:
         data = request.get_json()
-        print("Received data:", data)  # Debugging log
+        print("Received data:", data)
+
         question = data.get("question", "")
+        user_id = data.get("user_id")
+        filename = data.get("filename")
 
-        if not question:
-            return jsonify({"response": "Please ask a valid question."})
+        if not question or not user_id or not filename:
+            return jsonify({"response": "Missing required fields: question, user_id, or filename"}), 400
 
-        # Query PDF system
-        response, sources = rag_system.query_financial_data(question)
+        print(f"📥 Querying for user: {user_id}, file: {filename}, question: {question}")
 
-        print("Response generated:", response)  # Debugging log
+        # Query MongoDB vector store
+        response, sources = rag_system.query_financial_data(
+            query=question,
+            user_id=user_id,
+            filename=filename
+        )
 
-        return jsonify({"response": response, "sources": sources})
+        print("✅ Response generated from Groq LLM")
+        return jsonify({
+            "response": response,
+            "sources": sources
+        })
 
     except Exception as e:
-        print("Error processing request:", str(e))
+        print("❌ Error processing query:", str(e))
         return jsonify({"response": "Internal server error"}), 500
 
+
 # API to Check PDF Processing Status
-@app.route("/pdf_status/<filename>", methods=["GET"])
-def check_pdf_status(filename):
-    """Checks if a PDF has finished processing."""
-    status = pdf_status.get(filename, "not_found")
+@app.route("/pdf_status/<user_id>/<filename>", methods=["GET"])
+def check_pdf_status(user_id, filename):
+    """Check PDF processing status for a specific user and file."""
+    status_key = f"{user_id}:{filename}"
+    status = pdf_status.get(status_key, "not_found")
     return jsonify({"status": status})
 
 #----------------------------------------Show Company Metrics----------------------------------

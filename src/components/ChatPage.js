@@ -27,7 +27,7 @@ function ChatPage() {
     const chatEndRef = useRef(null);
     const navigate = useNavigate();
 
-    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL;
+    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL || "http://127.0.0.1:5000";
     // const CHATBOT_API_URL = "http://127.0.0.1:5000"
 
     const { setLoading } = useLoader();
@@ -47,8 +47,6 @@ function ChatPage() {
         window.scrollTo(0, 0);
       }, []);
       
-      
-
     useEffect(() => {
         const handleResize = () => {
           if (window.innerWidth < 768) {
@@ -59,12 +57,11 @@ function ChatPage() {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
       }, []);
-      
 
     useEffect(() => {
         //  Add a global request interceptor
         const requestInterceptor = axios.interceptors.request.use((config) => {
-            // 🚀 Skip loader for PDF upload & processing
+            // Skip loader for PDF upload & processing
             if (!config.url.includes("/upload_pdf") && !config.url.includes("/pdf_status")) {
                 setLoading(true);
             }
@@ -74,7 +71,7 @@ function ChatPage() {
         //  Add a global response interceptor
         const responseInterceptor = axios.interceptors.response.use(
             (response) => {
-                // 🚀 Skip disabling loader for PDF requests (they never triggered it)
+                // Skip disabling loader for PDF requests (they never triggered it)
                 if (!response.config.url.includes("/upload_pdf") && !response.config.url.includes("/pdf_status")) {
                     setLoading(false);
                 }
@@ -95,15 +92,12 @@ function ChatPage() {
         };
     }, [setLoading]);
     
-
-
     //  Auto-scroll to the latest message
     const scrollToBottom = () => {
         if (chatEndRef.current) {
             chatEndRef.current.parentNode.scrollTop = chatEndRef.current.parentNode.scrollHeight;
         }
     };
-
 
     //  Fetch company names from API on component mount
     useEffect(() => {
@@ -169,8 +163,7 @@ function ChatPage() {
         } catch (error) {
             console.error("Error fetching user-specific chat sessions:", error);
         }
-    };
-      
+    }; 
 
     const sendMessage = async () => { //newly added today
         if (!message.trim()) return;
@@ -288,12 +281,14 @@ function ChatPage() {
         }
     };       
 
-    //  Handle Sign Out
     const handleSignOut = () => {
-        localStorage.removeItem("user"); // Remove user data from local storage
-        localStorage.removeItem("sessionId"); // Remove session ID
-        navigate("/login"); // Redirect to login page
-    };
+        localStorage.removeItem("user");              // full user info
+        localStorage.removeItem("userId");            // used by chatbot
+        localStorage.removeItem("sessionId");         // current chat session
+        localStorage.removeItem("pdfChat_userId");    // used by PDF Q&A
+        localStorage.removeItem("pdfChat_filename");  // uploaded PDF
+        navigate("/login");                           // redirect to login
+    };    
     
         // Store custom titles dynamically in localStorage
     const getOrGenerateTitle = (sessionId, chatMessages) => {
@@ -332,10 +327,11 @@ function ChatPage() {
         setUploadStatus("loading");
         setUploadMessage("⏳ Uploading...");
         setHoverMessage("Uploading PDF...");
-    
+        
+        const userId = localStorage.getItem("userId");
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("company", "Unknown");
+        formData.append("user_id", userId);
     
         try {
             const response = await axios.post(`${CHATBOT_API_URL}/upload_pdf`, formData, {
@@ -355,7 +351,11 @@ function ChatPage() {
             setHoverMessage('PDF Processing...');
     
             //  Wait for processing to complete
+            
+            localStorage.setItem("pdfChat_userId", userId);
+            localStorage.setItem("pdfChat_filename", response.data.filename);
             checkProcessingStatus(response.data.filename);
+
         } catch (error) {
             console.error("Upload failed:", error);
             setUploadStatus("error");
@@ -368,7 +368,9 @@ function ChatPage() {
     const checkProcessingStatus = async (filename) => {
         const interval = setInterval(async () => {
             try {
-                const statusResponse = await axios.get(`${CHATBOT_API_URL}/pdf_status/${filename}`);
+                const userId = localStorage.getItem("userId");
+                const statusResponse = await axios.get(`${CHATBOT_API_URL}/pdf_status/${userId}/${filename}`);
+
                 if (statusResponse.data.status === "done") {
                     clearInterval(interval);
                     setUploadMessage("✅ Processing completed! Redirecting...");
@@ -497,8 +499,6 @@ function ChatPage() {
                         setShowChatSidebar(false);
                     }}
                     />
-
-
 
                 <div className="chat-app-content">
 

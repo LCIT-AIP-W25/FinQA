@@ -3,19 +3,22 @@ import re
 import fitz
 import pandas as pd
 from dotenv import load_dotenv
-from typing import List, Tuple, Optional
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import time
 from groq_wrapper import GroqWrapper
+from pymongo import MongoClient
 
 # Load environment variables
 load_dotenv()
 
 class FinancialRAGSystem:
     def __init__(self):
+        self.mongo_client = MongoClient(os.getenv("MONGO_URI"))
+        self.mongo_db = self.mongo_client["Financial_Rag_DB"]
+        self.mongo_collection = self.mongo_db["finqa_pdf"]
+
         # Configuration
         self.GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
         
@@ -136,156 +139,145 @@ class FinancialRAGSystem:
             return "cash_flow"
         return "other"
 
-    def process_pdf(self, pdf_path: str, company_name: str) -> bool:
-        """Process PDF file and store in FAISS index with comprehensive logging"""
+    def process_pdf(self, pdf_path: str, user_id: str) -> bool:
+        """Process PDF file and store embeddings in MongoDB (user-specific, no company)"""
         print(f"\n=== PROCESSING PDF: {pdf_path} ===")
-        print(f"Company: {company_name}")
-        
+        print(f"User: {user_id}")
+
         try:
-            start_time = time.time()
+            filename = os.path.basename(pdf_path)
             doc = fitz.open(pdf_path)
-            all_docs = []
-            total_pages = len(doc)
-            
-            print(f"Document has {total_pages} pages")
-            
-            for page_num in range(total_pages):
+            all_chunks = []
+
+            for page_num in range(len(doc)):
                 page = doc.load_page(page_num)
-                print(f"\nProcessing page {page_num+1}/{total_pages}...")
-
-                # Extract text and tables
                 text = page.get_text("text")
-                tables = self._extract_financial_tables(page, page_num, pdf_path)
+                section = self._detect_section(text)
 
-                # Chunk text content
+                # 1. Process text chunks
                 text_chunks = self.text_splitter.split_text(text)
-                print(f"  Split into {len(text_chunks)} text chunks")
-                
                 for i, chunk in enumerate(text_chunks):
-                    all_docs.append(Document(
-                        page_content=chunk,
-                        metadata={
+                    all_chunks.append({
+                        "user_id": str(user_id),
+                        "filename": filename,
+                        "content": chunk,
+                        "metadata": {
+                            "page": page_num + 1,
+                            "section": section,
                             "type": "text",
-                            "section": self._detect_section(chunk),
-                            "chunk_id": i,
-                            "company": company_name,
-                            "source": pdf_path,
-                            "page": page_num + 1
+                            "chunk_id": i
                         }
-                    ))
+                    })
 
-                # Add tables
-                all_docs.extend(tables)
-                print(f"  Total documents after page {page_num+1}: {len(all_docs)}")
+                # 2. Process financial tables
+                tables = self._extract_financial_tables(page, page_num, pdf_path)
+                for doc in tables:
+                    all_chunks.append({
+                        "user_id": str(user_id),
+                        "filename": filename,
+                        "content": doc.page_content,
+                        "metadata": doc.metadata
+                    })
 
-            # Handle FAISS index
-            faiss_index_path = os.path.join(self.index_name, "index.faiss")
-            processing_time = time.time() - start_time
-            
-            if os.path.exists(self.index_name) and os.path.isfile(faiss_index_path):
-                print("\nLoading existing FAISS index...")
-                existing_store = FAISS.load_local(
-                    self.index_name, self.embeddings, allow_dangerous_deserialization=True
-                )
-                print(f"  Adding {len(all_docs)} new documents to index")
-                existing_store.add_documents(all_docs)
-                existing_store.save_local(self.index_name)
-                print("✅ Updated existing FAISS index")
-            else:
-                print("\nCreating new FAISS index...")
-                FAISS.from_documents(all_docs, self.embeddings).save_local(self.index_name)
-                print("✅ Created new FAISS index")
+            print(f"Total text/table chunks: {len(all_chunks)}")
+            if not all_chunks:
+                print("❌ No valid content extracted.")
+                return False
 
-            print(f"\n=== PROCESSING COMPLETE ===")
-            print(f"Total processing time: {processing_time:.2f} seconds")
-            print(f"Total documents processed: {len(all_docs)}")
-            print(f"Index location: {self.index_name}")
+            # 3. Generate embeddings
+            texts = [chunk["content"] for chunk in all_chunks]
+            embeddings = self.embeddings.embed_documents(texts)
+
+            # 4. Prepare MongoDB docs
+            documents = []
+            for chunk, embedding in zip(all_chunks, embeddings):
+                documents.append({
+                    "user_id": str(chunk["user_id"]),
+                    "filename": chunk["filename"],
+                    "content": chunk["content"],
+                    "metadata": chunk["metadata"],
+                    "embedding": embedding
+                })
+
+            # 5. Remove previous entries
+            deleted = self.mongo_collection.delete_many({
+                "user_id": str(user_id),
+                "filename": filename
+            })
+            print(f"🧹 Deleted {deleted.deleted_count} old records")
+
+            # 6. Insert fresh records
+            inserted = self.mongo_collection.insert_many(documents)
+            print(f"✅ Inserted {len(inserted.inserted_ids)} new documents")
+
+            # 7. Delete uploaded PDF
+            doc.close()
+            os.remove(pdf_path)
+            print(f"🗑️ Deleted PDF: {pdf_path}")
+
             return True
 
         except Exception as e:
-            print(f"\n=== PROCESSING FAILED ===")
-            print(f"Error: {e}")
+            print(f"❌ PDF processing failed: {e}")
             return False
 
-    def query_financial_data(self, query: str, company: Optional[str] = None, k: int = 4) -> Tuple[str, List[dict]]:
-        """Query the financial data using RAG pipeline with detailed logging"""
+    def query_financial_data(self, query: str, user_id: str, filename: str, k: int = 4) -> Tuple[str, List[dict]]:
+        """Query user-specific PDF data using MongoDB Atlas Vector Search"""
         print(f"\n=== QUERY PROCESSING ===")
-        print(f"Query: {query}")
-        print(f"Company filter: {company if company else 'None'}")
-        print(f"Requested documents: {k}")
-        
+        print(f"User: {user_id} | File: {filename} | Question: {query}")
+        print(f"Top-K results requested: {k}")
+
         try:
             start_time = time.time()
-            faiss_index_path = os.path.join(self.index_name, "index.faiss")
 
-            # Check FAISS index existence
-            if not os.path.exists(self.index_name) or not os.path.isfile(faiss_index_path):
-                print("❌ No FAISS index found")
-                return "No FAISS index found. Please upload and process a PDF first.", []
+            # 1. Generate query embedding
+            query_embedding = self.embeddings.embed_query(query)
+            print("✅ Generated embedding for query")
 
-            print("Loading FAISS index...")
-            load_start = time.time()
-            vector_store = FAISS.load_local(
-                self.index_name,
-                self.embeddings,
-                allow_dangerous_deserialization=True
-            )
-            print(f"  Index loaded in {(time.time() - load_start):.2f}s")
+            # 2. Run vector search in MongoDB
+            print("🔍 Performing vector search in MongoDB Atlas...")
+            print(f"Filter: user_id={str(user_id)}, filename={filename}") 
+            results = self.mongo_collection.aggregate([
+                {
+                    "$vectorSearch": {
+                        "queryVector": query_embedding,
+                        "path": "embedding",
+                        "numCandidates": 100,
+                        "limit": k,
+                        "index": "vector_index_pdf", 
+                        "filter": {
+                            "user_id": str(user_id),
+                            "filename": filename
+                        }
+                    }
+                }
+            ])
+            results = list(results)
 
-            # Retrieve relevant documents
-            print("\nExecuting similarity search...")
-            search_start = time.time()
-            
-            if company:
-                print(f"  Applying company filter for: {company}")
-                retrieved_docs = []
-                for doc in vector_store.similarity_search(query, k=k*2):  # Fetch extra to filter
-                    if doc.metadata.get("company", "").lower() == company.lower():
-                        retrieved_docs.append(doc)
-                        if len(retrieved_docs) >= k:
-                            break
-                print(f"  Found {len(retrieved_docs)} matching documents after filtering")
-            else:
-                retrieved_docs = vector_store.similarity_search(query, k=k)
-                print(f"  Found {len(retrieved_docs)} documents")
-
-            if not retrieved_docs:
-                print("⚠️ No relevant documents found")
+            if not results:
+                print("⚠️ No relevant documents found.")
                 return "No relevant documents found.", []
 
-            # Log retrieved documents
-            print("\nRetrieved documents:")
-            for i, doc in enumerate(retrieved_docs, 1):
-                print(f"  {i}. {doc.metadata.get('source', 'Unknown')}")
-                print(f"     Page: {doc.metadata.get('page', '?')}")
-                print(f"     Section: {doc.metadata.get('section', 'unknown').upper()}")
-                print(f"     Type: {doc.metadata.get('type', 'unknown')}")
-                print(f"     Company: {doc.metadata.get('company', 'unknown')}")
-                print(f"     Content preview: {doc.page_content[:100]}...\n")
-
-            # Prepare LLM context
-            print("Preparing LLM context...")
+            # 3. Prepare LLM context
+            print("Preparing context for Groq...")
             context = "\n\n".join([
-                f"SOURCE: {doc.metadata.get('source', 'Unknown')} (Page {doc.metadata.get('page', '?')})\n"
-                f"SECTION: {doc.metadata.get('section', 'unknown').upper()}\n"
-                f"CONTENT:\n{doc.page_content[:1000]}..."
-                for doc in retrieved_docs
+                f"Page {doc.get('metadata', {}).get('page', '?')} | Section: {doc.get('metadata', {}).get('section', 'unknown').upper()}\n{doc['content'][:1000]}..."
+                for doc in results
             ])
-            print(f"  Context length: {len(context)} characters")
+            print(f"Total context length: {len(context)} characters")
 
-            # Query Groq API through wrapper
-            print("\nQuerying Groq API...")
-            llm_start = time.time()
+            # 4. Send to Groq LLM
+            print("Sending context and question to Groq LLM...")
             response, error = GroqWrapper.make_rag_request(
-                model="llama-3.3-70b-versatile",
+                model="mistral-saba-24b",
                 messages=[
                     {
                         "role": "system",
                         "content": """You are a financial analyst. Follow these rules:
-1. Base answers ONLY on the provided context
-2. For numerical questions, provide exact figures with units
-3. For tables, reference the page number
-4. Be concise but complete"""
+    1. Base answers ONLY on the provided context
+    2. For numerical questions, provide exact figures with units
+    3. For tables, reference the page number
+    4. Be concise but complete"""
                     },
                     {
                         "role": "user",
@@ -295,36 +287,30 @@ class FinancialRAGSystem:
                 temperature=0.3,
                 max_tokens=1024
             )
-            
+
             if error:
                 raise Exception(error)
-                
-            print(f"  LLM response received in {(time.time() - llm_start):.2f}s")
-            if hasattr(response, '_metadata'):
-                print(f"  Used API Key: {response._metadata['api_key']}")
-                print(f"  Latency: {response._metadata['latency']:.2f}s")
 
-            # Prepare sources
+            print("✅ Groq LLM response received")
+
+            # 5. Extract sources
             sources = [{
-                "content": doc.page_content[:500] + "...",
-                "source": doc.metadata.get("source"),
-                "page": doc.metadata.get("page"),
-                "section": doc.metadata.get("section", "unknown").upper(),
-                "company": doc.metadata.get("company", "unknown")
-            } for doc in retrieved_docs]
+                "content": doc["content"][:500] + "...",
+                "source": doc["filename"],
+                "page": doc.get("metadata", {}).get("page"),
+                "section": doc.get("metadata", {}).get("section", "unknown").upper()
+            } for doc in results]
 
-            total_time = time.time() - start_time
-            print(f"\n=== QUERY COMPLETE ===")
-            print(f"Total processing time: {total_time:.2f} seconds")
-            
+            print(f"\n=== QUERY COMPLETE ({len(results)} chunks) ===")
+            print(f"Total processing time: {time.time() - start_time:.2f} seconds")
+
             return response.choices[0].message.content, sources
 
         except Exception as e:
             print(f"\n=== QUERY FAILED ===")
-            print(f"Error: {e}")
+            print(f"❌ Error: {e}")
             return f"Error processing query: {str(e)}", []
-
-
+        
 # Example Usage
 if __name__ == "__main__":
     # Initialize system

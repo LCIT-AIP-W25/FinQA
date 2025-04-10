@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 import axios from "axios";
 import "../styles/PDFChatPage.css"; //  Uses same styles as ChatPage
 
@@ -8,8 +8,10 @@ const PDFChatPage = () => {
     const [currentChat, setCurrentChat] = useState([]);
     const [loading, setLoading] = useState(false);
     const chatEndRef = useRef(null); //  Auto-scroll reference
-    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL;
-
+    const CHATBOT_API_URL = process.env.REACT_APP_CHATBOT_API_URL || "http://127.0.0.1:5000";
+    const user_id = localStorage.getItem("pdfChat_userId");
+    const filename = localStorage.getItem("pdfChat_filename");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const setViewportHeight = () => {
@@ -25,7 +27,15 @@ const PDFChatPage = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
       }, []);
-      
+
+  
+    // ✅ Block access with a redirect inside useEffect
+    useEffect(() => {
+          if (!user_id || !filename) {
+              alert("⚠️ Please upload a PDF before using this feature.");
+              navigate("/chat");
+          }
+      }, [user_id, filename, navigate]);
 
     //  Scroll to bottom on new messages
     useEffect(() => {
@@ -33,7 +43,8 @@ const PDFChatPage = () => {
             chatEndRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [currentChat]);
-
+    
+    
     //  Send user question & get response from backend
     const sendMessage = async () => {
         if (!message.trim()) return;
@@ -42,11 +53,20 @@ const PDFChatPage = () => {
         setCurrentChat((prevChat) => [...prevChat, userMessage]);
         setMessage("");
         setLoading(true);
+
+
+        if (!user_id || !filename) {
+            alert("Missing file or user context. Please upload a PDF again.");
+            return;
+        }
     
         try {
             const response = await axios.post(`${CHATBOT_API_URL}/query_pdf_chatbot`, {
                 question: message,
+                user_id: user_id,
+                filename: filename
             });
+            
     
             console.log("Response received:", response.data);  //  Add this for debugging
     
