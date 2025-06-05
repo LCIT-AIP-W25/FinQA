@@ -1,0 +1,80 @@
+.floating-panel {
+  position: fixed;
+  top: 60px;
+  left: 50px;
+  width: 300px;
+  height: calc(100vh - 60px);
+  background: #ffffff;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transform: translateX(0);
+  opacity: 1;
+  box-sizing: border-box;
+}
+
+/* Animation States */
+.floating-panel.entering {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+.floating-panel.entered {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.floating-panel.exiting {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+/* Header */
+.floating-panel-header {
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+  text-align: right;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: black; /* use this if your parent color is fine */
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #ef4444; /* red on hover, or use black to stay consistent */
+  transform: scale(1.1);
+}
+
+
+/* Body */
+.floating-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 500px) {
+  .floating-panel {
+    width: 100vw;
+    max-width: 100vw;
+    left: 0;
+    top: 60px;
+    height: calc(100vh - 60px);
+    z-index: 200;
+  }
+
+  .floating-panel.entering,
+  .floating-panel.exiting {
+    transform: translateY(30px);
+  }
+}

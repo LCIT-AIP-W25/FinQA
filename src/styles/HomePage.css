@@ -1,0 +1,226 @@
+/* Base styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    margin: 0;
+    color: #333;
+}
+
+.home-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Header styles */
+.home-header {
+    margin-bottom: 2rem;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.home-logo {
+    width: 60px;
+    height: auto;
+}
+
+.logo-title h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Hamburger styles */
+.menu-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 1001; 
+    position: relative;
+    padding: 10px;
+}
+
+.menu-icon {
+    width: 25px;
+    height: 3px;
+    background-color: #333;
+    position: relative;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.menu-icon::before,
+.menu-icon::after {
+    content: '';
+    position: absolute;
+    width: 25px;
+    height: 3px;
+    background-color: #333;
+    transition: all 0.3s ease;
+}
+
+.menu-icon::before {
+    transform: translateY(-8px);
+}
+
+.menu-icon::after {
+    transform: translateY(8px);
+}
+
+.menu-icon.open {
+    background-color: transparent;
+}
+
+.menu-icon.open::before {
+    transform: rotate(45deg);
+}
+
+.menu-icon.open::after {
+    transform: rotate(-45deg);
+}
+
+/* Navigation drawer */
+.nav-menu {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 260px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s ease;
+    z-index: 999;
+    padding-top: 4rem;
+}
+
+.nav-menu.open {
+    left: 0;
+}
+
+.nav-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-category {
+    padding: 1rem 1.5rem 0.5rem;
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+}
+
+.nav-menu li {
+    padding: 0.75rem 1.5rem;
+}
+
+.nav-menu a,
+.menu-btn {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    font-size: 1rem;
+    transition: 0.3s;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.nav-menu li:hover {
+    background-color: #f0f0f0;
+}
+
+.sign-out {
+    color: #dc3545;
+}
+
+.sign-out:hover {
+    background-color: #fdecea;
+}
+
+/* Overlay */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 998;
+}
+
+.menu-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.news-section {
+    grid-column: 1 / -1;
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+
+.news-section h2 {
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.news-table-container {
+    overflow-x: auto;
+}
+
+.news-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.news-table th,
+.news-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.news-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.news-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.news-table a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.news-table a:hover {
+    text-decoration: underline;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
