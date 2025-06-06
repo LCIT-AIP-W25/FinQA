@@ -15,15 +15,24 @@ function HomePage() {
     }, []);
 
     const fetchNews = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_AUTH_API_URL}/api/yahoo_news`);
+    try {
+        console.log('Fetching news...');
+        const response = await axios.get(`${process.env.REACT_APP_AUTH_API_URL}/api/yahoo_news`);
+        console.log('News data received:', response.data);
+        
+        if (Array.isArray(response.data)) {
             setNews(response.data);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching news:', error);
-            setLoading(false);
+        } else {
+            console.error('Invalid news data format:', response.data);
+            setNews([]);
         }
-    };
+        setLoading(false);
+    } catch (error) {
+        console.error('Error fetching news:', error);
+        setNews([]);
+        setLoading(false);
+    }
+};
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);

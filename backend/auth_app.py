@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -336,10 +337,42 @@ def health_check():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+
 @auth_app.route('/', methods=['GET'])
 def index():
- return'✅ Auth backend is running!', 200
+    return '✅ Auth backend is running!', 200  # Fix indentation
 
+@auth_app.route('/api/yahoo_news', methods=['GET'])
+def get_yahoo_news():
+    try:
+        # Debug log
+        print("Fetching yahoo news from database...")
+        
+        # Query to fetch news from yahoo_news table
+        sql = text("""
+            SELECT  title, url, timestamp, stock_symbol 
+            FROM yahoo_news 
+            ORDER BY timestamp DESC 
+            LIMIT 10
+        """)
+        
+        result = db.session.execute(sql)
+        news_items = []
+        
+        for row in result:
+            news_items.append({
+                "title": row[0],
+                "link": row[1],
+                "published_date": row[2].isoformat() if row[2] else None,
+                "source": row[3]
+            })
+        
+        print(f"Found {len(news_items)} news items")
+        return jsonify(news_items)
+    except Exception as e:
+        print(f"Error fetching news: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 #  Run Authentication App
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))  # Default to 10001 if PORT is not set
