@@ -3,8 +3,9 @@
 }
 
 .App-logo {
-  height: 40vmin;
-  pointer-events: none;
+   width: 120px; 
+    height: auto;
+    object-fit: contain;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -24,6 +25,7 @@
   color: white;
 }
 
+
 .App-link {
   color: #61dafb;
 }
@@ -35,4 +37,140 @@
   to {
     transform: rotate(360deg);
   }
+}
+/* Signup Background Fullscreen */
+.sec-signup {
+  background: url('/public/images/background.png') no-repeat center center;
+  background-size: cover; /* 
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed; /* Optional: gives a parallax feel */
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+/* Form Styling */
+.signup-form-wrapper {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 2rem 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+    max-width: 420px;
+    width: 100%;
+}
+
+.signup-logo {
+    width: 90px;
+    margin-bottom: 1rem;
+}
+
+.wel-txt {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.txt-lab {
+    font-weight: 500;
+    margin-top: 0.75rem;
+    display: block;
+}
+
+.inp-set {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-top: 0.25rem;
+}
+
+.btn-sign {
+    width: 100%;
+    background-color: #0f62fe;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.eye-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.error-text {
+    color: #d32f2f;
+    font-size: 0.875rem;
+    margin-top: 0.3rem;
+}
+
+.success-text {
+    color: #2e7d32;
+    font-size: 0.875rem;
+    margin-top: 0.3rem;
+}
+
+.account-txt {
+    font-size: 0.9rem;
+    display: inline;
+    margin-right: 4px;
+}
+
+.sign-txt {
+    font-weight: 600;
+    color: #0f62fe;
+    text-decoration: none;
+}
+
+.link-line:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .signup-form-wrapper {
+        padding: 1.5rem;
+    }
+
+    .signup-logo {
+        width: 70px;
+    }
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.sec-login {
+  background: url('/public/images/background.png') no-repeat center center;
+   background-size: cover;
+  background-position: center;
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.login-form-wrapper {
+  background-color: rgba(255, 255, 255, 0.95); /* ✅ Opaque white background */
+  padding: 2rem 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  max-width: 420px;
+  width: 100%;
 }

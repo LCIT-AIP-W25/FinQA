@@ -55,7 +55,7 @@ function ResetPassword() {
                         <div className='d-flex justify-content-center'>
                             <div className='box-size'>
                                 <div className='d-flex align-items-center box-pad'>
-                                    <img className='inline-block' src='/images/we.png' alt="Logo" />
+                                    <img className='inline-block' src='/images/Logo.png' alt="Logo" />
                                 </div>
                                 <p className='wel-txt'>Reset Your Password</p>
                                 <p className='det-txt'>Enter a new password to secure your account.</p>

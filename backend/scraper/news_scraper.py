@@ -4,13 +4,23 @@ from datetime import datetime
 import time
 
 # PostgreSQL config
+
 DB_CONFIG = {
-    'host': 'localhost',
+   'host': 'aws-0-ca-central-1.pooler.supabase.com',
     'port': '5432',
-    'dbname': 'finQA',
-    'user': 'postgres',
-    'password': 'mypostgres'
-}
+    'dbname': 'postgres',
+    'user': 'postgres.ukepmwoqxybhauovasry',
+    'password': 'FinAnswer@Loyalist'
+    }
+#--}    
+
+#--DB_CONFIG = {
+   #-- 'host': 'localhost',
+    #--'port': '5432',
+    #--'dbname': 'finQA',
+    #--'user': 'postgres',
+    #--'password': 'mypostgres'
+#--}
 
 def get_news_from_rss(stock_symbol):
     url = f"https://feeds.finance.yahoo.com/rss/2.0/headline?s={stock_symbol}&region=US&lang=en-US"

@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 
-DATABASE_URI = "postgresql+psycopg2://postgres:mypostgres@localhost:5432/finqa"
+DATABASE_URI = "postgresql://postgres.ukepmwoqxybhauovasry:FinAnswer%40Loyalist@aws-0-ca-central-1.pooler.supabase.com:5432/postgres"
+#--"postgresql+psycopg2://postgres:mypostgres@localhost:5432/finqa"
 
 engine = create_engine(DATABASE_URI)
 

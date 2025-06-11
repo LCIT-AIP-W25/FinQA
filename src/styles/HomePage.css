@@ -1,16 +1,20 @@
 /* Base styles */
 body {
+    margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f5f7fa;
-    margin: 0;
     color: #333;
+    overflow-x: hidden;
 }
 
 .home-container {
-    max-width: 1200px;
+   min-height: 100vh;
+    overflow-y: auto;
+    max-width: 1400px;  
     margin: 0 auto;
     padding: 2rem 1rem;
 }
+
 
 /* Header styles */
 .home-header {
@@ -19,8 +23,10 @@ body {
 
 .header-top {
     display: flex;
-    justify-content: space-between;
+    flex-direction: row;
     align-items: center;
+    padding: 1rem;
+    gap: 1rem;
 }
 
 .logo-title {
@@ -29,9 +35,30 @@ body {
     gap: 1rem;
 }
 
+.main-content {
+    display: grid;
+    grid-template-columns: 280px 1fr; /* Left column 280px, right takes remaining space */
+    gap: 2rem;
+    margin-top: 2rem;
+    height: calc(100vh - 100px);
+    overflow: hidden; /* Adjust height to fit within viewport */
+}
+.filters-sidebar {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: calc(100vh - 200px);
+    position: sticky;
+    top: 2rem;
+    overflow-y: auto;
+}
+
+
 .home-logo {
-    width: 60px;
+    width: 100px;
     height: auto;
+    margin-bottom: 1rem;
 }
 
 .logo-title h1 {
@@ -42,12 +69,51 @@ body {
 
 /* Hamburger styles */
 .menu-toggle {
+    order:-1;
     background: none;
     border: none;
     cursor: pointer;
-    z-index: 1001; 
+    z-index: 1001;
     position: relative;
     padding: 10px;
+}
+
+.filters-sidebar h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #333;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.filter-section {
+    margin-bottom: 1.5rem;
+}
+
+.filter-section h4 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.filter-option:hover {
+    background-color: #f5f7fa;
 }
 
 .menu-icon {
@@ -169,13 +235,17 @@ body {
     visibility: visible;
 }
 
+/* News section styles */
 .news-section {
-    grid-column: 1 / -1;
     background: white;
     border-radius: 10px;
     padding: 2rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     margin-top: 2rem;
+    overflow-y: auto;
+    margin-top: 0;
+        min-height: 300px;
+
 }
 
 .news-section h2 {
@@ -183,44 +253,107 @@ body {
     color: #333;
 }
 
-.news-table-container {
-    overflow-x: auto;
-}
-
-.news-table {
+/* News Tiles Layout */
+.news-tiles-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
+    min-height: min-content;
+   
 }
 
-.news-table th,
-.news-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+.news-tiles-container::-webkit-scrollbar {
+    width: 8px;
+}
+.news-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
 }
 
-.news-table th {
-    background-color: #f8f9fa;
+.news-section::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 8px;
+}
+
+.news-section::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+/* Add scrollbar styling */
+.news-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+
+.news-tile {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease;
+}
+
+.news-tile:hover {
+    transform: translateY(-5px);
+}
+
+.news-title a {
+    font-size: 16px;
     font-weight: 600;
-    color: #495057;
-}
-
-.news-table tr:hover {
-    background-color: #f8f9fa;
-}
-
-.news-table a {
-    color: #007bff;
+    color: #0077cc;
     text-decoration: none;
 }
 
-.news-table a:hover {
+.news-title a:hover {
     text-decoration: underline;
+}
+
+.news-source,
+.news-date {
+    font-size: 14px;
+    color: #555;
+    margin-top: 8px;
 }
 
 .loading {
     text-align: center;
     padding: 2rem;
     color: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .logo-title h1 {
+        font-size: 1.2rem;
+    }
+
+    .news-title a {
+        font-size: 14px;
+    }
+
+    .news-section {
+        padding: 1rem;
+    }
+
+    .news-tile {
+        padding: 12px;
+    }
+}
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 220px 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .filters-sidebar {
+        display: none; /* Hide filters on mobile */
+    }
 }

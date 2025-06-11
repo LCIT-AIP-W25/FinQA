@@ -285,7 +285,7 @@ def get_yahoo_news():
             SELECT title, link, published_date, source
             FROM yahoo_news
             ORDER BY published_date DESC
-            LIMIT 10
+            LIMIT 25
         """
         result = db.session.execute(sql)
         news_items = [

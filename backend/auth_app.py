@@ -346,32 +346,39 @@ def index():
 @auth_app.route('/api/yahoo_news', methods=['GET'])
 def get_yahoo_news():
     try:
-        # Debug log
-        print("Fetching yahoo news from database...")
+        print("Fetching yahoo news from PostgreSQL...")
         
-        # Query to fetch news from yahoo_news table
+        # Debug: Check total count
+        count_sql = text("SELECT COUNT(*) FROM yahoo_news")
+        total_count = db.session.execute(count_sql).scalar()
+        print(f"Total news articles in database: {total_count}")
+        
+        # Fetch 25 latest news items
         sql = text("""
-            SELECT  title, url, timestamp, stock_symbol 
+            SELECT title, url, timestamp, stock_symbol 
             FROM yahoo_news 
             ORDER BY timestamp DESC 
-            LIMIT 10
+            LIMIT 25
         """)
         
         result = db.session.execute(sql)
         news_items = []
         
         for row in result:
-            news_items.append({
+            item = {
                 "title": row[0],
-                "link": row[1],
+                "link": row[1],  # Note: using 'url' column as 'link'
                 "published_date": row[2].isoformat() if row[2] else None,
-                "source": row[3]
-            })
-        
-        print(f"Found {len(news_items)} news items")
+                "source": row[3]  # using stock_symbol as source
+            }
+            news_items.append(item)
+            
+        print(f"Successfully fetched {len(news_items)} news items")
         return jsonify(news_items)
+        
     except Exception as e:
-        print(f"Error fetching news: {str(e)}")
+        print(f"PostgreSQL Error: {str(e)}")
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 #  Run Authentication App
 if __name__ == '__main__':

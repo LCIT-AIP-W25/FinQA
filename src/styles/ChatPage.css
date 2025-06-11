@@ -48,8 +48,9 @@ html, body {
 }
 
 .chat-app-logo-img {
-    width: 45px;
+    width: 60px;
     height: auto;
+    margin-right: 1rem;
 }
 
 .chat-app-header-title {
