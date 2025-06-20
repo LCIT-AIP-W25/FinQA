@@ -2,19 +2,20 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f7fa;
-    color: #333;
+    background: url('/public/images/background.png') no-repeat center center;
+    background-size: cover;
+    color: white;
     overflow-x: hidden;
 }
 
 .home-container {
    min-height: 100vh;
     overflow-y: auto;
-    max-width: 1400px;  
     margin: 0 auto;
     padding: 2rem 1rem;
+    background-color: rgba(32, 33, 68, 0.8); /* semi-transparent overlay for readability */
+    border-radius: 10px;
 }
-
 
 /* Header styles */
 .home-header {
@@ -36,22 +37,26 @@ body {
 }
 
 .main-content {
-    display: grid;
-    grid-template-columns: 280px 1fr; /* Left column 280px, right takes remaining space */
+    display: flex;
+    flex-direction: row;
     gap: 2rem;
     margin-top: 2rem;
+    width: 100%;
     height: calc(100vh - 100px);
     overflow: hidden; /* Adjust height to fit within viewport */
 }
 .filters-sidebar {
-    background: white;
+    background: rgba(32, 33, 68, 0.9);
     border-radius: 10px;
     padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     height: calc(100vh - 200px);
     position: sticky;
-    top: 2rem;
+    top: 0;
     overflow-y: auto;
+    color: white;
+    width: 36.4%;
+    font-size: 22.4px;
 }
 
 
@@ -62,9 +67,10 @@ body {
 }
 
 .logo-title h1 {
-    font-size: 1.6rem;
+    font-size: 2.24rem;
     font-weight: 600;
     margin: 0;
+    color: white;
 }
 
 /* Hamburger styles */
@@ -76,14 +82,17 @@ body {
     z-index: 1001;
     position: relative;
     padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 }
 
 .filters-sidebar h3 {
-    font-size: 1.2rem;
+    font-size: 1.68rem;
     margin-bottom: 1rem;
-    color: #333;
+    color: white;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .filter-section {
@@ -91,9 +100,9 @@ body {
 }
 
 .filter-section h4 {
-    font-size: 1rem;
+    font-size: 1.4rem;
     margin-bottom: 0.5rem;
-    color: #666;
+    color: #ccc;
 }
 
 .filter-options {
@@ -110,16 +119,17 @@ body {
     cursor: pointer;
     border-radius: 4px;
     transition: background-color 0.2s;
+    color: white;
 }
 
 .filter-option:hover {
-    background-color: #f5f7fa;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .menu-icon {
     width: 25px;
     height: 3px;
-    background-color: #333;
+    background-color: white;
     position: relative;
     transition: all 0.3s ease;
     display: block;
@@ -131,7 +141,7 @@ body {
     position: absolute;
     width: 25px;
     height: 3px;
-    background-color: #333;
+    background-color: white;
     transition: all 0.3s ease;
 }
 
@@ -162,11 +172,12 @@ body {
     left: -280px;
     width: 260px;
     height: 100vh;
-    background: white;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    background: rgba(32, 33, 68, 0.95);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
     transition: left 0.3s ease;
     z-index: 999;
     padding-top: 4rem;
+    color: white;
 }
 
 .nav-menu.open {
@@ -182,7 +193,7 @@ body {
 .menu-category {
     padding: 1rem 1.5rem 0.5rem;
     font-size: 0.75rem;
-    color: #999;
+    color: #bbb;
     text-transform: uppercase;
 }
 
@@ -193,9 +204,9 @@ body {
 .nav-menu a,
 .menu-btn {
     text-decoration: none;
-    color: #333;
+    color: white;
     display: block;
-    font-size: 1rem;
+    font-size: 22.4px;
     transition: 0.3s;
     background: none;
     border: none;
@@ -205,15 +216,15 @@ body {
 }
 
 .nav-menu li:hover {
-    background-color: #f0f0f0;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .sign-out {
-    color: #dc3545;
+    color: #ff6b6b;
 }
 
 .sign-out:hover {
-    background-color: #fdecea;
+    background-color: rgba(255, 107, 107, 0.2);
 }
 
 /* Overlay */
@@ -237,38 +248,38 @@ body {
 
 /* News section styles */
 .news-section {
-    background: white;
+    background: rgba(32, 33, 68, 0.9);
     border-radius: 10px;
     padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
     margin-top: 2rem;
     overflow-y: auto;
     margin-top: 0;
-        min-height: 300px;
-
+    min-height: 420px;
+    color: white;
+    flex-grow: 1;
 }
 
 .news-section h2 {
     margin-bottom: 1.5rem;
-    color: #333;
+    color: white;
 }
 
 /* News Tiles Layout */
 .news-tiles-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     padding: 20px;
     width: 100%;
     min-height: min-content;
-   
 }
 
 .news-tiles-container::-webkit-scrollbar {
     width: 8px;
 }
 .news-section::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(32, 33, 68, 0.9);
     border-radius: 8px;
 }
 
@@ -285,14 +296,29 @@ body {
     width: 8px;
 }
 
-
 .news-tile {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 22.4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease;
+    color: white;
+    position: relative;
+}
+
+.news-ticker,
+.news-scraped-info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.85rem;
+    color: #a8c0ff;
+    background-color: rgba(32, 33, 68, 0.7);
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 10;
 }
 
 .news-tile:hover {
@@ -300,9 +326,9 @@ body {
 }
 
 .news-title a {
-    font-size: 16px;
+    font-size: 22.4px;
     font-weight: 600;
-    color: #0077cc;
+    color: #a8c0ff;
     text-decoration: none;
 }
 
@@ -313,24 +339,24 @@ body {
 .news-source,
 .news-date {
     font-size: 14px;
-    color: #555;
+    color: #c0c0c0;
     margin-top: 8px;
 }
 
 .loading {
     text-align: center;
     padding: 2rem;
-    color: #666;
+    color: #ccc;
 }
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .logo-title h1 {
-        font-size: 1.2rem;
+        font-size: 1.68rem;
     }
 
     .news-title a {
-        font-size: 14px;
+        font-size: 19.6px;
     }
 
     .news-section {
@@ -344,7 +370,7 @@ body {
 /* Responsive adjustments */
 @media (max-width: 1024px) {
     .main-content {
-        grid-template-columns: 220px 1fr;
+        grid-template-columns: 264px 1fr;
     }
 }
 

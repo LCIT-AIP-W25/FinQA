@@ -3,10 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/HomePage.css';
 
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import '../styles/HomePage.css';
+
 function HomePage() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
     const user = JSON.parse(localStorage.getItem("user"));
     const navigate = useNavigate();
 
@@ -17,7 +23,9 @@ function HomePage() {
     const fetchNews = async () => {
         try {
             console.log('Fetching news...');
-            const response = await axios.get(`${process.env.REACT_APP_AUTH_API_URL}/api/yahoo_news`);
+            const apiUrl = `${process.env.REACT_APP_AUTH_API_URL}/api/yahoo_news`;
+            console.log('API URL:', apiUrl);
+            const response = await axios.get(apiUrl);
             console.log('News data received:', response.data);
 
             if (Array.isArray(response.data)) {
@@ -28,7 +36,7 @@ function HomePage() {
             }
             setLoading(false);
         } catch (error) {
-            console.error('Error fetching news:', error);
+            console.error('Error fetching news:', error.message, error.response);
             setNews([]);
             setLoading(false);
         }
@@ -55,18 +63,26 @@ function HomePage() {
                     <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
                     <h1>Welcome, {user?.username} 👋</h1>
                 </div>
-                <button className="menu-toggle" onClick={toggleMenu}>
-                    <span className={`menu-icon ${isMenuOpen ? 'open' : ''}`}></span>
+                <input
+                    type="text"
+                    className="home-search-bar"
+                    placeholder="Search news..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ marginLeft: '20px', padding: '6px 12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px' }}
+                />
+                <button className="menu-toggle" onClick={toggleMenu} style={{ position: 'relative' }}>
+                    <span className={`menu-icon ${isMenuOpen ? 'open' : ''}`} style={{ position: 'relative', right: '0', top: '0', transform: 'none', transition: 'none' }}></span>
                 </button>
             </div>
         </header>
 
-        <nav className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
-            <ul>
-                <li className="menu-category">Main Navigation</li>
-                <li><Link to="/home">Home</Link></li>
-                <li><Link to="/chat">AI Chat</Link></li>
-                <li><Link to="/pdf-chat">PDF Analysis</Link></li>
+            <nav className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
+                <ul>
+                    {/* Removed the Main Navigation category label as requested */}
+                    <li><Link to="/home">Home</Link></li>
+                    <li><Link to="/chat">AI Chat</Link></li>
+                    <li><Link to="/pdf-chat">PDF Analysis</Link></li>
 
                 <li className="menu-category">Chat Tools</li>
                 <li><button className="menu-btn" onClick={handleCompanyReports}>Company Reports</button></li>

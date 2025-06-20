@@ -1,7 +1,12 @@
+/* Updated ChatPage.css to align color theme with HomePage.css dark theme */
+
 /* -------------------- Global Styles -------------------- */
 html, body {
     height: 100%;
     overflow: hidden;
+    background-color: rgba(32, 33, 68, 0.8);
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* -------------------- Main Layout -------------------- */
@@ -10,6 +15,7 @@ html, body {
     flex-direction: column;
     height: calc(var(--vh, 1vh) * 100);
     overflow: hidden;
+    background-color: rgba(32, 33, 68, 0.8);
 }
 
 .chat-app-content {
@@ -17,15 +23,15 @@ html, body {
     flex: 1;
     overflow: hidden;
     position: relative; /* ensure floating panels anchor correctly */
-  }
+    background-color: rgba(32, 33, 68, 0.8);
+}
 
-  .chat-app-wrapper {
+.chat-app-wrapper {
     height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-  }
-  
+}
 
 /* -------------------- Header -------------------- */
 .chat-app-header {
@@ -33,12 +39,13 @@ html, body {
     justify-content: space-between;
     align-items: center;
     padding: 12px 20px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #ddd;
+    background-color: rgba(32, 33, 68, 0.9);
+    border-bottom: 1px solid #444;
     height: 60px;
     flex-shrink: 0;
     position: relative;
     z-index: 1000;
+    color: white;
 }
 
 .chat-app-logo {
@@ -56,7 +63,7 @@ html, body {
 .chat-app-header-title {
     font-size: 18px;
     font-weight: bold;
-    color: #333;
+    color: white;
     margin: 0;
 }
 
@@ -76,12 +83,13 @@ html, body {
 .chat-app-username {
     margin-right: 12px;
     font-weight: 500;
+    color: white;
 }
 
 .chat-app-profile-icon {
     width: 40px;
     height: 40px;
-    background-color: #333;
+    background-color: #4a4a7a;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -94,13 +102,14 @@ html, body {
     position: absolute;
     right: 0;
     top: 50px;
-    background-color: white;
+    background-color: rgba(32, 33, 68, 0.95);
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
     width: 200px;
     padding: 10px;
     z-index: 1000;
     display: none;
+    color: white;
 }
 
 .chat-app-profile-dropdown .chat-app-dropdown-menu {
@@ -116,7 +125,7 @@ html, body {
 .chat-app-avatar {
     width: 50px;
     height: 50px;
-    background-color: #555;
+    background-color: #55557a;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -128,6 +137,7 @@ html, body {
 
 .chat-app-profile-name {
     font-weight: bold;
+    color: white;
 }
 
 .chat-app-dropdown-item {
@@ -137,6 +147,11 @@ html, body {
     background: none;
     text-align: left;
     cursor: pointer;
+    color: white;
+}
+
+.chat-app-dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .chat-app-sign-out {
@@ -149,21 +164,20 @@ html, body {
     background-color: #c82333;
 }
 
-
 /* -------------------- Chat Window -------------------- */
 .chat-app-window {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #f4f4f4;
+    background: rgba(32, 33, 68, 0.9);
     padding: 20px;
     height: calc(var(--vh, 1vh) * 100 - 60px);
     overflow-y: auto;
     margin-left: 50px;
-    /* margin: 0; No sidebar margins */
     box-sizing: border-box;
-  }
+    color: white;
+}
 
 /* -------------------- Chat History -------------------- */
 .chat-app-chat-history-header {
@@ -188,7 +202,7 @@ html, body {
 .chat-app-chat-item {
     display: flex;
     align-items: center;
-    background-color: #495963;
+    background-color: #4a4a7a;
     color: white !important;
     font-weight: normal !important;
     padding: 10px;
@@ -206,14 +220,14 @@ html, body {
 }
 
 .chat-app-chat-item:hover {
-    background-color: #e6e6e6;
-    color: black !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white !important;
 }
 
 .chat-app-chat-item.active {
-    background-color: #e9f0fd;
-    color: black !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white !important;
+    box-shadow: 0 2px 5px rgba(255, 255, 255, 0.3);
 }
 
 .chat-app-chat-title {
@@ -250,12 +264,13 @@ html, body {
     width: 100%;
     max-width: 800px;
     padding: 20px;
-    background: white;
+    background: rgba(32, 33, 68, 0.8);
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     overflow-y: hidden;
     min-height: 100px;
     scroll-padding-bottom: 100px;
+    color: white;
 }
 
 .chat-app-messages.has-messages {
@@ -268,7 +283,7 @@ html, body {
     align-items: center;
     height: 100%;
     font-size: 1.2rem;
-    color: #888;
+    color: #ccc;
     font-weight: 500;
     text-align: center;
 }
@@ -281,58 +296,53 @@ html, body {
     max-width: 75%;
     word-wrap: break-word;
     white-space: pre-wrap;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    color: white;
 }
 
 .chat-app-user-message {
-    background-color: #fafafa;
+    background-color: rgba(64, 64, 96, 0.8);
     text-align: right;
-    color: #2f2f2f;
     margin-left: auto;
 }
 
 .chat-app-bot-message {
-    background-color: #e9f0fd;
+    background-color: rgba(48, 48, 72, 0.8);
     text-align: left;
-    color: #2f2f2f;
     margin-right: auto;
 }
 
 /* -------------------- Selected Company -------------------- */
-/* Selected Company Styles */
 .chat-app-selected-company {
     width: 100%;
     max-width: 800px;
     text-align: center;
-    background-color: #ffffff;
+    background-color: rgba(32, 33, 68, 0.9);
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
-    color: #333;
+    color: white;
     margin-bottom: 10px;
-    /* padding: 10px; */
-    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
-    /* display: flex; */
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.3);
     justify-content: space-between;
     align-items: center;
 }
 
 .chat-app-selected-label-main {
-    /* display: flex; */
     align-items: center;
     gap: 8px;
     font-size: 14px;
     font-weight: 500;
-    color: #333;
+    color: white;
 }
 
 .chat-app-selected-label {
     font-weight: bold;
-    color: #007bff !important;
+    color: #a8c0ff !important;
 }
 
 .chat-app-selected-name {
-    color: #000;
+    color: white;
     font-weight: 500;
 }
 
@@ -341,14 +351,10 @@ html, body {
 }
 
 .chat-app-select-company-message {
-    color: #888;
+    color: #ccc;
     font-size: 14px;
     text-align: center;
     margin-bottom: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 /* -------------------- Chat Input -------------------- */
@@ -359,8 +365,8 @@ html, body {
     width: 100%;
     max-width: 800px;
     padding: 12px;
-    background-color: white;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    background-color: rgba(32, 33, 68, 0.9);
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
     border-radius: 10px;
     position: relative;
     bottom: 0;
@@ -372,14 +378,16 @@ html, body {
     flex-grow: 1;
     padding: 10px;
     border-radius: 5px;
-    border: 1px solid #ccc;
+    border: 1px solid #55557a;
     outline: none;
     font-size: 14px;
+    background-color: rgba(48, 48, 72, 0.8);
+    color: white;
 }
 
 .chat-app-input-section input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    border-color: #a8c0ff;
+    box-shadow: 0 0 0 2px rgba(168, 192, 255, 0.3);
 }
 
 .chat-app-button-group {
@@ -388,10 +396,10 @@ html, body {
     flex-wrap: wrap;
     justify-content: flex-end;
     margin-top: 8px;
-  }
-  
-  /* Base button */
-  .chat-button {
+}
+
+/* Base button */
+.chat-button {
     padding: 10px 20px;
     font-size: 0.875rem;
     font-weight: 500;
@@ -399,41 +407,41 @@ html, body {
     border-radius: 999px; /* pill shape */
     cursor: pointer;
     transition: all 0.25s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     min-width: 100px;
     text-align: center;
-  }
-  
-  /* Send Button */
-  .chat-button.send {
-    background-color: #2563eb;
+}
+
+/* Send Button */
+.chat-button.send {
+    background-color: #5a67d8;
     color: white;
-  }
-  
-  .chat-button.send:hover {
-    background-color: #1e40af;
+}
+
+.chat-button.send:hover {
+    background-color: #434190;
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-  }
-  
-  /* New Chat Button */
-  .chat-button.new {
-    background-color: #f3f4f6;
-    color: #111827;
-  }
-  
-  .chat-button.new:hover {
-    background-color: #e5e7eb;
+    box-shadow: 0 4px 10px rgba(90, 103, 216, 0.5);
+}
+
+/* New Chat Button */
+.chat-button.new {
+    background-color: rgba(32, 33, 68, 0.7);
+    color: white;
+}
+
+.chat-button.new:hover {
+    background-color: rgba(32, 33, 68, 0.9);
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  }
-  
+    box-shadow: 0 4px 10px rgba(32, 33, 68, 0.7);
+}
+
 /* -------------------- Upload Status -------------------- */
 .chat-app-upload-message {
     margin-top: 5px;
     font-size: 14px;
     font-weight: bold;
-    color: #28a745;
+    color: #a8c0ff;
     animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -457,7 +465,7 @@ html, body {
     left: 50%;
     bottom: 120%;
     transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(32, 33, 68, 0.7);
     color: white;
     padding: 4px 8px;
     border-radius: 4px;
@@ -502,9 +510,9 @@ html, body {
       margin: 8px 12px 8px auto;
       padding: 10px 14px;
       max-width: 80%;
-      background-color: #fafafa;
+      background-color: rgba(64, 64, 96, 0.8);
       text-align: right;
-      color: #2f2f2f;
+      color: white;
     }
   
     .chat-app-bot-message {
@@ -512,15 +520,15 @@ html, body {
       margin: 8px auto 8px 12px;
       padding: 10px 14px;
       max-width: 90%;
-      background-color: #e9f0fd;
+      background-color: rgba(48, 48, 72, 0.8);
       text-align: left;
-      color: #2f2f2f;
+      color: white;
     }
   
     .chat-app-selected-company {
       font-size: 14px;
       font-weight: 500;
-      color: #333;
+      color: white;
       border-radius: 6px;
     }
   
@@ -534,7 +542,7 @@ html, body {
     .chat-app-selected-name,
     .chat-app-select-company-message {
       font-size: 12px;
-      color: #888;
+      color: #ccc;
     }
   
     .chat-app-input-section {
@@ -573,15 +581,11 @@ html, body {
     .chat-app-header-title {
         font-size: 13px;
     }
-  }  
-  
-  /* Tablet (501px–767px): input + buttons inline */
-  @media (min-width: 501px) and (max-width: 767px) {
+}  
+
+/* Tablet (501px–767px): input + buttons inline */
+@media (min-width: 501px) and (max-width: 767px) {
     .chat-app-window {
-        /* padding-bottom: calc(70px + env(safe-area-inset-bottom));
-        padding-top: calc(20px + env(safe-area-inset-top));
-        padding-left: calc(20px + env(safe-area-inset-left));
-        padding-right: calc(20px + env(safe-area-inset-right)); */
         margin-left: 50px;
     }
   
@@ -610,21 +614,4 @@ html, body {
       padding: 8px 12px;
       font-size: 0.85rem;
     }
-  }
-  
-  
-  /* Desktop (≥768px): align buttons to the right */
-  @media (min-width: 768px) {
-    .chat-app-button-group {
-      flex-direction: row;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-  
-    .chat-button {
-      width: auto;
-      padding: 10px 20px;
-      font-size: 0.875rem;
-    }
-  }
-  
+}
