@@ -20,6 +20,7 @@ body {
 /* Header styles */
 .home-header {
     margin-bottom: 2rem;
+    margin-left: 40px; 
 }
 
 .header-top {
@@ -46,9 +47,10 @@ body {
     overflow: hidden; /* Adjust height to fit within viewport */
 }
 .filters-sidebar {
-    background: rgba(32, 33, 68, 0.9);
+    background: rgba(32, 33, 68, 1);
     border-radius: 10px;
     padding: 1.5rem;
+    margin-top: 60px; /* ⬅️ Add this line */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     height: calc(100vh - 200px);
     position: sticky;
@@ -58,7 +60,6 @@ body {
     width: 36.4%;
     font-size: 22.4px;
 }
-
 
 .home-logo {
     width: 100px;
@@ -75,16 +76,13 @@ body {
 
 /* Hamburger styles */
 .menu-toggle {
-    order:-1;
-    background: none;
-    border: none;
-    cursor: pointer;
-    z-index: 1001;
-    position: relative;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+  position: fixed;
+  top: 20px;
+  left: 20px; /* move to left */
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 1101;
 }
 
 .filters-sidebar h3 {
@@ -127,43 +125,43 @@ body {
 }
 
 .menu-icon {
-    width: 25px;
-    height: 3px;
-    background-color: white;
-    position: relative;
-    transition: all 0.3s ease;
-    display: block;
+  width: 25px;
+  height: 3px;
+  background-color: white;
+  position: relative;
+  display: block;
+  transition: all 0.3s ease;
 }
-
 .menu-icon::before,
 .menu-icon::after {
-    content: '';
-    position: absolute;
-    width: 25px;
-    height: 3px;
-    background-color: white;
-    transition: all 0.3s ease;
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 3px;
+  background-color: white;
+  transition: all 0.3s ease;
 }
 
 .menu-icon::before {
-    transform: translateY(-8px);
+  transform: translateY(-8px);
 }
 
 .menu-icon::after {
-    transform: translateY(8px);
+  transform: translateY(8px);
 }
 
 .menu-icon.open {
-    background-color: transparent;
+  background-color: transparent;
 }
 
 .menu-icon.open::before {
-    transform: rotate(45deg);
+  transform: rotate(45deg);
 }
 
 .menu-icon.open::after {
-    transform: rotate(-45deg);
+  transform: rotate(-45deg);
 }
+
 
 /* Navigation drawer */
 .nav-menu {
@@ -297,7 +295,7 @@ body {
 }
 
 .news-tile {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     padding: 22.4px;
@@ -328,7 +326,7 @@ body {
 .news-title a {
     font-size: 22.4px;
     font-weight: 600;
-    color: #a8c0ff;
+    color: white;
     text-decoration: none;
 }
 

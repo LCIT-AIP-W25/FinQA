@@ -124,6 +124,7 @@ function ChatPage() {
             async function fetchCompanies() {
                 try {
                     const response = await axios.get(`${CHATBOT_API_URL}/api/companies`);
+                    console.log("Fetched companies:", response.data);
                     setCompanyList(response.data);  //  Store fetched company names
                 } catch (error) {
                     console.error("Error fetching company names:", error);
@@ -467,7 +468,7 @@ function ChatPage() {
                             <img className="chat-app-logo-img" src="/images/wes.png" alt="Logo" />
                         </Link>
                         {/* Header Text */}
-                        <h2 className="chat-app-header-title">WealthWiz AI Chat</h2>
+                        <h2 className="chat-app-header-title">FinAnswer</h2>
                     </div>
 
 

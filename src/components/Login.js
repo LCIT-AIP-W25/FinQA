@@ -64,7 +64,7 @@ function Login() {
       <div className='signup-form-wrapper'>
         <div className='text-center mb-3'>
           <img className='signup-logo' src='/images/Logo.png' alt="Logo" />
-          <p className='wel-txt'>Welcome back</p>
+          <p className='wel-txt' style={{color: 'black'}}>Welcome back</p>
           <p className='det-txt'>Please enter your details</p>
         </div>
 
