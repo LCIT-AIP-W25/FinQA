@@ -51,6 +51,7 @@ def get_db_connection():
     db_password = os.getenv("DB_PASSWORD")
     db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
     db_wallet = os.getenv("DB_WALLET_LOCATION")
+    wal_password = os.getenv("DB_WALLET_PASSWORD")
 
     # Establish connection using the wallet
     connection = oracledb.connect(
@@ -59,7 +60,7 @@ def get_db_connection():
         dsn=db_dsn,
         config_dir=db_wallet,  # Points to /opt/wallet
         wallet_location=db_wallet,
-        wallet_password=db_password,  # Optional (if ewallet.p12 is used)
+        wallet_password=wal_password,  # Optional (if ewallet.p12 is used)
         retry_count=3,
         retry_delay=1
     )
@@ -328,7 +329,7 @@ def query_chatbot():
         summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
 
         log_memory("After query_chatbot")
-        return jsonify({"response": summarized_response}), 200
+        return jsonify({"response":summarized_response }), 200
 
     except Exception as e:
         print(f"Error in query_chatbot: {str(e)}")
@@ -387,7 +388,8 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     numerical_str = str(numerical_response) if numerical_response else "No numerical data available"
     print(f"\n[1/3] Formatted Numerical Response: {numerical_str}")
     
-    model_name = "mistral-saba-24b"
+    #model_name = "mistral-saba-24b"
+    model_name = "llama3-70b-8192"
     max_retries = 3
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
@@ -425,7 +427,11 @@ def summarize_responses(user_question, numerical_response, contextual_response):
             # Use the wrapper instead of direct Groq client
             response, error = GroqWrapper.make_summarize_request(
                 model=model_name,
-                messages=[{"role": "system", "content": prompt}],
+                messages=[
+                        {"role": "system", "content": "You are a financial summarization assistant."},
+                        {"role": "user", "content": prompt}
+                        ],
+
                 max_tokens=512,
                 temperature=0.3
             )
@@ -519,6 +525,7 @@ db_config = {
     "password": os.getenv("DB_PASSWORD"),
     "dsn": os.getenv("DB_DSN"),
     "wallet_location": os.getenv("DB_WALLET_LOCATION"),
+    "wal_password": os.getenv("DB_WALLET_PASSWORD"),
 }
 
 def handle_numerical_query(user_question, selected_company, session_id=None):
@@ -549,6 +556,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
             ddl_content = ddl_file.read().strip()
 
         llm_output = query_llm(user_question, ddl_content, model_name, key_manager.get_sql_key(), chat_history=chat_history)
+        print(llm_output)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500
