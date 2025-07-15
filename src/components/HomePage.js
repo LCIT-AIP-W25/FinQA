@@ -10,6 +10,7 @@ function HomePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSources, setSelectedSources] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTickers, setSelectedTickers] = useState([]);
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
 
@@ -53,6 +54,13 @@ function HomePage() {
 
   const handleDateChange = (e) => setSelectedDate(e.target.value);
 
+  const handleTickerChange = (e) => {
+    const value = e.target.value;
+    setSelectedTickers(prev =>
+      prev.includes(value) ? prev.filter(ticker => ticker !== value) : [...prev, value]
+    );
+  };
+
   const filterByDate = (itemDate) => {
     if (!selectedDate) return true;
     const now = new Date();
@@ -69,6 +77,14 @@ function HomePage() {
       return publishedDate >= oneMonthAgo && publishedDate <= now;
     }
     return true;
+  };
+
+  const filterByTicker = (symbol) => {
+    if (selectedTickers.length === 0) return true;
+    const itemTickers = (symbol || '')
+      .split(',')
+      .map(t => t.trim().toUpperCase());
+    return selectedTickers.some(ticker => itemTickers.includes(ticker));
   };
 
   return (
@@ -99,7 +115,6 @@ function HomePage() {
         </div>
       </header>
 
-      {/* Hamburger icon (shown only when menu is closed) */}
       {!isMenuOpen && (
         <button className="menu-toggle" onClick={toggleMenu}>
           <span className="menu-icon"></span>
@@ -107,23 +122,19 @@ function HomePage() {
       )}
 
       <nav className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
-        {/* Close icon (X) shown only when menu is open */}
         {isMenuOpen && (
           <button className="menu-toggle" onClick={toggleMenu}>
             <span className="menu-icon open"></span>
           </button>
         )}
-
         <ul>
           <li><Link to="/home">Home</Link></li>
           <li><Link to="/chat">AI Chat</Link></li>
           <li><Link to="/pdf-chat">PDF Analysis</Link></li>
-
           <li className="menu-category">Chat Tools</li>
           <li><button className="menu-btn" onClick={handleCompanyReports}>Company Reports</button></li>
           <li><button className="menu-btn" onClick={handleChatHistory}>Chat History</button></li>
           <li><button className="menu-btn" onClick={handleMetrics}>Metrics</button></li>
-
           <li className="menu-category">Account</li>
           <li><button className="menu-btn sign-out" onClick={handleSignOut}>Sign Out</button></li>
         </ul>
@@ -168,6 +179,24 @@ function HomePage() {
               ))}
             </div>
           </div>
+
+          <div className="filter-section">
+            <h4>By Ticker</h4>
+            <div className="filter-options">
+              {['AAPL', 'GOOG', 'MSFT', 'AMZN'].map((ticker) => (
+                <label className="filter-option" key={ticker}>
+                  <input
+                    type="checkbox"
+                    name="ticker"
+                    value={ticker}
+                    checked={selectedTickers.includes(ticker)}
+                    onChange={handleTickerChange}
+                  />
+                  {ticker}
+                </label>
+              ))}
+            </div>
+          </div>
         </aside>
 
         <div className="news-section">
@@ -182,6 +211,7 @@ function HomePage() {
                 .filter((item) => item.title.toLowerCase().includes(searchTerm.toLowerCase()))
                 .filter((item) => selectedSources.length === 0 || selectedSources.includes(item.source.toLowerCase()))
                 .filter((item) => filterByDate(item.published_date))
+                .filter((item) => filterByTicker(item.stock_symbol))
                 .map((item, index) => (
                   <div key={index} className="news-tile">
                     <h3 className="news-title">
@@ -190,6 +220,7 @@ function HomePage() {
                       </a>
                     </h3>
                     <p className="news-source">🔹 {item.source}</p>
+                    <p className="news-ticker">{item.stock_symbol}</p>
                     <p className="news-date">🗓 {new Date(item.published_date).toLocaleDateString()}</p>
                   </div>
                 ))}

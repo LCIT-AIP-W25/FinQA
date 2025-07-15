@@ -174,3 +174,123 @@ body, html {
   max-width: 420px;
   width: 100%;
 }
+
+
+.signup-section {
+    min-height: 100vh;
+    background: linear-gradient(to right, #f8f9fa, #e9ecef);
+}
+
+.signup-wrapper {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 80%;
+    max-width: 900px;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: row;
+}
+
+.form-col {
+    background-color: #ffffff;
+}
+
+.right-panel {
+    background-color: #0d6efd;
+    color: white;
+    text-align: center;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.brand-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+}
+
+.motto {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.signup-logo {
+    width: 120px;
+    margin-bottom: 1rem;
+}
+
+.wel-txt {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.txt-lab {
+    font-weight: 500;
+    margin-top: 1rem;
+    display: block;
+}
+
+.inp-set {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+}
+
+.error-text {
+    color: #dc3545;
+    font-size: 0.9rem;
+}
+
+.success-text {
+    color: #198754;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.eye-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-sign {
+    background-color: #0d6efd;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.box-end {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.sign-txt {
+    font-weight: bold;
+    margin-left: 0.5rem;
+    color: #0d6efd;
+}
+
+.link-line {
+    text-decoration: none;
+}
+
+.relative {
+    position: relative;
+}
