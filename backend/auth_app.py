@@ -353,12 +353,12 @@ def get_yahoo_news():
         total_count = db.session.execute(count_sql).scalar()
         print(f"Total news articles in database: {total_count}")
         
-        # Fetch 25 latest news items
+        # Fetch 50 latest news items
         sql = text("""
             SELECT title, url, timestamp, stock_symbol 
             FROM yahoo_news 
             ORDER BY timestamp DESC 
-            LIMIT 25
+            LIMIT 50
         """)
         
         result = db.session.execute(sql)

@@ -51,6 +51,7 @@ def get_db_connection():
     db_password = os.getenv("DB_PASSWORD")
     db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
     db_wallet = os.getenv("DB_WALLET_LOCATION")
+    wal_password = os.getenv("DB_PASSWORD")
 
     # Establish connection using the wallet
     connection = oracledb.connect(
@@ -59,7 +60,7 @@ def get_db_connection():
         dsn=db_dsn,
         config_dir=db_wallet,  # Points to /opt/wallet
         wallet_location=db_wallet,
-        wallet_password=db_password,  # Optional (if ewallet.p12 is used)
+        wallet_password=wal_password,  # Optional (if ewallet.p12 is used)
         retry_count=3,
         retry_delay=1
     )
@@ -276,30 +277,52 @@ def get_chat(session_id):
 
 
 
-@app.route('/api/yahoo_news', methods=['GET'])
-def get_yahoo_news():
+from sqlalchemy import text  # Add this at the top if not already imported
+
+@app.route('/api/finance_news', methods=['GET'])
+def get_finance_news():
     try:
-        # Using SQLAlchemy to query PostgreSQL
-        sql = """
-            SELECT title, link, published_date, source
-            FROM yahoo_news
-            ORDER BY published_date DESC
-            LIMIT 25
-        """
-        result = db.session.execute(sql)
+        # Get limit parameter from query string, default to 25
+        limit = request.args.get('limit', 25, type=int)
+        
+        # Ensure limit is reasonable (between 1 and 100)
+        limit = max(1, min(limit, 100))
+        
+        sql = text("""
+            SELECT 
+                id,
+                source,
+                ticker,
+                title,
+                url,
+                title_sentiment,
+                sentiment_label,
+                scraped_at,
+                sentiment
+            FROM finance_news
+            ORDER BY scraped_at DESC
+            LIMIT :limit
+        """)
+        result = db.session.execute(sql, {"limit": limit})
         news_items = [
             {
-                "title": row[0],
-                "link": row[1],
-                "published_date": row[2].strftime("%Y-%m-%d %H:%M:%S"),
-                "source": row[3]
+                "id": row[0],
+                "source": row[1],
+                "ticker": row[2],
+                "title": row[3],
+                "url": row[4],
+                "title_sentiment": row[5],
+                "sentiment_label": row[6],
+                "scraped_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
+                "sentiment": row[8]
             }
             for row in result
         ]
         return jsonify(news_items), 200
     except Exception as e:
-        print(f"Error fetching news: {str(e)}")
-        return jsonify({"error": "Failed to fetch news"}), 500
+        print("❌ Error fetching finance news:", str(e))
+        return jsonify({"error": f"Failed to fetch finance news: {str(e)}"}), 500
+
 
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
@@ -328,7 +351,7 @@ def query_chatbot():
         summarized_response = summarize_responses(user_question, numerical_text, contextual_text)
 
         log_memory("After query_chatbot")
-        return jsonify({"response": summarized_response}), 200
+        return jsonify({"response":summarized_response }), 200
 
     except Exception as e:
         print(f"Error in query_chatbot: {str(e)}")
@@ -382,57 +405,71 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     print(f"User Question: {user_question}")
     print(f"Numerical Response: {numerical_response}")
     print(f"Contextual Response: {contextual_response[:200]}...")  # Show preview
-    
-    # Ensure numerical_text is always a string
-    numerical_str = str(numerical_response) if numerical_response else "No numerical data available"
+
+    # 🚫 Check for failed SQL responses
+    numerical_str = str(numerical_response).strip().lower() if numerical_response else ""
+    if not numerical_str or "failed" in numerical_str or "error" in numerical_str or "no match" in numerical_str:
+        numerical_response = None
+        numerical_str = "No numerical data available"
+
     print(f"\n[1/3] Formatted Numerical Response: {numerical_str}")
-    
-    model_name = "mistral-saba-24b"
+
+    model_name = "llama3-70b-8192"
     max_retries = 3
+
+    # 🧠 Prompt dynamically avoids misleading SQL values
     prompt = f"""
     You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
 
     ### Decision Rule:
-    - Prioritize the SQL numerical response if it directly answers the user's question.
-    - Use the contextual response only if SQL data is insufficient or irrelevant.
-    - Always use the **user question** to understand if the expected answer is a **percentage**, **monetary amount**, or **count**.
+    - Prioritize the SQL numerical response only if it is valid and directly answers the user's question.
+    - Use the contextual response only if SQL data is unavailable, invalid, or irrelevant.
+    - Always use the *user question* to understand if the expected answer is a *percentage, **monetary amount, or **count*.
+
+    ### Response Guidelines:
+    - Use the most accurate and relevant information (numerical or contextual) to directly answer the user's question.
+    - Do NOT mention which source was used (e.g., “SQL response” or “contextual response”).
+    - Never say things like "since the numerical response is unavailable..."
+    - Simply give the correct answer, clearly and concisely.
 
     ### Formatting Guidelines:
-    - If the user asks about **percentage change, growth, or decrease**, format the number as a percentage (e.g.,'1.24 becomes `-1.24%`, `12.5 becomes 12.5%`).
-    - If the user asks about **revenue, profit, income, shareholder equity**, or any **monetary value**, format as currency:
-        - Use `$` sign  (e.g., `143 becomes $143`, `22.7 becomes $22.7`)
-        - Add commas for readability (e.g., `$25,500`)
-        - NEVER add in decimals or round the original numerical answer.
-        - Never put % unless the question mentions percentage
-    - If the user asks for a **count** (like number of employees, units, or quarters), return the raw number with commas if large (`5,000`).
-    - Do not repeat the question. No explanations.
+    - If the user asks about *percentage change, growth, or decrease*, format the number as a percentage.
+    - If the user asks about *revenue, profit, income, shareholder equity, or any **monetary value*, format as currency:
+        - Use $ sign and add commas
+        - Do not add decimals or round numbers
+    - If the user asks for a *count*, return the number with commas if needed.
+    - Do not generate a fake number if none is available from SQL.
+    - If only the contextual response is relevant, use it as-is without guessing a number.
 
-    ###Inputs:
+    ### Inputs:
     User Question: {user_question}
-    Numerical Response (SQL): {numerical_response}
+    Numerical Response (SQL): {numerical_str}
     Contextual Response (RAG): {contextual_response}
 
     If you used the numerical response, always end with:
     "All monetary values are in millions."
-"""
-    print(f"\n[2/3] Generated Prompt (Preview):\n{prompt[:500]}...")  # Show first 500 chars
+    """
+
+    print(f"\n[2/3] Generated Prompt (Preview):\n{prompt[:500]}...")
 
     for attempt in range(max_retries):
         try:
             print(f"\nAttempt {attempt + 1}/{max_retries}: Querying LLM...")
             start_time = time.time()
-            
-            # Use the wrapper instead of direct Groq client
+
             response, error = GroqWrapper.make_summarize_request(
                 model=model_name,
-                messages=[{"role": "system", "content": prompt}],
+                messages=[
+                    {"role": "system", "content": "You are a financial summarization assistant."},
+                    {"role": "user", "content": prompt}
+                ],
                 max_tokens=512,
                 temperature=0.3
             )
-            
+
             if error:
                 raise Exception(error)
-                
+
             latency = time.time() - start_time
             print(f"  LLM Response received in {latency:.2f}s")
             print(f"  Model: {model_name}")
@@ -447,41 +484,34 @@ def summarize_responses(user_question, numerical_response, contextual_response):
 
             print("\n=== SUMMARIZATION SUCCESSFUL ===")
             return formatted_response
-            
+
         except Exception as e:
             error_message = str(e).lower()
-            print(f"\n⚠️ Attempt {attempt + 1} failed with error: {error_message}")
+            print(f"\n⚠ Attempt {attempt + 1} failed with error: {error_message}")
 
-            # Handle specific error cases with logging
             if "503" in error_message or "service unavailable" in error_message:
-                print("  Detected service unavailable error")
                 if attempt == max_retries - 1:
-                    print("  Max retries reached for service unavailable")
                     return "We are currently experiencing high demand. Please try again later."
                 time.sleep((attempt + 1) * 2)
                 continue
 
             if "rate limit" in error_message or "too many requests" in error_message:
-                print("  Detected rate limiting")
                 if attempt == max_retries - 1:
-                    print("  Max retries reached for rate limiting")
                     return "We are currently handling a high number of requests. Please try again in a few minutes."
                 time.sleep((attempt + 1) * 2)
                 continue
 
             if "unauthorized" in error_message or "invalid api key" in error_message:
-                print("  Detected authorization error")
                 return "We are currently unable to process this request. Please try again later."
 
             if attempt == max_retries - 1:
-                print("  Max retries reached for generic error")
                 return "We are experiencing technical difficulties. Please try again later."
 
-            print(f"  Waiting {((attempt + 1) * 2)} seconds before retry...")
             time.sleep((attempt + 1) * 2)
 
     print("\n=== SUMMARIZATION FAILED AFTER ALL RETRIES ===")
     return "We are experiencing technical difficulties. Please try again later."
+
 
 
 def get_ddl_prefix_from_db(company_name):
@@ -519,6 +549,7 @@ db_config = {
     "password": os.getenv("DB_PASSWORD"),
     "dsn": os.getenv("DB_DSN"),
     "wallet_location": os.getenv("DB_WALLET_LOCATION"),
+    "wal_password": os.getenv("DB_PASSWORD"),
 }
 
 def handle_numerical_query(user_question, selected_company, session_id=None):
@@ -549,6 +580,7 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
             ddl_content = ddl_file.read().strip()
 
         llm_output = query_llm(user_question, ddl_content, model_name, key_manager.get_sql_key(), chat_history=chat_history)
+        print(llm_output)
 
         if not llm_output:
             return {"error": "Failed to generate a response from LLM."}, 500
@@ -637,7 +669,7 @@ def robust_delete(path):
             print(f"✅ Successfully deleted {path}")
             return
         except Exception as e:
-            print(f"⚠️ Attempt {attempt + 1} failed for {path}: {str(e)}")
+            print(f"⚠ Attempt {attempt + 1} failed for {path}: {str(e)}")
             if attempt < max_retries - 1:
                 time.sleep(1 * (attempt + 1))  # Exponential backoff
             else:
@@ -679,7 +711,7 @@ def upload_pdf():
     # Background processing thread
     def process():
         try:
-            print(f"⚙️ Processing PDF for user: {user_id}")
+            print(f"⚙ Processing PDF for user: {user_id}")
             success = rag_system.process_pdf(file_path, user_id)
             pdf_status[status_key] = "done" if success else "failed"
         except Exception as e:
