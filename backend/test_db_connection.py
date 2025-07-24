@@ -14,5 +14,4 @@ except Exception as e:
 
 
 
-git remote add origin https://github.com/MeghanaSangawar/LCIT-AIP-W25/FinQA.git
 

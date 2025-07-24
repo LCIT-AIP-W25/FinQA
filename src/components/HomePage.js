@@ -180,29 +180,11 @@ const filteredNews = news
           </button>
         )}
         <ul>
-          <li><Link to="/home">Home</Link></li>
-          
-          {/* Expandable AI Chat Section */}
-          <li className="menu-expandable">
-            <button className="menu-btn expandable-btn" onClick={toggleAiChat}>
-              <span>AI Chat</span>
-              <span className={`expand-icon ${isAiChatExpanded ? 'expanded' : ''}`}>▼</span>
-            </button>
-            {isAiChatExpanded && (
-              <ul className="sub-menu">
-                <li><button className="menu-btn sub-menu-btn" onClick={handleMainChat}>Chat</button></li>
-                <li><Link to="/pdf-chat" className="sub-menu-link">PDF Analysis</Link></li>
-                <li><button className="menu-btn sub-menu-btn" onClick={handleCompanyReports}>Company Reports</button></li>
-              </ul>
-            )}
-          </li>
-          
-          <li className="menu-category">Chat Tools</li>
-          <li><button className="menu-btn" onClick={handleChatHistory}>Chat History</button></li>
-          <li><button className="menu-btn" onClick={handleMetrics}>Metrics</button></li>
-          <li className="menu-category">Account</li>
-          <li><button className="menu-btn sign-out" onClick={handleSignOut}>Sign Out</button></li>
-        </ul>
+  <li><Link to="/home">Home</Link></li>
+  <li><Link to="/chat">Learning Bot</Link></li>
+  <li><Link to="/trading-assistant">Trading Bot</Link></li>
+</ul>
+
       </nav>
 
       <main className="main-content">

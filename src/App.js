@@ -6,21 +6,19 @@ import Forget from './components/forget';
 import ChatPage from './components/ChatPage';
 import PDFChatPage from "./components/PDFChatPage";
 import HomePage from './components/HomePage';
+import TradingAssistant from './components/TradingAssistant'; // ✅ NEW
 import '../src/styles/custom.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import Comp from './components/Comp';
 import ResetPassword from './components/ResetPassword';
 import VerifyEmail from "./components/VerifyEmail";
-
-// ✅ Import Loader Context and Global Loader
 import { LoaderProvider } from './components/LoaderContext';
 import GlobalLoader from './components/GlobalLoader';
 
 function App() {
   return (
-    <LoaderProvider> {/* ✅ Wrap everything inside LoaderProvider */}
-      <GlobalLoader />  {/* ✅ Add Global Loader */}
+    <LoaderProvider>
+      <GlobalLoader />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
@@ -32,6 +30,7 @@ function App() {
           <Route path="/reset_password/:token" element={<ResetPassword />} />
           <Route path="/verify_email/:token" element={<VerifyEmail />} />
           <Route path='/pdf-chat' element={<ProtectedRoute><PDFChatPage /></ProtectedRoute>} />
+          <Route path='/trading-assistant' element={<ProtectedRoute><TradingAssistant /></ProtectedRoute>} /> {/* ✅ FIXED */}
         </Routes>
       </BrowserRouter>
     </LoaderProvider>

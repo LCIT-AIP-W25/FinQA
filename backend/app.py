@@ -359,7 +359,6 @@ def query_chatbot():
 
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
-    """API Endpoint to get company names"""
     return jsonify(get_company_names_from_db())
 
 @app.route('/api/sec_reports/<company>', methods=['GET'])
@@ -823,6 +822,29 @@ def fetch_company_metrics(company_name):
     print(f"DEBUG: API Response Sent → {response}")  # Log API output
 
     return jsonify(response)  # Only return JSON object (removes tuple)
+
+@app.route('/api/trading_assistant', methods=['POST'])
+def trading_assistant():
+    """Trading Assistant endpoint for basic trading queries"""
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        user_id = data.get('user_id', '')
+        
+        if not query:
+            return jsonify({"error": "Query is required"}), 400
+            
+        # Basic response for now - you can enhance this later
+        response = f"Trading Assistant received your query: '{query}'. This is a placeholder response that you can customize with your own trading logic."
+        
+        return jsonify({
+            "response": response,
+            "status": "success",
+            "user_id": user_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/')
 def index():
