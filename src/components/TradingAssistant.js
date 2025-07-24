@@ -14,24 +14,26 @@ function TradingAssistant() {
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
 
-useEffect(() => {
-  async function fetchCompanies() {
-    try {
-      const response = await axios.get('https://finrl-xsc4.onrender.com/companies');
-      setCompanyList(response.data);  // ✅ Use the response directly
-      console.log("✅ Companies loaded for Trading Assistant:", response.data);
-    } catch (error) {
-      console.error("❌ Error fetching trading assistant companies:", error);
+  const COMPANY_API_URL = process.env.REACT_APP_TRADEBOT_COMPANY_API;
+
+  useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        const response = await axios.get(COMPANY_API_URL);
+        setCompanyList(response.data);
+        console.log("✅ Companies loaded for Trading Assistant:", response.data);
+      } catch (error) {
+        console.error("❌ Error fetching trading assistant companies:", error);
+      }
     }
-  }
-  fetchCompanies();
-}, []);
+    fetchCompanies();
+  }, [COMPANY_API_URL]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleSignOut = () => {
     localStorage.clear();
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const handleQuery = async () => {
@@ -39,13 +41,11 @@ useEffect(() => {
 
     setLoading(true);
     try {
-      const response = await axios.post('https://finrl-xsc4.onrender.com/companies', {
+      const response = await axios.post(COMPANY_API_URL, {
         query: query,
         user_id: user?.user_id,
-
-        company: selectedCompany // 🟩 Pass selected company to backend
+        company: selectedCompany
       });
-
       setResponse(response.data.response);
     } catch (error) {
       console.error('Error querying trading assistant:', error);
@@ -94,7 +94,6 @@ useEffect(() => {
         <div className="trading-content">
           <h2>Ask Your Trading Question</h2>
 
-          {/* ✅ Company Selector */}
           <div className="company-selector">
             <label htmlFor="companyDropdown" className="selector-label">Select Company:</label>
             <select
@@ -110,39 +109,41 @@ useEffect(() => {
             </select>
           </div>
 
-<div className="query-section inline-sentence">
-  <span className="sentence-text">Predict stock movement for the next</span>
-  
-  <select
-    id="daysDropdown"
-    className="days-inline-dropdown"
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-  >
-    <option value="">--select--</option>
-    {Array.from({ length: 8 }, (_, i) => {
-      const days = i + 3;
-      return (
-        <option key={days} value={days}>
-          {days} days
-        </option>
-      );
-    })}
-  </select>
+          <div className="query-section">
+  <div className="inline-sentence">
+    <span className="sentence-text">Predict stock movement for the next</span>
 
-  <span className="sentence-text">.</span>
+    <select
+      id="daysDropdown"
+      className="days-inline-dropdown"
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
+    >
+      <option value="">--select--</option>
+      {Array.from({ length: 8 }, (_, i) => {
+        const days = i + 3;
+        return (
+          <option key={days} value={days}>
+            {days} days
+          </option>
+        );
+      })}
+    </select>
 
-  <button 
-    onClick={handleQuery} 
-    disabled={loading || !query}
-    className="query-button"
-  >
-    {loading ? 'Processing...' : 'Get Prediction'}
-  </button>
+    <span className="sentence-text">.</span>
+  </div>
+
+  <div className="query-button-wrapper">
+    <button 
+      onClick={handleQuery} 
+      disabled={loading || !query}
+      className="query-button"
+    >
+      {loading ? 'Processing...' : 'Get Prediction'}
+    </button>
+  </div>
 </div>
 
-
-          {/* ✅ Response Output */}
           {response && (
             <div className="response-section">
               <h3>Response:</h3>

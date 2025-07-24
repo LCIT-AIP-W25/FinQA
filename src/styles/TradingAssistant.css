@@ -288,7 +288,20 @@
 
 .company-selector {
   margin-bottom: 2rem;
+  font-size: 1.5rem;       /* Match the sentence */
+  font-weight: 700;        /* Bold text */
+  color: #ffffff;
 }
+
+.selector-label {
+   display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 700;        /* Bold label */
+  font-size: 1.5rem;       /* Larger font */
+  color: #b2cfff;
+}
+
+
 
 .selector-label {
   display: block;
@@ -302,28 +315,26 @@
   padding: 0.75rem;
   border-radius: 8px;
   border: 1px solid #ccc;
-  font-size: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.company-selector {
-  margin-bottom: 2rem;
-}
-
-.selector-label {
-  display: block;
-  margin-bottom: 0.5rem;
+  font-size: 1.1rem;       /* Increase dropdown font */
   font-weight: 600;
-  color: #b2cfff;
+   background-color: #ffffff;
+  color: rgb(5, 5, 5);
 }
 
-.selector-dropdown {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+.inline-sentence {
+  font-size: 1.5rem;       /* Increase font size */
+  font-weight: 700;        /* Make it bold */
+  margin-top: 2rem;        /* Add space below the dropdown */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+}
+
+
+.query-button-wrapper {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
