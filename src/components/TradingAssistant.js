@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/TradingAssistant.css';
 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
+
 function TradingAssistant() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [response, setResponse] = useState([]);
   const [loading, setLoading] = useState(false);
   const [companyList, setCompanyList] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -28,6 +32,18 @@ function TradingAssistant() {
     }
     fetchCompanies();
   }, [COMPANY_API_URL]);
+  useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        const response = await axios.get('https://finrl-gz1w.onrender.com/companies');
+        setCompanyList(response.data);
+        console.log("✅ Companies loaded for Trading Assistant:", response.data);
+      } catch (error) {
+        console.error("❌ Error fetching trading assistant companies:", error);
+      }
+    }
+    fetchCompanies();
+  }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -37,19 +53,48 @@ function TradingAssistant() {
   };
 
   const handleQuery = async () => {
-    if (!query.trim()) return;
+    if (!query || !selectedCompany) return;
 
     setLoading(true);
+    setResponse([]);
     try {
-      const response = await axios.post(COMPANY_API_URL, {
-        query: query,
-        user_id: user?.user_id,
-        company: selectedCompany
-      });
-      setResponse(response.data.response);
+      const tickerRes = await axios.get(`https://finrl-gz1w.onrender.com/find_ticker?q=${selectedCompany}`);
+      const ticker = tickerRes.data?.ticker;
+      if (!ticker) {
+        setResponse([{ date: "", prediction: "N/A", risk_level: "Ticker not found" }]);
+        return;
+      }
+
+      const days = parseInt(query);
+      const today = new Date();
+      const predictionResults = [];
+
+      for (let i = 0; i < days; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const isoDate = date.toISOString().split('T')[0];
+
+        try {
+          const predRes = await axios.get(`https://finrl-gz1w.onrender.com/prediction_by_date?ticker=${ticker}&date=${isoDate}`);
+          const predictionObj = predRes.data?.predictions?.[0];
+          if (predictionObj) {
+            predictionResults.push({
+              date: predictionObj.date,
+              prediction: predictionObj.prediction,
+              risk_level: predictionObj.risk_level
+            });
+          } else {
+            predictionResults.push({ date: isoDate, prediction: 'N/A', risk_level: 'No prediction' });
+          }
+        } catch (err) {
+          predictionResults.push({ date: isoDate, prediction: 'N/A', risk_level: 'Error fetching prediction' });
+        }
+      }
+
+      setResponse(predictionResults);
     } catch (error) {
-      console.error('Error querying trading assistant:', error);
-      setResponse('Sorry, I encountered an error processing your request. Please try again.');
+      console.error('❌ Error during prediction:', error);
+      setResponse([{ date: "", prediction: "N/A", risk_level: "Unexpected error" }]);
     } finally {
       setLoading(false);
     }
@@ -94,6 +139,7 @@ function TradingAssistant() {
         <div className="trading-content">
           <h2>Ask Your Trading Question</h2>
 
+          {/* Company Selector */}
           <div className="company-selector">
             <label htmlFor="companyDropdown" className="selector-label">Select Company:</label>
             <select
@@ -109,53 +155,74 @@ function TradingAssistant() {
             </select>
           </div>
 
-          <div className="query-section">
-  <div className="inline-sentence">
-    <span className="sentence-text">Predict stock movement for the next</span>
+          {/* Day Selector and Button */}
+          <div className="query-section inline-sentence">
+            <span className="sentence-text">Predict stock movement for the next</span>
 
-    <select
-      id="daysDropdown"
-      className="days-inline-dropdown"
-      value={query}
-      onChange={(e) => setQuery(e.target.value)}
-    >
-      <option value="">--select--</option>
-      {Array.from({ length: 8 }, (_, i) => {
-        const days = i + 3;
-        return (
-          <option key={days} value={days}>
-            {days} days
-          </option>
-        );
-      })}
-    </select>
+            <select
+              id="daysDropdown"
+              className="days-inline-dropdown"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            >
+              <option value="">--select--</option>
+              {Array.from({ length: 8 }, (_, i) => {
+                const days = i + 3;
+                return (
+                  <option key={days} value={days}>
+                    {days} days
+                  </option>
+                );
+              })}
+            </select>
 
-    <span className="sentence-text">.</span>
+              <span className="sentence-text">.</span>
   </div>
 
-  <div className="query-button-wrapper">
-    <button 
-      onClick={handleQuery} 
-      disabled={loading || !query}
-      className="query-button"
-    >
-      {loading ? 'Processing...' : 'Get Prediction'}
-    </button>
-  </div>
-</div>
+            <button
+              onClick={handleQuery}
+              disabled={loading || !query || !selectedCompany}
+              className="query-button"
+            >
+              {loading ? 'Processing...' : 'Get Prediction'}
+            </button>
 
-          {response && (
-            <div className="response-section">
-              <h3>Response:</h3>
-              <div className="response-content">
-                {response}
+            {/* Response Output */}
+            {response.length > 0 && (
+              <div className="response-section">
+                <h3>Predictions:</h3>
+
+                {/* 📊 Chart */}
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <LineChart
+                      data={response}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="prediction" stroke="#8884d8" activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* 📋 List */}
+                <ul className="response-list">
+                  {response.map((item, idx) => (
+                    <li key={idx}>
+                      {item.date}:  <strong>{item.prediction}</strong> | Risk: <em>{item.risk_level}</em>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
-  );
+            )}
+          </div>
+        </main>
+      </div>
+    );
 }
 
 export default TradingAssistant;
