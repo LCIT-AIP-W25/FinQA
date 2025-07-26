@@ -155,74 +155,83 @@ function TradingAssistant() {
             </select>
           </div>
 
-          {/* Day Selector and Button */}
-          <div className="query-section inline-sentence">
-            <span className="sentence-text">Predict stock movement for the next</span>
+ {/* Day Selector and Button */}
+<div className="query-section inline-sentence">
+  <span className="sentence-text">Predict stock movement for the next</span>
 
-            <select
-              id="daysDropdown"
-              className="days-inline-dropdown"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            >
-              <option value="">--select--</option>
-              {Array.from({ length: 8 }, (_, i) => {
-                const days = i + 3;
-                return (
-                  <option key={days} value={days}>
-                    {days} days
-                  </option>
-                );
-              })}
-            </select>
+  <select
+    id="daysDropdown"
+    className="days-inline-dropdown"
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+  >
+    <option value="">--select--</option>
+    {Array.from({ length: 8 }, (_, i) => {
+      const days = i + 3;
+      return (
+        <option key={days} value={days}>
+          {days} days
+        </option>
+      );
+    })}
+  </select>
 
-              <span className="sentence-text">.</span>
+  <span className="sentence-text">.</span>
+</div>
+
+<div className="query-button-wrapper">
+  <button
+    onClick={handleQuery}
+    disabled={loading || !query || !selectedCompany}
+    className="query-button"
+  >
+    {loading ? 'Processing...' : 'Get Prediction'}
+  </button>
+</div>
+
+{/* Response Output */}
+{response.length > 0 && (
+  <div className="response-section">
+    <h3>Predictions:</h3>
+
+    {/* 📊 Chart */}
+    <div style={{ width: '100%', height: 300 }}>
+      <ResponsiveContainer>
+        <LineChart
+          data={response}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line
+            type="monotone"
+            dataKey="prediction"
+            stroke="#8884d8"
+            activeDot={{ r: 6 }}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+
+    {/* 📋 List */}
+    <ul className="response-list">
+      {response.map((item, idx) => (
+        <li key={idx}>
+          {item.date}: <strong>{item.prediction}</strong> | Risk:{' '}
+          <em>{item.risk_level}</em>
+        </li>
+      ))}
+    </ul>
   </div>
+)}
 
-            <button
-              onClick={handleQuery}
-              disabled={loading || !query || !selectedCompany}
-              className="query-button"
-            >
-              {loading ? 'Processing...' : 'Get Prediction'}
-            </button>
-
-            {/* Response Output */}
-            {response.length > 0 && (
-              <div className="response-section">
-                <h3>Predictions:</h3>
-
-                {/* 📊 Chart */}
-                <div style={{ width: '100%', height: 300 }}>
-                  <ResponsiveContainer>
-                    <LineChart
-                      data={response}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Line type="monotone" dataKey="prediction" stroke="#8884d8" activeDot={{ r: 6 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* 📋 List */}
-                <ul className="response-list">
-                  {response.map((item, idx) => (
-                    <li key={idx}>
-                      {item.date}:  <strong>{item.prediction}</strong> | Risk: <em>{item.risk_level}</em>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    );
+        </div> {/* Close trading-content */}
+      </main>
+    </div>  
+  );
 }
 
 export default TradingAssistant;
