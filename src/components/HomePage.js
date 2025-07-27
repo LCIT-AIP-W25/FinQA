@@ -12,6 +12,11 @@ function HomePage() {
   const [selectedSentiments, setSelectedSentiments] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTickers, setSelectedTickers] = useState([]);
+
+  // Temporary states for filters before applying
+  const [tempSelectedSentiments, setTempSelectedSentiments] = useState([]);
+  const [tempSelectedDate, setTempSelectedDate] = useState('');
+  const [tempSelectedTickers, setTempSelectedTickers] = useState([]);
   const [uniqueTickers, setUniqueTickers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(18);
@@ -20,6 +25,7 @@ function HomePage() {
 
   useEffect(() => {
     fetchNews();
+    fetchTickers();
   }, []);
 
 const fetchNews = async () => {
@@ -28,29 +34,29 @@ const fetchNews = async () => {
     const response = await axios.get(apiUrl);
     if (Array.isArray(response.data)) {
       setNews(response.data);
-
-      // Collect unique tickers (from finance_news → ticker)
-      const tickersSet = new Set();
-      response.data.forEach(item => {
-        if (item.ticker) {
-          const trimmedTicker = item.ticker.trim().toUpperCase();
-          if (trimmedTicker) {
-            tickersSet.add(trimmedTicker);
-          }
-        }
-      });
-      const uniqueTickersArray = Array.from(tickersSet).sort();
-      setUniqueTickers(uniqueTickersArray);
     } else {
       setNews([]);
-      setUniqueTickers([]);
     }
     setLoading(false);
   } catch (error) {
     console.error('Error fetching news:', error.message, error.response);
     setNews([]);
-    setUniqueTickers([]);
     setLoading(false);
+  }
+};
+
+const fetchTickers = async () => {
+  try {
+    const response = await axios.get('http://localhost:5050/api/finance_news/tickers');
+    if (Array.isArray(response.data)) {
+      const sortedTickers = response.data.map(ticker => ticker.trim().toUpperCase()).sort();
+      setUniqueTickers(sortedTickers);
+    } else {
+      setUniqueTickers([]);
+    }
+  } catch (error) {
+    console.error('Error fetching tickers:', error.message, error.response);
+    setUniqueTickers([]);
   }
 };
 
@@ -67,15 +73,15 @@ const fetchNews = async () => {
 
   const handleSentimentChange = (e) => {
     const value = e.target.value;
-    setSelectedSentiments(prev =>
+    setTempSelectedSentiments(prev =>
       prev.includes(value) ? prev.filter(sentiment => sentiment !== value) : [...prev, value]
     );
   };
 
-  const handleDateChange = (e) => setSelectedDate(e.target.value);
+  const handleDateChange = (e) => setTempSelectedDate(e.target.value);
   const handleTickerChange = (e) => {
     const value = e.target.value;
-    setSelectedTickers(prev =>
+    setTempSelectedTickers(prev =>
       prev.includes(value) ? prev.filter(ticker => ticker !== value) : [...prev, value]
     );
   };
@@ -200,7 +206,7 @@ const filteredNews = news
       type="checkbox"
       name="sentiment"
       value={sentiment}
-      checked={selectedSentiments.includes(sentiment)}
+      checked={tempSelectedSentiments.includes(sentiment)}
       onChange={handleSentimentChange}
     />
     {sentiment}
@@ -218,7 +224,7 @@ const filteredNews = news
                     type="radio"
                     name="date"
                     value={option}
-                    checked={selectedDate === option}
+                    checked={tempSelectedDate === option}
                     onChange={handleDateChange}
                   />
                   {option === '' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
@@ -236,7 +242,7 @@ const filteredNews = news
                     type="checkbox"
                     name="ticker"
                     value={ticker}
-                    checked={selectedTickers.includes(ticker)}
+                    checked={tempSelectedTickers.includes(ticker)}
                     onChange={handleTickerChange}
                   />
                   {ticker}
@@ -244,6 +250,11 @@ const filteredNews = news
               ))}
             </div>
           </div>
+          <button className="filter-button" type="button" onClick={() => {
+            setSelectedSentiments(tempSelectedSentiments);
+            setSelectedDate(tempSelectedDate);
+            setSelectedTickers(tempSelectedTickers);
+          }}>Filter</button>
         </aside>
 
         <div className="news-section">

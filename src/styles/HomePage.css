@@ -147,6 +147,7 @@ body {
 
 .news-section h2 {
   margin-bottom: 1.5rem;
+  font-weight: bold;
 }
 
 /* News Tiles Container */
@@ -203,7 +204,7 @@ body {
 }
 
 .news-title a {
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 600;
   color: white;
   text-decoration: none;
@@ -542,6 +543,7 @@ body {
   border-bottom: 2px solid #4e7fff;
   padding-bottom: 0.5rem;
   color: #b2cfff;
+  font-weight: 700;
 }
 
 .article-card {
@@ -685,5 +687,31 @@ body {
   }
 }
 
+.filter-button {
+  background: rgba(78, 127, 255, 0.9);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 11;
+  pointer-events: auto;
+}
 
+.filter-button:hover:not(:disabled) {
+  background: rgba(78, 127, 255, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(78, 127, 255, 0.4);
+}
 
+.filter-button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
