@@ -17,6 +17,61 @@ from stock_data import fetch_stock_price_llm
 load_dotenv()
 
 stock_keywords = ['stock price', 'share price', 'open price', 'close price', 'high', 'low', 'average price', 'latest price']
+stock_keywords += ['price in', 'performance in', 'price difference', 'stock performance', 'price trend']
+
+COMPANY_TICKER_MAP = {
+    "GOOGLE": "GOOG",
+    "AMAZON": "AMZN",
+    "TESLA": "TSLA",
+    "META": "META",
+    "APPLE": "AAPL",
+    "MICROSOFT": "MSFT",
+    "JP MORGAN": "JPM",
+    "NETFLIX": "NFLX",
+    "AMD": "AMD",
+    "VISA": "V",
+    "MASTERCARD": "MA",
+    "PEPSICO": "PEP",
+    "AT&T": "T",
+    "MCDONALD": "MCD",
+    "S&P GLOBAL": "SPGI"
+}
+
+
+
+# Metrics considered percentages
+PERCENTAGE_METRICS = {
+    "Revenue Growth (YoY)", "Shares Change (YoY)", "EPS Growth", "Gross Margin",
+    "Operating Margin", "Profit Margin", "Free Cash Flow Margin", "EBITDA Margin",
+    "EBIT Margin", "Effective Tax Rate", "Cash Growth", "Net Cash Growth",
+    "Operating Cash Flow Growth", "Free Cash Flow Growth", "Market Cap Growth",
+    "Return on Equity (ROE)", "Return on Assets (ROA)", "Return on Capital (ROIC)",
+    "Return on Capital Employed (ROCE)", "Earnings Yield", "FCF Yield", "Dividend Yield",
+    "Payout Ratio", "Buyback Yield / Dilution", "Total Shareholder Return"
+}
+
+def format_metric_value(metric_name, value):
+    """Format float values based on whether the metric is a percentage."""
+    if value is None:
+        return "N/A"
+    if metric_name in PERCENTAGE_METRICS and isinstance(value, (float, int)):
+        return f"{round(value * 100, 2)}%"
+    if isinstance(value, (float, int)):
+        return f"${round(value, 2):,}"
+    return str(value)
+
+def is_explanation_query(user_question: str) -> bool:
+    # explanation_keywords = [
+    #     "how is", "how do you calculate", "explain", "what is the formula for",
+    #     "formula for", "definition of", "what does", "describe"
+    # ]
+    explanation_keywords = [
+    "how do you calculate", "explain", "what is the formula for",
+    "formula for", "definition of", "what does it mean", "describe the formula"
+    ]
+    user_question_lower = user_question.lower()
+    return any(kw in user_question_lower for kw in explanation_keywords)
+
 
 # Configuration
 URL_PATTERN = re.compile(r'https?://\S+|www\.\S+')
@@ -173,20 +228,41 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None, numeri
     if not _initialized:
         raise RuntimeError("Components not initialized")
 
-    # ✅ Check for stock-related queries
+    # ✅ Normalize company name to ticker (e.g., "JP MORGAN" → "JPM")
+    ticker = None
+    if selected_company:
+        normalized_name = selected_company.upper().strip()
+        ticker = COMPANY_TICKER_MAP.get(normalized_name, normalized_name)
+
+    # ✅ Handle stock price queries separately
     if any(keyword in final_query.lower() for keyword in stock_keywords):
-        if selected_company:
-            stock_response = fetch_stock_price_llm(final_query, selected_company.upper())
-            return stock_response, []  # 🔁 Bypass LLM and RAG if stock
+        print(f"📌 Stock-related question received: [Company: {selected_company}] {final_query}")
+        print(f"➡️ Routing to PostgreSQL for ticker: {ticker}")
+
+        if ticker:
+            stock_response = fetch_stock_price_llm(final_query, ticker)
+            if "❌" in stock_response or "⚠️" in stock_response:
+                return stock_response, []  # PostgreSQL error or no data
+            return stock_response, []
         else:
             return "⚠️ Please specify a valid company ticker (e.g., TSLA, AMZN).", []
 
-    # 📊 Oracle-based numerical responses for non-stock queries stay intact
+    # 📊 Oracle-based financial metric logic
     try:
         relevant_docs = retrieve_documents(final_query, selected_company)
         retrieved_text = "\n\n".join([doc["text"] + "..." for doc in relevant_docs]) if relevant_docs else ""
 
-        sql_context = f"SQL result: {numerical_response}\n\n" if numerical_response else ""
+        metric_name_match = re.search(r"for\s+(.*?)\s+in|of\s+(.*?)\s+in", final_query, re.IGNORECASE)
+        metric_name = metric_name_match.group(1) if metric_name_match else None
+
+        if numerical_response and metric_name:
+            formatted_value = format_metric_value(metric_name.strip(), float(numerical_response))
+            sql_context = f"SQL result: {formatted_value}\n\n"
+        elif numerical_response:
+            sql_context = f"SQL result: {numerical_response}\n\n"
+        else:
+            sql_context = ""
+
         full_context = sql_context + "Context from documents:\n" + retrieved_text
 
         history_messages = []
@@ -199,10 +275,9 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None, numeri
             {
                 "role": "system",
                 "content": (
-                    "You are a financial AI assistant that answers using:\n"
-                    "1. Numerical data (from SQL)\n"
-                    "2. Supporting document context (from RAG)\n\n"
-                    "Prioritize the SQL result if it directly answers the question. Use documents for support or elaboration."
+                    "You are a financial AI assistant that only answers questions related to finance, business performance, stock data, or company metrics.\n"
+                    "If the question is unrelated to finance (e.g., politics, sports, celebrities), politely reply that you're only trained to answer financial topics.\n\n"
+                    "When answering, prioritize SQL data (numerical response) if available. Only use document context (RAG) if SQL data is missing."
                 )
             }
         ] + history_messages + [{
@@ -234,7 +309,6 @@ def query_llm_groq(final_query, selected_company=None, chat_history=None, numeri
     except Exception as e:
         return f"❌ Groq API Error: {str(e)}", []
 
-
 if __name__ == "__main__":
     if initialize_components():
         query = input("Enter your financial question: ")
@@ -256,3 +330,7 @@ if __name__ == "__main__":
             for i, doc in enumerate(sources, 1):
                 print(f"{i}. Source: {doc['source']}")
                 print(f"    Text Preview: {doc['text'][:120]}...\n")
+
+# ✅ Ensure components are initialized when file is imported
+if not _initialized:
+    initialize_components()
