@@ -10,7 +10,6 @@ from datetime import datetime
 from groq import Groq
 import itertools
 
-
 def load_excel_data(file_path):
     """Loads the Excel file and creates a dictionary of DataFrames for each company."""
     xls = pd.ExcelFile(file_path)
@@ -57,6 +56,9 @@ ALWAYS use "" (double quotes) for table and column names.
 ALWAYS use ''(single quotes) for filtering "METRICS" column.
 ALWAYS prefix "ADMIN" to table names.
 ALWAYS MAKE SURE THE SQL SYNTAX IS CORRECT.
+NEVER modify or paraphrase the metric names (e.g., do NOT replace '/' with 'with' or '&' with 'and'). 
+Use the metric name EXACTLY as referenced in the database schema.
+
 
 ### Previous Conversation Context:
 {history_context} 
@@ -95,6 +97,12 @@ Your SQL output: SELECT ("Q3_2024" - "Q3_2023") FROM "ADMIN"."AMD_BALANCE_SHEET_
  
 User input: How did the EPS Growth in Q3 2024 compare to Q3 2023 for Amazon?
 Your SQL output: SELECT ("Q3_2024" - "Q3_2023") FROM "ADMIN"."AMZN_INCOME_QUARTERLY" WHERE "METRICS" = 'EPS Growth';
+
+User input: What is the Interest & Investment Income in Q3 2024 for Google?
+Your SQL output: SELECT "Q3_2024" FROM "ADMIN"."GOOG_INCOME_QUARTERLY" WHERE "METRICS" = 'Interest & Investment Income';
+
+User input: What is the EV/Sales Ratio in Q3 2024 for Google?
+Your SQL output: SELECT "Q3_2024" FROM "ADMIN"."GOOG_INCOME_QUARTERLY" WHERE "METRICS" = 'EV/Sales Ratio';
 \n\n
  
 ### System instructions:
@@ -106,7 +114,6 @@ Based on the DDL below, generate an SQL query.
 ## Natural Language Query
 query = "{user_question}"
 \n\n
-
 """
     retries = 0
     while retries < max_retries:
@@ -122,7 +129,7 @@ query = "{user_question}"
                 stream=False,
             )
             llm_response = response.choices[0].message.content.strip()
-            
+            print(llm_response)
             logging.debug("LLM Response received: %s", llm_response)
             return llm_response
         except httpx.HTTPStatusError as e:
@@ -146,7 +153,7 @@ def execute_sql(query, db_config):
             dsn=db_config["dsn"],
             config_dir=db_config["wallet_location"],
             wallet_location=db_config["wallet_location"],
-            wallet_password=db_config["password"]
+            wallet_password=db_config["wal_password"]
         )
         cursor = conn.cursor()
         start_time = time.time()
