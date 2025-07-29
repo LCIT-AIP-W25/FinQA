@@ -20,6 +20,12 @@ import stat
 from datetime import datetime as dt
 import psutil
 import logging
+from real_chatbot_rag import format_metric_value, PERCENTAGE_METRICS
+from real_chatbot_rag import query_llm_groq, initialize_components
+
+initialize_components()  # Ensures everything is loaded
+
+
 
 # Configure logging once
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -51,7 +57,7 @@ def get_db_connection():
     db_password = os.getenv("DB_PASSWORD")
     db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
     db_wallet = os.getenv("DB_WALLET_LOCATION")
-    wal_password = os.getenv("DB_PASSWORD")
+    wal_password = os.getenv("DB_WALLET_PASSWORD")
 
     # Establish connection using the wallet
     connection = oracledb.connect(
@@ -277,68 +283,30 @@ def get_chat(session_id):
 
 
 
-from sqlalchemy import text  # Add this at the top if not already imported
-
-@app.route('/api/finance_news', methods=['GET'])
-def get_finance_news():
+@app.route('/api/yahoo_news', methods=['GET'])
+def get_yahoo_news():
     try:
-        # Get limit parameter from query string, default to 25
-        limit = request.args.get('limit', 25, type=int)
-        
-        # Ensure limit is reasonable (between 1 and 100)
-        limit = max(1, min(limit, 100))
-        
-        sql = text("""
-            SELECT 
-                id,
-                source,
-                ticker,
-                title,
-                url,
-                title_sentiment,
-                sentiment_label,
-                scraped_at,
-                sentiment
-            FROM finance_news
-            ORDER BY scraped_at DESC
-            LIMIT :limit
-        """)
-        result = db.session.execute(sql, {"limit": limit})
+        # Using SQLAlchemy to query PostgreSQL
+        sql = """
+            SELECT title, link, published_date, source
+            FROM yahoo_news
+            ORDER BY published_date DESC
+            LIMIT 25
+        """
+        result = db.session.execute(sql)
         news_items = [
             {
-                "id": row[0],
-                "source": row[1],
-                "ticker": row[2],
-                "title": row[3],
-                "url": row[4],
-                "title_sentiment": row[5],
-                "sentiment_label": row[6],
-                "scraped_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
-                "sentiment": row[8]
+                "title": row[0],
+                "link": row[1],
+                "published_date": row[2].strftime("%Y-%m-%d %H:%M:%S"),
+                "source": row[3]
             }
             for row in result
         ]
         return jsonify(news_items), 200
     except Exception as e:
-        print("❌ Error fetching finance news:", str(e))
-        return jsonify({"error": f"Failed to fetch finance news: {str(e)}"}), 500
-
-@app.route('/api/finance_news/tickers', methods=['GET'])
-def get_finance_news_tickers():
-    try:
-        sql = text("""
-            SELECT DISTINCT ticker
-            FROM finance_news
-            WHERE ticker IS NOT NULL
-            ORDER BY ticker
-        """)
-        result = db.session.execute(sql)
-        tickers = [row[0] for row in result]
-        return jsonify(tickers), 200
-    except Exception as e:
-        print("❌ Error fetching finance news tickers:", str(e))
-        return jsonify({"error": f"Failed to fetch finance news tickers: {str(e)}"}), 500
-
+        print(f"Error fetching news: {str(e)}")
+        return jsonify({"error": "Failed to fetch news"}), 500
 
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
@@ -375,6 +343,7 @@ def query_chatbot():
 
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
+    """API Endpoint to get company names"""
     return jsonify(get_company_names_from_db())
 
 @app.route('/api/sec_reports/<company>', methods=['GET'])
@@ -419,7 +388,10 @@ def summarize_responses(user_question, numerical_response, contextual_response):
     print("\n=== STARTING RESPONSE SUMMARIZATION ===")
     print(f"User Question: {user_question}")
     print(f"Numerical Response: {numerical_response}")
-    print(f"Contextual Response: {contextual_response[:200]}...")  # Show preview
+    #print(f"Contextual Response: {contextual_response[:200]}...")  # Show preview
+    print("Contextual Response (Full):")
+    print(contextual_response)
+
 
     # 🚫 Check for failed SQL responses
     numerical_str = str(numerical_response).strip().lower() if numerical_response else ""
@@ -431,39 +403,40 @@ def summarize_responses(user_question, numerical_response, contextual_response):
 
     model_name = "llama3-70b-8192"
     max_retries = 3
+    #You are an AI assistant that explains financial questions using either SQL data (if available) or helpful contextual explanations (if not). Your job is to format the final answer for the user in a clear, friendly way.
 
     # 🧠 Prompt dynamically avoids misleading SQL values
     prompt = f"""
-    You are an AI assistant that prioritizes the numerical response from a SQL Database to answer financial questions, supported by a contextual RAG response. Your job is to decide the correct answer, then FORMAT the output correctly based on the user's question.
+You are a financial AI assistant that always prioritizes SQL data for answering questions. 
+Only use document context (RAG) if SQL data is missing or the query fails. 
+Never infer or recalculate numbers from documents if SQL data is available.
 
-    ### Decision Rule:
-    - Prioritize the SQL numerical response only if it is valid and directly answers the user's question.
-    - Use the contextual response only if SQL data is unavailable, invalid, or irrelevant.
-    - Always use the *user question* to understand if the expected answer is a *percentage, **monetary amount, or **count*.
+### Decision Rules:
+- Use SQL numerical response if available and valid.
+- Use contextual explanation only when SQL is missing or fails.
+- Do not mention "SQL failure", "fallback", or system internals.
 
-    ### Response Guidelines:
-    - Use the most accurate and relevant information (numerical or contextual) to directly answer the user's question.
-    - Do NOT mention which source was used (e.g., “SQL response” or “contextual response”).
-    - Never say things like "since the numerical response is unavailable..."
-    - Simply give the correct answer, clearly and concisely.
+### Response Guidelines:
+- Always explain using the SQL result when present, without referencing the source.
+- If using document context, explain clearly without fabricating any numbers.
+- Never guess or assume values not explicitly provided.
+- Respond in a friendly, professional tone as if speaking to a business user.
 
-    ### Formatting Guidelines:
-    - If the user asks about *percentage change, growth, or decrease*, format the number as a percentage.
-    - If the user asks about *revenue, profit, income, shareholder equity, or any **monetary value*, format as currency:
-        - Use $ sign and add commas
-        - Do not add decimals or round numbers
-    - If the user asks for a *count*, return the number with commas if needed.
-    - Do not generate a fake number if none is available from SQL.
-    - If only the contextual response is relevant, use it as-is without guessing a number.
+### Formatting Rules:
+- Format monetary values using `$` and commas (e.g., $3,450).
+- Use percentage formatting when the question involves change or growth.
+- If using SQL, end the answer with:  
+  "All monetary values are in millions."
 
-    ### Inputs:
-    User Question: {user_question}
-    Numerical Response (SQL): {numerical_str}
-    Contextual Response (RAG): {contextual_response}
+### Inputs:
+User Question: {user_question}
+Numerical Response (SQL): {numerical_str}
+Contextual Response (RAG): {contextual_response}
 
-    If you used the numerical response, always end with:
-    "All monetary values are in millions."
-    """
+Please return only the final user-facing answer.
+"""
+
+
 
     print(f"\n[2/3] Generated Prompt (Preview):\n{prompt[:500]}...")
 
@@ -502,7 +475,7 @@ def summarize_responses(user_question, numerical_response, contextual_response):
 
         except Exception as e:
             error_message = str(e).lower()
-            print(f"\n⚠ Attempt {attempt + 1} failed with error: {error_message}")
+            print(f"\n⚠️ Attempt {attempt + 1} failed with error: {error_message}")
 
             if "503" in error_message or "service unavailable" in error_message:
                 if attempt == max_retries - 1:
@@ -564,7 +537,7 @@ db_config = {
     "password": os.getenv("DB_PASSWORD"),
     "dsn": os.getenv("DB_DSN"),
     "wallet_location": os.getenv("DB_WALLET_LOCATION"),
-    "wal_password": os.getenv("DB_PASSWORD"),
+    "wal_password": os.getenv("DB_WALLET_PASSWORD"),
 }
 
 def handle_numerical_query(user_question, selected_company, session_id=None):
@@ -630,30 +603,38 @@ def handle_numerical_query(user_question, selected_company, session_id=None):
 def handle_contextual_query(user_question, selected_company, session_id=None):
     """Handle contextual queries using MongoDB Atlas Vector Search with conversation history."""
     try:
-    
         # Get chat history if session_id is provided
-        # Get chat history within the same context
         chat_history = []
         if session_id:
             with db_lock:
                 chat_messages = Chat.query.filter_by(session_id=session_id).order_by(Chat.id).all()
                 chat_history = [{'sender': msg.sender, 'message': msg.message} for msg in chat_messages]
-        
+
         final_query = f"[Company: {selected_company}] {user_question}"
         response, relevant_docs = query_llm_groq(final_query, selected_company, chat_history)
-        
+
         if isinstance(response, str) and response.startswith("❌"):
+            logging.error(f"Contextual query failed: {response}")
             return {"error": response}, 500
 
-        sources = [{"source": doc["source"], "snippet": doc["text"][:200]} for doc in relevant_docs]
+        # Log full contextual response clearly
+        logging.info("🧠 Full Contextual Response:\n" + response)
+
+        if relevant_docs:
+            logging.info("📄 Relevant Sources Retrieved:")
+            for doc in relevant_docs:
+                logging.info(f"Source: {doc.get('source')}\nSnippet: {doc.get('text', '')[:300]}\n---")
+
+        sources = [{"source": doc.get("source"), "snippet": doc.get("text", "")[:200]} for doc in relevant_docs]
         return {
             "response": response,
             "sources": sources
         }, 200
+
     except Exception as e:
+        logging.error(f"❌ Error in contextual query: {str(e)}")
         return {"error": str(e)}, 500
     
-
 #------------------------------------------PDF Processing---------------------------------------- 
 # Dictionary to track PDF processing status
 pdf_status = {}
@@ -684,7 +665,7 @@ def robust_delete(path):
             print(f"✅ Successfully deleted {path}")
             return
         except Exception as e:
-            print(f"⚠ Attempt {attempt + 1} failed for {path}: {str(e)}")
+            print(f"⚠️ Attempt {attempt + 1} failed for {path}: {str(e)}")
             if attempt < max_retries - 1:
                 time.sleep(1 * (attempt + 1))  # Exponential backoff
             else:
@@ -726,7 +707,7 @@ def upload_pdf():
     # Background processing thread
     def process():
         try:
-            print(f"⚙ Processing PDF for user: {user_id}")
+            print(f"⚙️ Processing PDF for user: {user_id}")
             success = rag_system.process_pdf(file_path, user_id)
             pdf_status[status_key] = "done" if success else "failed"
         except Exception as e:
@@ -838,29 +819,6 @@ def fetch_company_metrics(company_name):
     print(f"DEBUG: API Response Sent → {response}")  # Log API output
 
     return jsonify(response)  # Only return JSON object (removes tuple)
-
-@app.route('/api/trading_assistant', methods=['POST'])
-def trading_assistant():
-    """Trading Assistant endpoint for basic trading queries"""
-    try:
-        data = request.get_json()
-        query = data.get('query', '')
-        user_id = data.get('user_id', '')
-        
-        if not query:
-            return jsonify({"error": "Query is required"}), 400
-            
-        # Basic response for now - you can enhance this later
-        response = f"Trading Assistant received your query: '{query}'. This is a placeholder response that you can customize with your own trading logic."
-        
-        return jsonify({
-            "response": response,
-            "status": "success",
-            "user_id": user_id
-        }), 200
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/')
 def index():
