@@ -10,6 +10,10 @@ function HomePage() {
   const [selectedSentiments, setSelectedSentiments] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTickers, setSelectedTickers] = useState([]);
+
+  const [tempSelectedSentiments, setTempSelectedSentiments] = useState([]);
+  const [tempSelectedDate, setTempSelectedDate] = useState('');
+  const [tempSelectedTickers, setTempSelectedTickers] = useState([]);
   const [uniqueTickers, setUniqueTickers] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -22,37 +26,16 @@ function HomePage() {
     fetchTickers();
   }, []);
 
-const fetchNews = async () => {
-  try {
-    const apiUrl = `http://localhost:5050/api/finance_news?limit=50`; 
-    const response = await axios.get(apiUrl);
-    if (Array.isArray(response.data)) {
-      setNews(response.data);
-
-      // Collect unique tickers (from finance_news → ticker)
-      const tickersSet = new Set();
-      response.data.forEach(item => {
-        if (item.ticker) {
-          const trimmedTicker = item.ticker.trim().toUpperCase();
-          if (trimmedTicker) {
-            tickersSet.add(trimmedTicker);
-          }
-        }
-      });
-      const uniqueTickersArray = Array.from(tickersSet).sort();
-      setUniqueTickers(uniqueTickersArray);
-    } else {
-      setNews([]);
-      setUniqueTickers([]);
+  const fetchNews = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5050/api/finance_news?limit=50`);
+      setNews(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error("News fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  } catch (error) {
-    console.error('Error fetching news:', error.message, error.response);
-    setNews([]);
-    setUniqueTickers([]);
-    setLoading(false);
-  }
-};
+  };
 
   const fetchTickers = async () => {
     try {
@@ -68,16 +51,17 @@ const fetchNews = async () => {
 
   const handleSentimentChange = (e) => {
     const value = e.target.value;
-    setSelectedSentiments(prev =>
-      prev.includes(value) ? prev.filter(sentiment => sentiment !== value) : [...prev, value]
+    setTempSelectedSentiments(prev =>
+      prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]
     );
   };
 
-  const handleDateChange = (e) => setSelectedDate(e.target.value);
+  const handleDateChange = (e) => setTempSelectedDate(e.target.value);
+
   const handleTickerChange = (e) => {
     const value = e.target.value;
-    setSelectedTickers(prev =>
-      prev.includes(value) ? prev.filter(ticker => ticker !== value) : [...prev, value]
+    setTempSelectedTickers(prev =>
+      prev.includes(value) ? prev.filter(t => t !== value) : [...prev, value]
     );
   };
 
@@ -105,11 +89,11 @@ const fetchNews = async () => {
     return selectedTickers.includes(ticker.trim().toUpperCase());
   };
 
-      const handleSignOut = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        navigate('/login');
-    };
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   const filteredNews = news
     .filter(item => item.title?.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -127,49 +111,49 @@ const fetchNews = async () => {
   return (
     <div className="home-container">
       <header className="home-header">
-  <div className="header-top">
-    <div className="logo-title">
-      <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
-      <h1>Welcome, {user?.username} 👋</h1>
-    </div>
-    <div className="search-nav-wrapper">
-      <input
-        type="text"
-        className="home-search-bar"
-        placeholder="Search news..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <div className="top-nav-wrapper">     
-        <div className="top-nav">
-          <Link to="/home">Home</Link>
-          <Link to="/chat">Learning Bot</Link>
-          <Link to="/trading-assistant">Trading Bot</Link>
-          <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
+        <div className="header-top">
+          <div className="logo-title">
+            <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
+            <h1>Welcome, {user?.username} 👋</h1>
+          </div>
+          <div className="search-nav-wrapper">
+            <input
+              type="text"
+              className="home-search-bar"
+              placeholder="Search news..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="top-nav-wrapper">
+              <div className="top-nav">
+                <Link to="/home">Home</Link>
+                <Link to="/chat">Learning Bot</Link>
+                <Link to="/trading-assistant">Trading Bot</Link>
+                <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-</header>
+      </header>
 
       <main className="main-content">
         <aside className="filters-sidebar">
           <h3>Filter News</h3>
+
           <div className="filter-section">
             <h4>By Sentiment</h4>
             {['Positive', 'Negative', 'Neutral'].map((sentiment) => (
-  <label className="filter-option" key={sentiment}>
-    <input
-      type="checkbox"
-      name="sentiment"
-      value={sentiment}
-      checked={selectedSentiments.includes(sentiment)}
-      onChange={handleSentimentChange}
-    />
-    {sentiment}
-  </label>
-))}
-            </div>
+              <label className="filter-option" key={sentiment}>
+                <input
+                  type="checkbox"
+                  name="sentiment"
+                  value={sentiment}
+                  checked={tempSelectedSentiments.includes(sentiment)}
+                  onChange={handleSentimentChange}
+                />
+                {sentiment}
+              </label>
+            ))}
           </div>
 
           <div className="filter-section">
@@ -181,7 +165,7 @@ const fetchNews = async () => {
                     type="radio"
                     name="date"
                     value={option}
-                    checked={selectedDate === option}
+                    checked={tempSelectedDate === option}
                     onChange={handleDateChange}
                   />
                   {option === '' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
@@ -199,7 +183,7 @@ const fetchNews = async () => {
                     type="checkbox"
                     name="ticker"
                     value={ticker}
-                    checked={selectedTickers.includes(ticker)}
+                    checked={tempSelectedTickers.includes(ticker)}
                     onChange={handleTickerChange}
                   />
                   {ticker}
@@ -207,6 +191,18 @@ const fetchNews = async () => {
               ))}
             </div>
           </div>
+
+          <button
+            className="filter-button"
+            type="button"
+            onClick={() => {
+              setSelectedSentiments(tempSelectedSentiments);
+              setSelectedDate(tempSelectedDate);
+              setSelectedTickers(tempSelectedTickers);
+            }}
+          >
+            Apply Filter
+          </button>
         </aside>
 
         <div className="news-section">
@@ -218,6 +214,7 @@ const fetchNews = async () => {
               </div>
             )}
           </div>
+
           {loading ? (
             <div className="loading">Loading...</div>
           ) : (
@@ -229,7 +226,8 @@ const fetchNews = async () => {
                       <a href={item.url} target="_blank" rel="noreferrer">{item.title}</a>
                     </h3>
                     <p className="news-ticker">{item.ticker}</p>
-                    <p className="news-date">🗓 {new Date(item.scraped_at).toLocaleDateString()}</p>
+                    <p className="news-date">🗓 {new Date(item.scraped_at).toLocaleDateString()}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -258,28 +256,23 @@ const fetchNews = async () => {
 
         <div className="right-container">
           <h3 className="section-title">Top Finance Reads</h3>
-          {[
-            {
-              title: 'Know Your Client (KYC) Rule',
-              description: 'Ensures advisors understand your risk tolerance.',
-              url: 'https://www.securities-administrators.ca/',
-            },
-            {
-              title: 'TFSA Stock Trading Guidelines',
-              description: 'TFSA allows stock trading, but day-trading risks tax penalties.',
-              url: 'https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/tax-free-savings-account.html',
-            },
-            {
-              title: 'CRM2 – Transparency in Fees',
-              description: 'Requires annual disclosure of fees and investment performance.',
-              url: 'https://www.getsmarteraboutmoney.ca/invest/investment-products/stocks/',
-            },
-            {
-              title: 'Insider Trading Laws',
-              description: 'Using non-public information to trade is illegal.',
-              url: 'https://www.osc.ca/',
-            }
-          ].map(({ title, description, url }, idx) => (
+          {[{
+            title: 'Know Your Client (KYC) Rule',
+            description: 'Ensures advisors understand your risk tolerance.',
+            url: 'https://www.securities-administrators.ca/',
+          }, {
+            title: 'TFSA Stock Trading Guidelines',
+            description: 'TFSA allows stock trading, but day-trading risks tax penalties.',
+            url: 'https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/tax-free-savings-account.html',
+          }, {
+            title: 'CRM2 – Transparency in Fees',
+            description: 'Requires annual disclosure of fees and investment performance.',
+            url: 'https://www.getsmarteraboutmoney.ca/invest/investment-products/stocks/',
+          }, {
+            title: 'Insider Trading Laws',
+            description: 'Using non-public information to trade is illegal.',
+            url: 'https://www.osc.ca/',
+          }].map(({ title, description, url }, idx) => (
             <div key={idx} className="article-card">
               <h4>{title}</h4>
               <p>{description}</p>
