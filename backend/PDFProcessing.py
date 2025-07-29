@@ -10,6 +10,7 @@ import time
 from groq_wrapper import GroqWrapper
 from pymongo import MongoClient
 from typing import List, Tuple
+import numpy as np
 
 # Load environment variables
 load_dotenv()
@@ -68,12 +69,14 @@ class FinancialRAGSystem:
             chunk_size=1000,
             chunk_overlap=200,
             length_function=len,
-            separators=["\n\n", "\n", "(?<=\. )", " ", ""]
+            #separators=["\n\n", "\n", "(?<=\. )", " ", ""]
+            separators = ["\n\n", "\n", r"(?<=\. )", " ", ""]
+
         )
         print("✅ Text splitter configured with:")
         print(f"   - Chunk size: 1000")
         print(f"   - Overlap: 200")
-        print(f"   - Separators: ['\\n\\n', '\\n', '(?<=\\. )', ' ', '']")
+        print(f"   - Separators: ['\\n\\n', '\\n', r'(?<=\\. )', ' ', '']")
 
     def _initialize_groq(self):
         """Initialize Groq connection through wrapper with enhanced logging"""
@@ -152,6 +155,7 @@ class FinancialRAGSystem:
 
             for page_num in range(len(doc)):
                 page = doc.load_page(page_num)
+                #page = doc[page_num]
                 text = page.get_text("text")
                 section = self._detect_section(text)
 
@@ -172,12 +176,12 @@ class FinancialRAGSystem:
 
                 # 2. Process financial tables
                 tables = self._extract_financial_tables(page, page_num, pdf_path)
-                for doc in tables:
+                for table_doc in tables:
                     all_chunks.append({
                         "user_id": str(user_id),
                         "filename": filename,
-                        "content": doc.page_content,
-                        "metadata": doc.metadata
+                        "content": table_doc.page_content,
+                        "metadata": table_doc.metadata
                     })
 
             print(f"Total text/table chunks: {len(all_chunks)}")
@@ -233,6 +237,9 @@ class FinancialRAGSystem:
 
             # 1. Generate query embedding
             query_embedding = self.embeddings.embed_query(query)
+            
+            # Safe conversion
+            query_embedding = np.array(query_embedding).astype(float).tolist()
             print("✅ Generated embedding for query")
 
             # 2. Run vector search in MongoDB
@@ -245,7 +252,7 @@ class FinancialRAGSystem:
                         "path": "embedding",
                         "numCandidates": 100,
                         "limit": k,
-                        "index": "vector_index_pdf", 
+                        "index": "vector_pdf", 
                         "filter": {
                             "user_id": str(user_id),
                             "filename": filename
@@ -254,6 +261,8 @@ class FinancialRAGSystem:
                 }
             ])
             results = list(results)
+            print(f"Query vector length: {len(query_embedding)}")
+            print(f"First few vector values: {query_embedding[:5]}")
 
             if not results:
                 print("⚠️ No relevant documents found.")
@@ -270,7 +279,8 @@ class FinancialRAGSystem:
             # 4. Send to Groq LLM
             print("Sending context and question to Groq LLM...")
             response, error = GroqWrapper.make_rag_request(
-                model="mistral-saba-24b",
+                #model="mistral-saba-24b",
+                model= "llama3-8b-8192",
                 messages=[
                     {
                         "role": "system",
@@ -295,12 +305,20 @@ class FinancialRAGSystem:
             print("✅ Groq LLM response received")
 
             # 5. Extract sources
+            # sources = [{
+            #     "content": doc["content"][:500] + "...",
+            #     "source": doc["filename"],
+            #     "page": doc.get("metadata", {}).get("page"),
+            #     "section": doc.get("metadata", {}).get("section", "unknown").upper()
+            # } for doc in results]
             sources = [{
-                "content": doc["content"][:500] + "...",
-                "source": doc["filename"],
-                "page": doc.get("metadata", {}).get("page"),
+                "content": doc.get("content", "")[:500] + "...",
+                "source": doc.get("metadata", {}).get("source", "unknown"),
+                "page": doc.get("metadata", {}).get("page", "?"),
                 "section": doc.get("metadata", {}).get("section", "unknown").upper()
             } for doc in results]
+
+
 
             print(f"\n=== QUERY COMPLETE ({len(results)} chunks) ===")
             print(f"Total processing time: {time.time() - start_time:.2f} seconds")
