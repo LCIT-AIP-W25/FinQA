@@ -10,10 +10,6 @@ function HomePage() {
   const [selectedSentiments, setSelectedSentiments] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTickers, setSelectedTickers] = useState([]);
-
-  const [tempSelectedSentiments, setTempSelectedSentiments] = useState([]);
-  const [tempSelectedDate, setTempSelectedDate] = useState('');
-  const [tempSelectedTickers, setTempSelectedTickers] = useState([]);
   const [uniqueTickers, setUniqueTickers] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,16 +22,37 @@ function HomePage() {
     fetchTickers();
   }, []);
 
-  const fetchNews = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5050/api/finance_news?limit=50`);
-      setNews(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      console.error("News fetch error:", err);
-    } finally {
-      setLoading(false);
+const fetchNews = async () => {
+  try {
+    const apiUrl = `http://localhost:5050/api/finance_news?limit=50`; 
+    const response = await axios.get(apiUrl);
+    if (Array.isArray(response.data)) {
+      setNews(response.data);
+
+      // Collect unique tickers (from finance_news → ticker)
+      const tickersSet = new Set();
+      response.data.forEach(item => {
+        if (item.ticker) {
+          const trimmedTicker = item.ticker.trim().toUpperCase();
+          if (trimmedTicker) {
+            tickersSet.add(trimmedTicker);
+          }
+        }
+      });
+      const uniqueTickersArray = Array.from(tickersSet).sort();
+      setUniqueTickers(uniqueTickersArray);
+    } else {
+      setNews([]);
+      setUniqueTickers([]);
     }
-  };
+    setLoading(false);
+  } catch (error) {
+    console.error('Error fetching news:', error.message, error.response);
+    setNews([]);
+    setUniqueTickers([]);
+    setLoading(false);
+  }
+};
 
   const fetchTickers = async () => {
     try {
@@ -51,17 +68,16 @@ function HomePage() {
 
   const handleSentimentChange = (e) => {
     const value = e.target.value;
-    setTempSelectedSentiments(prev =>
-      prev.includes(value) ? prev.filter(s => s !== value) : [...prev, value]
+    setSelectedSentiments(prev =>
+      prev.includes(value) ? prev.filter(sentiment => sentiment !== value) : [...prev, value]
     );
   };
 
-  const handleDateChange = (e) => setTempSelectedDate(e.target.value);
-
+  const handleDateChange = (e) => setSelectedDate(e.target.value);
   const handleTickerChange = (e) => {
     const value = e.target.value;
-    setTempSelectedTickers(prev =>
-      prev.includes(value) ? prev.filter(t => t !== value) : [...prev, value]
+    setSelectedTickers(prev =>
+      prev.includes(value) ? prev.filter(ticker => ticker !== value) : [...prev, value]
     );
   };
 
@@ -142,53 +158,55 @@ function HomePage() {
           <div className="filter-section">
             <h4>By Sentiment</h4>
             {['Positive', 'Negative', 'Neutral'].map((sentiment) => (
-              <label key={sentiment}>
-                <input
-                  type="checkbox"
-                  value={sentiment}
-                  checked={tempSelectedSentiments.includes(sentiment)}
-                  onChange={handleSentimentChange}
-                />
-                {sentiment}
-              </label>
-            ))}
+  <label className="filter-option" key={sentiment}>
+    <input
+      type="checkbox"
+      name="sentiment"
+      value={sentiment}
+      checked={selectedSentiments.includes(sentiment)}
+      onChange={handleSentimentChange}
+    />
+    {sentiment}
+  </label>
+))}
+            </div>
           </div>
 
           <div className="filter-section">
             <h4>By Date</h4>
-            {['Today', 'Week', 'Month', ''].map((option, idx) => (
-              <label key={idx}>
-                <input
-                  type="radio"
-                  value={option}
-                  checked={tempSelectedDate === option}
-                  onChange={handleDateChange}
-                />
-                {option === '' ? 'All' : option}
-              </label>
-            ))}
+            <div className="filter-options">
+              {['today', 'week', 'month', ''].map((option, idx) => (
+                <label className="filter-option" key={idx}>
+                  <input
+                    type="radio"
+                    name="date"
+                    value={option}
+                    checked={selectedDate === option}
+                    onChange={handleDateChange}
+                  />
+                  {option === '' ? 'All' : option.charAt(0).toUpperCase() + option.slice(1)}
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="filter-section">
             <h4>By Ticker</h4>
-            {uniqueTickers.map((ticker) => (
-              <label key={ticker}>
-                <input
-                  type="checkbox"
-                  value={ticker}
-                  checked={tempSelectedTickers.includes(ticker)}
-                  onChange={handleTickerChange}
-                />
-                {ticker}
-              </label>
-            ))}
+            <div className="filter-options">
+              {uniqueTickers.map((ticker) => (
+                <label className="filter-option" key={ticker}>
+                  <input
+                    type="checkbox"
+                    name="ticker"
+                    value={ticker}
+                    checked={selectedTickers.includes(ticker)}
+                    onChange={handleTickerChange}
+                  />
+                  {ticker}
+                </label>
+              ))}
+            </div>
           </div>
-
-          <button className="filter-button" onClick={() => {
-            setSelectedSentiments(tempSelectedSentiments);
-            setSelectedDate(tempSelectedDate);
-            setSelectedTickers(tempSelectedTickers);
-          }}>Apply Filter</button>
         </aside>
 
         <div className="news-section">
