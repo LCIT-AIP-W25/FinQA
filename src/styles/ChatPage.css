@@ -15,22 +15,44 @@ html, body {
     flex-direction: column;
     height: calc(var(--vh, 1vh) * 100);
     overflow: hidden;
-    background-color: rgba(32, 33, 68, 0.8);
+    background: url('//public/images/background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    position: relative;
 }
 
+.chat-app-container::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        rgba(13, 17, 23, 0.7)
+       
+    );
+    z-index: 1;
+}
+
+
 .chat-app-content {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-    position: relative; /* ensure floating panels anchor correctly */
-    background-color: rgba(32, 33, 68, 0.8);
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background-color: rgba(32, 33, 68, 0.75);
+  gap: 5px;
+      backdrop-filter: blur(8px);
+
+ 
 }
 
 .chat-app-wrapper {
-    height: 100%;
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
 /* -------------------- Header -------------------- */
@@ -46,6 +68,8 @@ html, body {
     position: relative;
     z-index: 1000;
     color: white;
+    background: rgba(32, 33, 68, 0.95);
+    backdrop-filter: blur(10px);
 }
 
 .chat-app-logo {
@@ -166,17 +190,19 @@ html, body {
 
 /* -------------------- Chat Window -------------------- */
 .chat-app-window {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: rgba(32, 33, 68, 0.9);
-    padding: 20px;
-    height: calc(var(--vh, 1vh) * 100 - 60px);
-    overflow-y: auto;
-    margin-left: 50px;
-    box-sizing: border-box;
-    color: white;
+   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(32, 33, 68, 0.9);
+  padding: 20px;
+  height: calc(var(--vh, 1vh) * 100 - 60px);
+  overflow-y: auto;
+   margin-left: 0;        /* ✅ No extra gap */
+  padding-left: 10px;
+  box-sizing: border-box;
+  color: white;
+   max-width: calc(100% - 360px);
 }
 
 /* -------------------- Chat History -------------------- */
@@ -614,4 +640,19 @@ html, body {
       padding: 8px 12px;
       font-size: 0.85rem;
     }
+}
+
+.static-company-sidebar {
+  width: 500px;
+    position: relative;
+ z-index: 2;  
+  background-color: white;
+  height: calc(var(--vh, 1vh) * 100);
+  overflow-y: auto;
+  border-right: 1px solid #ccc;
+  box-sizing: border-box;
+  padding: 16px;
+ margin-left: 60px;
+  border-radius: 10px 0 0 10px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 }

@@ -47,7 +47,7 @@
 
 /* Scrollable Company List with limited height */
 .company-list {
-  max-height: 120px;
+  max-height: 250px;
   overflow-y: auto;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
@@ -76,7 +76,7 @@
 
 /* Report Section */
 .report-section {
-  padding-top: 8px;
+  padding-top: 32px;
   border-top: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
@@ -90,8 +90,8 @@
 }
 
 .upload-section {
-  padding-top: 8px;
   border-top: 1px solid #f0f0f0;
+  padding-top: 32px;
   gap: 12px;
   align-items: center;
   text-align: center;

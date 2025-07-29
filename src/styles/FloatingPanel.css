@@ -1,19 +1,14 @@
 .floating-panel {
   position: fixed;
-  top: 60px;
-  left: 50px;
-  width: 450px;
-  height: calc(100vh - 60px);
-  background: #ffffff;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  z-index: 150;
+  top: 0;
+  height: 100vh;
+  width: 320px;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-  transform: translateX(0);
-  opacity: 1;
-  box-sizing: border-box;
+  transition: transform 0.3s ease;
 }
 
 /* Animation States */
@@ -73,8 +68,47 @@
     z-index: 200;
   }
 
-  .floating-panel.entering,
-  .floating-panel.exiting {
-    transform: translateY(30px);
-  }
+/* Entering from the left */
+.floating-panel.left.entering {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+.floating-panel.left.entered {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.floating-panel.left.exiting {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+/* Entering from the right */
+.floating-panel.right.entering {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+.floating-panel.right.entered {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.floating-panel.right.exiting {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+/* Panel on the left */
+.floating-panel.left {
+  left: 0;
+  border-right: 1px solid #ddd;
+}
+
+/* Panel on the right */
+.floating-panel.right {
+  right: 0;
+  border-left: 1px solid #ddd;
+}
 }

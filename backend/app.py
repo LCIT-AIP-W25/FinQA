@@ -323,6 +323,22 @@ def get_finance_news():
         print("❌ Error fetching finance news:", str(e))
         return jsonify({"error": f"Failed to fetch finance news: {str(e)}"}), 500
 
+@app.route('/api/finance_news/tickers', methods=['GET'])
+def get_finance_news_tickers():
+    try:
+        sql = text("""
+            SELECT DISTINCT ticker
+            FROM finance_news
+            WHERE ticker IS NOT NULL
+            ORDER BY ticker
+        """)
+        result = db.session.execute(sql)
+        tickers = [row[0] for row in result]
+        return jsonify(tickers), 200
+    except Exception as e:
+        print("❌ Error fetching finance news tickers:", str(e))
+        return jsonify({"error": f"Failed to fetch finance news tickers: {str(e)}"}), 500
+
 
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])

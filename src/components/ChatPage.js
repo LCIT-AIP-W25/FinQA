@@ -458,180 +458,157 @@ function ChatPage() {
     fetchMetrics();
     }, [selectedCompany]);
 
-    return (
-        <section className="chat-app-container">
-            <div className="chat-app-wrapper">
-                {/* Header Section with User Info */}
-                <div className="chat-app-header">
-                    <div className="chat-app-logo">
-                        <Link to="/home">
-                            <img className="chat-app-logo-img" src="/images/wes.png" alt="Logo" />
-                        </Link>
-                        {/* Header Text */}
-                        <h2 className="chat-app-header-title">FinAnswer</h2>
-                    </div>
+return (
+  <section className="chat-app-container">
+    <div className="chat-app-wrapper">
+<div className="chat-app-header">
+  <div className="chat-app-logo">
+    <Link to="/home">
+      <img className="chat-app-logo-img" src="/images/Logo.png" alt="Logo" />
+    </Link>
+    <h2 className="chat-app-header-title">FinAnswer</h2>
+  </div>
 
-
-                    
-                    <div className="chat-app-user-section">
-                        <div className="chat-app-profile">
-                            {user ? (
-                                <>
-                                    <span className="chat-app-username">{user.username}</span>
-                                    <div className="chat-app-profile-dropdown" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                        <div className="chat-app-profile-icon">
-                                            {user.username.charAt(0).toUpperCase()}
-                                        </div>
-                                        {dropdownOpen && (
-                                            <div className="chat-app-dropdown-menu">
-                                                <div className="chat-app-profile-info">
-                                                    <div className="chat-app-avatar">
-                                                        {user.username.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <p className="chat-app-profile-name">Hi, {user.username}!</p>
-                                                </div>
-                                                <hr />
-                                                {/* <button className="chat-app-dropdown-item">My Profile</button> */}
-                                                <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}>Sign Out</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <span>Loading...</span>  // Placeholder until user data loads
-                            )}
-                        </div>
-                    </div>
-                </div>
-                <SlickBar
-                    onToggleCompany={() => {
-                        setShowCompanyPanel(prev => !prev);
-                        setShowChatSidebar(false);
-                        setShowMetricsSidebar(false);
-                    }}
-                    onToggleChat={() => {
-                        setShowChatSidebar(prev => !prev);
-                        setShowCompanyPanel(false);
-                        setShowMetricsSidebar(false);
-                    }}
-                    onToggleMetrics={() => {
-                        setShowMetricsSidebar(prev => !prev);
-                        setShowCompanyPanel(false);
-                        setShowChatSidebar(false);
-                    }}
-                    />
-
-                <div className="chat-app-content">
-
-                {showCompanyPanel && (
-                        <FloatingPanel onClose={() => setShowCompanyPanel(false)}>
-                            <CompanyReportPanel
-                            searchTerm={searchTerm}
-                            setSearchTerm={setSearchTerm}
-                            companyList={companyList}
-                            selectedCompany={selectedCompany}
-                            setSelectedCompany={setSelectedCompany}
-                            handleFileUpload={handleFileUpload}
-                            uploadStatus={uploadStatus}
-                            uploadMessage={uploadMessage}
-                            hoverMessage={hoverMessage}
-                            setUploadMessage={setUploadMessage}
-                            setShowCompanyPanel={setShowCompanyPanel} 
-                            />
-                        </FloatingPanel>
-                        )}
-
-
-                    {showChatSidebar && (
-                        <FloatingPanel onClose={() => setShowChatSidebar(false)} position="left">
-                            <ChatHistorySidebar
-                            searchTerm={searchTerm}
-                            setSearchTerm={setSearchTerm}
-                            companyList={companyList}
-                            selectedCompany={selectedCompany}
-                            setSelectedCompany={setSelectedCompany}
-                            chatHistory={chatHistory}
-                            sessionId={sessionId}
-                            loadChatSession={loadChatSession}
-                            deleteChatSession={deleteChatSession}
-                            getOrGenerateTitle={getOrGenerateTitle}
-                            setShowChatSidebar={setShowChatSidebar}
-                            />
-                        </FloatingPanel>
-                        )}
-
-                    {showMetricsSidebar && (
-                        <FloatingPanel onClose={() => setShowMetricsSidebar(false)} position="left">
-                            <MetricsSidebar
-                            selectedCompany={selectedCompany}
-                            metricsSearchTerm={metricsSearchTerm}
-                            setMetricsSearchTerm={setMetricsSearchTerm}
-                            filteredMetrics={filteredMetrics}
-                            selectedMetric={selectedMetric}
-                            handleMetricClick={handleMetricClick}
-                            setShowMetricsSidebar={setShowMetricsSidebar}
-                            />
-                        </FloatingPanel>
-                        )}
-
-  
-
-                    {/* Chat Window Section */}
-                    <div className="chat-app-window">
-
-                        {/* Display the selected company above the chat window */}
-                        <div className="chat-app-selected-company">
-                            {selectedCompany ? (
-                                <>
-                                    <div className="chat-app-selected-label-main">
-                                        <span className="chat-app-selected-label">Selected Company: </span>
-                                        <span className="chat-app-selected-name">{selectedCompany}</span>
-                                    </div>
-                                    
-                                </>
-                            ) : (
-                                <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
-                            )}
-                        </div>
-
-                        <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
-                            {currentChat.length === 0 ? (
-                                <p className="chat-app-placeholder">What can I help with?</p>
-                            ) : (
-                                currentChat.map((msg, idx) => (
-                                    <p key={idx} className={msg.sender === "user" ? "chat-app-user-message" : "chat-app-bot-message"}>
-                                        {msg.message}
-                                    </p>
-                                ))
-                            )}
-                            <div ref={chatEndRef}></div>
-                        </div>
-
-                        {/* Chat Input Box */}
-                        <div className="chat-app-input-section">
-                            <input
-                                type="text"
-                                className="chat-app-input"
-                                placeholder="Type a message..."
-                                value={message}
-                                onChange={(e) => setMessage(e.target.value)}
-                                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                            />
-
-
-                            {/* Group buttons together for responsiveness */}
-                            <div className="chat-app-button-group">
-                                <button onClick={sendMessage} className="chat-button send">✉️ Send</button>
-                                <button onClick={startNewChat} className="chat-button new">🔄 New Chat</button>
-                            </div>
-                        </div>
-                    </div>
-
-
-                </div>
+  <div className="chat-app-user-section">
+    <div className="chat-app-profile">
+      {user ? (
+        <>
+          <span className="chat-app-username">{user.username}</span>
+          <div className="chat-app-profile-dropdown" onClick={() => setDropdownOpen(!dropdownOpen)}>
+            <div className="chat-app-profile-icon">
+              {user.username.charAt(0).toUpperCase()}
             </div>
-        </section>
-    );
+            {dropdownOpen && (
+              <div className="chat-app-dropdown-menu">
+                <div className="chat-app-profile-info">
+                  <div className="chat-app-avatar">
+                    {user.username.charAt(0).toUpperCase()}
+                  </div>
+                  <p className="chat-app-profile-name">Hi, {user.username}!</p>
+                </div>
+                <hr />
+                <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}>
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <span>Loading...</span>
+      )}
+    </div>
+  </div>
+</div>
+
+
+      <div className="chat-app-content">
+        <div className="static-company-sidebar">
+          <CompanyReportPanel
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            companyList={companyList}
+            selectedCompany={selectedCompany}
+            setSelectedCompany={setSelectedCompany}
+            handleFileUpload={handleFileUpload}
+            uploadStatus={uploadStatus}
+            uploadMessage={uploadMessage}
+            hoverMessage={hoverMessage}
+            setUploadMessage={setUploadMessage}
+            setShowCompanyPanel={() => {}}
+          />
+        </div>
+
+        <div className="chat-app-window">
+          <div className="chat-app-selected-company">
+            {selectedCompany ? (
+              <div className="chat-app-selected-label-main">
+                <span className="chat-app-selected-label">Selected Company: </span>
+                <span className="chat-app-selected-name">{selectedCompany}</span>
+              </div>
+            ) : (
+              <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
+            )}
+          </div>
+
+          <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
+            {currentChat.length === 0 ? (
+              <p className="chat-app-placeholder">What can I help with?</p>
+            ) : (
+              currentChat.map((msg, idx) => (
+                <p key={idx} className={msg.sender === "user" ? "chat-app-user-message" : "chat-app-bot-message"}>
+                  {msg.message}
+                </p>
+              ))
+            )}
+            <div ref={chatEndRef}></div>
+          </div>
+
+          <div className="chat-app-input-section">
+            <input
+              type="text"
+              className="chat-app-input"
+              placeholder="Type a message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+            />
+            <div className="chat-app-button-group">
+              <button onClick={sendMessage} className="chat-button send">✉️ Send</button>
+              <button onClick={startNewChat} className="chat-button new">🔄 New Chat</button>
+            </div>
+          </div>
+        </div>
+
+        <SlickBar
+          onToggleChat={() => {
+            setShowChatSidebar(prev => !prev);
+            setShowCompanyPanel(false);
+            setShowMetricsSidebar(false);
+          }}
+          onToggleMetrics={() => {
+            setShowMetricsSidebar(prev => !prev);
+            setShowCompanyPanel(false);
+            setShowChatSidebar(false);
+          }}
+        />
+
+        {showChatSidebar && (
+  <FloatingPanel onClose={() => setShowChatSidebar(false)} position="right">
+    <ChatHistorySidebar
+      searchTerm={searchTerm}
+      setSearchTerm={setSearchTerm}
+      companyList={companyList}
+      selectedCompany={selectedCompany}
+      setSelectedCompany={setSelectedCompany}
+      chatHistory={chatHistory}
+      sessionId={sessionId}
+      loadChatSession={loadChatSession}
+      deleteChatSession={deleteChatSession}
+      getOrGenerateTitle={getOrGenerateTitle}
+      setShowChatSidebar={setShowChatSidebar}
+    />
+  </FloatingPanel>
+)}
+
+{showMetricsSidebar && (
+  <FloatingPanel onClose={() => setShowMetricsSidebar(false)} position="left">
+    <MetricsSidebar
+      selectedCompany={selectedCompany}
+      metricsSearchTerm={metricsSearchTerm}
+      setMetricsSearchTerm={setMetricsSearchTerm}
+      filteredMetrics={filteredMetrics}
+      selectedMetric={selectedMetric}
+      handleMetricClick={handleMetricClick}
+      setShowMetricsSidebar={setShowMetricsSidebar}
+    />
+  </FloatingPanel>
+)}
+
+      </div>
+    </div>
+  </section>
+);
 
 }
 

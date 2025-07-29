@@ -40,7 +40,7 @@
 }
 /* Signup Background Fullscreen */
 .sec-signup {
-  background: url('/public/images/background.png') no-repeat center center;
+  background: url('/public/images/background.jpg') no-repeat center center;
   background-size: cover; /* 
   background-repeat: no-repeat;
   background-position: center;
@@ -155,7 +155,7 @@ body, html {
 }
 
 .sec-login {
-  background: url('/public/images/background.png') no-repeat center center;
+  background: url('/public/images/background.jpg') no-repeat center center;
    background-size: cover;
   background-position: center;
   width: 100vw;

@@ -1,7 +1,7 @@
 /* Trading Assistant Styles */
 .trading-assistant-container {
   min-height: 100vh;
-  background: url('/public/images/background.png') no-repeat center center;
+  background: url('/public/images/background.jpg') no-repeat center center;
   background-size: cover;
   background-color: rgba(32, 33, 68, 0.8);
   color: white;
