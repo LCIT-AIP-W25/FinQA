@@ -57,7 +57,7 @@ def get_db_connection():
     db_password = os.getenv("DB_PASSWORD")
     db_dsn = os.getenv("DB_DSN")  # e.g., "my_db_alias" (must match tnsnames.ora)
     db_wallet = os.getenv("DB_WALLET_LOCATION")
-    wal_password = os.getenv("DB_WALLET_PASSWORD")
+    wal_password = os.getenv("DB_PASSWORD") # Optional (if ewallet.p12 is used)
 
     # Establish connection using the wallet
     connection = oracledb.connect(
@@ -282,31 +282,184 @@ def get_chat(session_id):
 
 
 
+from sqlalchemy import text  # Add this at the top if not already imported
 
-@app.route('/api/yahoo_news', methods=['GET'])
-def get_yahoo_news():
-    try:
-        # Using SQLAlchemy to query PostgreSQL
-        sql = """
-            SELECT title, link, published_date, source
-            FROM yahoo_news
-            ORDER BY published_date DESC
-            LIMIT 25
-        """
-        result = db.session.execute(sql)
-        news_items = [
-            {
-                "title": row[0],
-                "link": row[1],
-                "published_date": row[2].strftime("%Y-%m-%d %H:%M:%S"),
-                "source": row[3]
-            }
-            for row in result
-        ]
-        return jsonify(news_items), 200
-    except Exception as e:
-        print(f"Error fetching news: {str(e)}")
-        return jsonify({"error": "Failed to fetch news"}), 500
+
+@app.route('/api/finance_news', methods=['GET'])
+def get_finance_news():
+   try:
+       # Get limit parameter from query string, default to 25
+       limit = request.args.get('limit', 25, type=int)
+      
+       # Ensure limit is reasonable (between 1 and 100)
+       limit = max(1, min(limit, 100))
+      
+       sql = text("""
+           SELECT
+               id,
+               source,
+               ticker,
+               title,
+               url,
+               title_sentiment,
+               sentiment_label,
+               scraped_at,
+               sentiment
+           FROM finance_news
+           ORDER BY scraped_at DESC
+           LIMIT :limit
+       """)
+       result = db.session.execute(sql, {"limit": limit})
+       news_items = [
+           {
+               "id": row[0],
+               "source": row[1],
+               "ticker": row[2],
+               "title": row[3],
+               "url": row[4],
+               "title_sentiment": row[5],
+               "sentiment_label": row[6],
+               "scraped_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
+               "sentiment": row[8]
+           }
+           for row in result
+       ]
+       return jsonify(news_items), 200
+   except Exception as e:
+       print("❌ Error fetching finance news:", str(e))
+       return jsonify({"error": f"Failed to fetch finance news: {str(e)}"}), 500
+
+
+@app.route('/api/finance_news/tickers', methods=['GET'])
+def get_finance_news_tickers():
+   try:
+       sql = text("""
+           SELECT DISTINCT ticker
+           FROM finance_news
+           WHERE ticker IS NOT NULL
+           ORDER BY ticker
+       """)
+       result = db.session.execute(sql)
+       tickers = [row[0] for row in result]
+       return jsonify(tickers), 200
+   except Exception as e:
+       print("❌ Error fetching finance news tickers:", str(e))
+       return jsonify({"error": f"Failed to fetch finance news tickers: {str(e)}"}), 500
+
+
+@app.route('/api/finance_news/selected_tickers', methods=['GET'])
+def get_finance_news_selected_tickers():
+   try:
+       # Get limit (default 50), capped between 1 and 100
+       total_limit = request.args.get('limit', 50, type=int)
+       total_limit = max(1, min(total_limit, 100))
+
+
+       # Get selected tickers as a list
+       tickers = request.args.getlist('tickers')
+
+
+       if not tickers:
+           # If no ticker selected, return top limit articles as fallback
+           sql = text("""
+               SELECT
+                   id, source, ticker, title, url, title_sentiment,
+                   sentiment_label, scraped_at, sentiment
+               FROM finance_news
+               ORDER BY scraped_at DESC
+               LIMIT :limit
+           """)
+           result = db.session.execute(sql, {"limit": total_limit})
+           news_items = [
+               {
+                   "id": row[0],
+                   "source": row[1],
+                   "ticker": row[2],
+                   "title": row[3],
+                   "url": row[4],
+                   "title_sentiment": row[5],
+                   "sentiment_label": row[6],
+                   "scraped_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
+                   "sentiment": row[8]
+               }
+               for row in result
+           ]
+           return jsonify(news_items), 200
+
+
+       # Divide limit among selected tickers
+       per_ticker = total_limit // len(tickers)
+       remainder = total_limit % len(tickers)
+       final_results = []
+       fetched_ids = set()
+
+
+       for i, ticker in enumerate(tickers):
+           limit = per_ticker + (1 if i < remainder else 0)
+           sql = text("""
+               SELECT
+                   id, source, ticker, title, url, title_sentiment,
+                   sentiment_label, scraped_at, sentiment
+               FROM finance_news
+               WHERE ticker = :ticker
+               ORDER BY scraped_at DESC
+               LIMIT :limit
+           """)
+           result = db.session.execute(sql, {"ticker": ticker, "limit": limit})
+           for row in result:
+               if row[0] not in fetched_ids:
+                   fetched_ids.add(row[0])
+                   final_results.append({
+                       "id": row[0],
+                       "source": row[1],
+                       "ticker": row[2],
+                       "title": row[3],
+                       "url": row[4],
+                       "title_sentiment": row[5],
+                       "sentiment_label": row[6],
+                       "scraped_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
+                       "sentiment": row[8]
+                   })
+
+
+       # Fill up if total results < total_limit (in case some tickers had fewer articles)
+       remaining = total_limit - len(final_results)
+       if remaining > 0:
+           sql_fill = text(f"""
+               SELECT
+                   id, source, ticker, title, url, title_sentiment,
+                   sentiment_label, scraped_at, sentiment
+               FROM finance_news
+               WHERE ticker IN :tickers
+               AND id NOT IN :fetched_ids
+               ORDER BY scraped_at DESC
+               LIMIT :remaining
+           """)
+           result_fill = db.session.execute(sql_fill, {
+               "tickers": tuple(tickers),
+               "fetched_ids": tuple(fetched_ids) if fetched_ids else (0,),
+               "remaining": remaining
+           })
+           for row in result_fill:
+               final_results.append({
+                   "id": row[0],
+                   "source": row[1],
+                   "ticker": row[2],
+                   "title": row[3],
+                   "url": row[4],
+                   "title_sentiment": row[5],
+                   "sentiment_label": row[6],
+                   "scraped_at": row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
+                   "sentiment": row[8]
+               })
+
+
+       return jsonify(final_results), 200
+
+
+   except Exception as e:
+       print("❌ Error fetching finance news:", str(e))
+       return jsonify({"error": f"Failed to fetch finance news: {str(e)}"}), 500
 
 #----------------------------------------Updated Chatbot Query Route----------------------------------------
 @app.route('/query_chatbot', methods=['POST'])
@@ -343,6 +496,7 @@ def query_chatbot():
 
 @app.route('/api/companies', methods=['GET'])
 def fetch_companies():
+    print("in fetch_companies API endpoint")
     """API Endpoint to get company names"""
     return jsonify(get_company_names_from_db())
 
@@ -423,7 +577,7 @@ Never infer or recalculate numbers from documents if SQL data is available.
 - Respond in a friendly, professional tone as if speaking to a business user.
 
 ### Formatting Rules:
-- Format monetary values using `$` and commas (e.g., $3,450).
+- Format monetary values using $ and commas (e.g., $3,450).
 - Use percentage formatting when the question involves change or growth.
 - If using SQL, end the answer with:  
   "All monetary values are in millions."
@@ -475,7 +629,7 @@ Please return only the final user-facing answer.
 
         except Exception as e:
             error_message = str(e).lower()
-            print(f"\n⚠️ Attempt {attempt + 1} failed with error: {error_message}")
+            print(f"\n⚠ Attempt {attempt + 1} failed with error: {error_message}")
 
             if "503" in error_message or "service unavailable" in error_message:
                 if attempt == max_retries - 1:
@@ -518,13 +672,14 @@ def get_ddl_prefix_from_db(company_name):
     return result[0] if result else None
 
 def get_company_names_from_db():
+    print("in fetch_companies function")
     """Fetch distinct company names from the COMPANY_MAPPING table."""
     connection = get_db_connection()
-
+    print("in fetch_companies conn established")
     cursor = connection.cursor()
     query = "SELECT DISTINCT UPPER(COMPANY_NAME) FROM COMPANY_MAPPING"
     cursor.execute(query)
-    
+    print("in fetch_companies query executed")
     companies = [row[0] for row in cursor.fetchall()]
     cursor.close()
     connection.close()
@@ -537,7 +692,7 @@ db_config = {
     "password": os.getenv("DB_PASSWORD"),
     "dsn": os.getenv("DB_DSN"),
     "wallet_location": os.getenv("DB_WALLET_LOCATION"),
-    "wal_password": os.getenv("DB_WALLET_PASSWORD"),
+    "wal_password": os.getenv("DB_PASSWORD"),
 }
 
 def handle_numerical_query(user_question, selected_company, session_id=None):
@@ -665,7 +820,7 @@ def robust_delete(path):
             print(f"✅ Successfully deleted {path}")
             return
         except Exception as e:
-            print(f"⚠️ Attempt {attempt + 1} failed for {path}: {str(e)}")
+            print(f"⚠ Attempt {attempt + 1} failed for {path}: {str(e)}")
             if attempt < max_retries - 1:
                 time.sleep(1 * (attempt + 1))  # Exponential backoff
             else:
@@ -707,7 +862,7 @@ def upload_pdf():
     # Background processing thread
     def process():
         try:
-            print(f"⚙️ Processing PDF for user: {user_id}")
+            print(f"⚙ Processing PDF for user: {user_id}")
             success = rag_system.process_pdf(file_path, user_id)
             pdf_status[status_key] = "done" if success else "failed"
         except Exception as e:

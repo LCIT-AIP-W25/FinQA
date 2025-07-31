@@ -128,9 +128,12 @@ function HomePage() {
               <div className="top-nav">
                 <Link to="/home">Home</Link>
                 <Link to="/chat">Learning Bot</Link>
-                <Link to="/trading-assistant">Trading Bot</Link>
+                <Link to="/prediction-assistant">Prediction Bot</Link>
+                <Link to="/trading-bot">Trading Bot</Link>
+                
+
                 <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
-              </div>
+              </div> 
             </div>
           </div>
         </div>

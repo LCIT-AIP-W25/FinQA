@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import '../styles/TradingAssistant.css';
+import '../styles/PredictionAssistant.css';
 
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-function TradingAssistant() {
+function PredictionAssistant() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState([]);
@@ -108,7 +108,7 @@ function TradingAssistant() {
         <div className="header-top">
           <div className="logo-title">
             <img src="/images/Logo.png" alt="FinAnswer Logo" className="trading-logo" />
-            <h1>Trading Assistant</h1>
+            <h1>Prediction Assistant </h1>
           </div>
         </div>
       </header>
@@ -234,4 +234,4 @@ function TradingAssistant() {
   );
 }
 
-export default TradingAssistant;
+export default PredictionAssistant;
