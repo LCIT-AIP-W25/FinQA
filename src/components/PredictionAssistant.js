@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/PredictionAssistant.css';
 
@@ -18,32 +18,26 @@ function PredictionAssistant() {
   const user = JSON.parse(localStorage.getItem("user"));
   const navigate = useNavigate();
 
-  const COMPANY_API_URL = process.env.REACT_APP_TRADEBOT_COMPANY_API;
+  const COMPANY_API_URL = process.env.REACT_APP_API_BASE + '/companies';
 
   useEffect(() => {
     async function fetchCompanies() {
       try {
         const response = await axios.get(COMPANY_API_URL);
-        setCompanyList(response.data);
+        if (Array.isArray(response.data)) {
+          setCompanyList(response.data);
+        } else {
+          console.error("❌ Unexpected data format for companies:", response.data);
+          setCompanyList([]);
+        }
         console.log("✅ Companies loaded for Trading Assistant:", response.data);
       } catch (error) {
         console.error("❌ Error fetching trading assistant companies:", error);
+        setCompanyList([]);
       }
     }
     fetchCompanies();
   }, [COMPANY_API_URL]);
-  useEffect(() => {
-    async function fetchCompanies() {
-      try {
-        const response = await axios.get('https://finrl-gz1w.onrender.com/companies');
-        setCompanyList(response.data);
-        console.log("✅ Companies loaded for Trading Assistant:", response.data);
-      } catch (error) {
-        console.error("❌ Error fetching trading assistant companies:", error);
-      }
-    }
-    fetchCompanies();
-  }, []);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -58,7 +52,7 @@ function PredictionAssistant() {
     setLoading(true);
     setResponse([]);
     try {
-      const tickerRes = await axios.get(`https://finrl-gz1w.onrender.com/find_ticker?q=${selectedCompany}`);
+      const tickerRes = await axios.get(`${process.env.REACT_APP_API_BASE}/find_ticker?q=${selectedCompany}`);
       const ticker = tickerRes.data?.ticker;
       if (!ticker) {
         setResponse([{ date: "", prediction: "N/A", risk_level: "Ticker not found" }]);
@@ -75,7 +69,7 @@ function PredictionAssistant() {
         const isoDate = date.toISOString().split('T')[0];
 
         try {
-          const predRes = await axios.get(`https://finrl-gz1w.onrender.com/prediction_by_date?ticker=${ticker}&date=${isoDate}`);
+          const predRes = await axios.get(`${process.env.REACT_APP_API_BASE}/prediction_by_date?ticker=${ticker}&date=${isoDate}`);
           const predictionObj = predRes.data?.predictions?.[0];
           if (predictionObj) {
             predictionResults.push({
@@ -102,42 +96,28 @@ function PredictionAssistant() {
 
   return (
     <div className="trading-assistant-container">
-      <div className={`menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
+      <header className="prediction-header">
+        <div className="header-top-prediction">
+          <div className="logo-title-prediction">
+            <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
+            <h1>Prediction Bot</h1>
+          </div>
+            <div className="top-nav-wrapper">
+              <div className="top-nav">
+                <Link to="/home">Home</Link>
+                <Link to="/chat">Learning Bot</Link>
+                <Link to="/prediction-assistant">Prediction Bot</Link>
+                <Link to="/trading-bot">Trading Bot</Link>
+                
 
-      <header className="trading-header">
-        <div className="header-top">
-          <div className="logo-title">
-            <img src="/images/Logo.png" alt="FinAnswer Logo" className="trading-logo" />
-            <h1>Prediction Assistant </h1>
+                <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
+              </div> 
           </div>
         </div>
       </header>
-
-      {!isMenuOpen && (
-        <button className="menu-toggle" onClick={toggleMenu}>
-          <span className="menu-icon"></span>
-        </button>
-      )}
-
-      <nav className={`nav-menu ${isMenuOpen ? 'open' : ''}`}>
-        {isMenuOpen && (
-          <button className="menu-toggle" onClick={toggleMenu}>
-            <span className={`menu-icon ${isMenuOpen ? 'open' : ''}`}></span>
-          </button>
-        )}
-        <ul>
-          <li><a href="/home">Home</a></li>
-          <li><a href="/chat">Chat</a></li>
-          <li><a href="/pdf-chat">PDF Analysis</a></li>
-          <li><a href="/trading-assistant">Trading Assistant</a></li>
-          <li className="menu-category">Account</li>
-          <li><button className="menu-btn sign-out" onClick={handleSignOut}>Sign Out</button></li>
-        </ul>
-      </nav>
-
-      <main className="trading-main">
-        <div className="trading-content">
-          <h2>Ask Your Trading Question</h2>
+       <main className="trading-main">
+        <div className="trading-container">
+          <h2>Predict Price</h2>
 
           {/* Company Selector */}
           <div className="company-selector">

@@ -28,7 +28,7 @@ function HomePage() {
 
   const fetchNews = async () => {
     try {
-      const response = await axios.get(`http://localhost:5050/api/finance_news?limit=50`);
+      const response = await axios.get("http://localhost:5050/api/finance_news?limit=50");
       setNews(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("News fetch error:", err);
@@ -39,7 +39,7 @@ function HomePage() {
 
   const fetchTickers = async () => {
     try {
-      const response = await axios.get(`http://localhost:5050/api/finance_news/tickers`);
+      const response = await axios.get("http://localhost:5050/api/finance_news/tickers");
       if (Array.isArray(response.data)) {
         const sorted = response.data.map(t => t.trim().toUpperCase()).sort();
         setUniqueTickers(sorted);
@@ -116,14 +116,7 @@ function HomePage() {
             <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
             <h1>Welcome, {user?.username} 👋</h1>
           </div>
-          <div className="search-nav-wrapper">
-            <input
-              type="text"
-              className="home-search-bar"
-              placeholder="Search news..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          
             <div className="top-nav-wrapper">
               <div className="top-nav">
                 <Link to="/home">Home</Link>
@@ -135,7 +128,17 @@ function HomePage() {
                 <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
               </div> 
             </div>
-          </div>
+          
+        </div>
+        
+        <div className="search-nav-wrapper">
+          <input
+            type="text"
+            className="home-search-bar"
+            placeholder="Search news..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </header>
 

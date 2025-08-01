@@ -54,7 +54,7 @@
 }
 /* Form Styling */
 .signup-form-wrapper {
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: white;
     padding: 2rem 2.5rem;
     border-radius: 12px;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
@@ -264,6 +264,12 @@ body, html {
     background: none;
     border: none;
     cursor: pointer;
+}
+
+/* Reset password logo styling */
+.inline-block {
+    width: 45px;
+    height: auto;
 }
 
 .btn-sign {

@@ -460,102 +460,79 @@ function ChatPage() {
 
 return (
   <section className="chat-app-container">
-    <div className="chat-app-wrapper">
-<div className="chat-app-header">
-  <div className="chat-app-logo">
-    <Link to="/home">
-      <img className="chat-app-logo-img" src="/images/Logo.png" alt="Logo" />
-    </Link>
-    <h2 className="chat-app-header-title">FinAnswer</h2>
-  </div>
-
-  <div className="chat-app-user-section">
-    <div className="chat-app-profile">
-      {user ? (
-        <>
-          <span className="chat-app-username">{user.username}</span>
-          <div className="chat-app-profile-dropdown" onClick={() => setDropdownOpen(!dropdownOpen)}>
-            <div className="chat-app-profile-icon">
-              {user.username.charAt(0).toUpperCase()}
-            </div>
-            {dropdownOpen && (
-              <div className="chat-app-dropdown-menu">
-                <div className="chat-app-profile-info">
-                  <div className="chat-app-avatar">
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
-                  <p className="chat-app-profile-name">Hi, {user.username}!</p>
-                </div>
-                <hr />
-                <button className="chat-app-dropdown-item chat-app-sign-out" onClick={handleSignOut}>
-                  Sign Out
-                </button>
-              </div>
-            )}
+  <header className="chatbot-header">
+        <div className="header-top-chatbot">
+          <div className="logo-title-chatbot">
+            <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
+            <h1>Chat Bot</h1>
           </div>
-        </>
-      ) : (
-        <span>Loading...</span>
-      )}
-    </div>
-  </div>
-</div>
-
-
-      <div className="chat-app-content">
-        <div className="static-company-sidebar">
-          <CompanyReportPanel
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            companyList={companyList}
-            selectedCompany={selectedCompany}
-            setSelectedCompany={setSelectedCompany}
-            handleFileUpload={handleFileUpload}
-            uploadStatus={uploadStatus}
-            uploadMessage={uploadMessage}
-            hoverMessage={hoverMessage}
-            setUploadMessage={setUploadMessage}
-            setShowCompanyPanel={() => {}}
-          />
+            <div className="top-nav-wrapper">
+              <div className="top-nav">
+                <Link to="/home">Home</Link>
+                <Link to="/chat">Learning Bot</Link>
+                <Link to="/prediction-assistant">Prediction Bot</Link>
+                <Link to="/trading-bot">Trading Bot</Link>
+                <button onClick={handleSignOut} className="sign-out-btn">Sign Out</button>
+              </div> 
+          </div>
         </div>
-
-        <div className="chat-app-window">
-          <div className="chat-app-selected-company">
-            {selectedCompany ? (
-              <div className="chat-app-selected-label-main">
-                <span className="chat-app-selected-label">Selected Company: </span>
-                <span className="chat-app-selected-name">{selectedCompany}</span>
-              </div>
-            ) : (
-              <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
-            )}
-          </div>
-
-          <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
-            {currentChat.length === 0 ? (
-              <p className="chat-app-placeholder">What can I help with?</p>
-            ) : (
-              currentChat.map((msg, idx) => (
-                <p key={idx} className={msg.sender === "user" ? "chat-app-user-message" : "chat-app-bot-message"}>
-                  {msg.message}
-                </p>
-              ))
-            )}
-            <div ref={chatEndRef}></div>
-          </div>
-
-          <div className="chat-app-input-section">
-            <input
-              type="text"
-              className="chat-app-input"
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+      </header>
+    <div className="chat-app-wrapper">
+        <div className="chat-main-container">
+          <div className="static-company-sidebar">
+            <CompanyReportPanel
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              companyList={companyList}
+              selectedCompany={selectedCompany}
+              setSelectedCompany={setSelectedCompany}
+              handleFileUpload={handleFileUpload}
+              uploadStatus={uploadStatus}
+              uploadMessage={uploadMessage}
+              hoverMessage={hoverMessage}
+              setUploadMessage={setUploadMessage}
+              setShowCompanyPanel={() => {}}
             />
-            <div className="chat-app-button-group">
-              <button onClick={sendMessage} className="chat-button send">✉️ Send</button>
-              <button onClick={startNewChat} className="chat-button new">🔄 New Chat</button>
+          </div>
+
+          <div className="chat-app-window">
+            <div className="chat-app-selected-company">
+              {selectedCompany ? (
+                <div className="chat-app-selected-label-main">
+                  <span className="chat-app-selected-label">Selected Company: </span>
+                  <span className="chat-app-selected-name">{selectedCompany}</span>
+                </div>
+              ) : (
+                <p className="chat-app-select-company-message">Please select a company to start chatting.</p>
+              )}
+            </div>
+
+            <div className={`chat-app-messages ${currentChat.length > 0 ? "has-messages" : ""}`}>
+              {currentChat.length === 0 ? (
+                <p className="chat-app-placeholder">What can I help with?</p>
+              ) : (
+                currentChat.map((msg, idx) => (
+                  <p key={idx} className={msg.sender === "user" ? "chat-app-user-message" : "chat-app-bot-message"}>
+                    {msg.message}
+                  </p>
+                ))
+              )}
+              <div ref={chatEndRef}></div>
+            </div>
+
+            <div className="chat-app-input-section">
+              <input
+                type="text"
+                className="chat-app-input"
+                placeholder="Type a message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <div className="chat-app-button-group">
+                <button onClick={sendMessage} className="chat-button send">✉️ Send</button>
+                <button onClick={startNewChat} className="chat-button new">🔄 New Chat</button>
+              </div>
             </div>
           </div>
         </div>
@@ -605,7 +582,6 @@ return (
   </FloatingPanel>
 )}
 
-      </div>
     </div>
   </section>
 );

@@ -8,21 +8,26 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.trading-header {
-  padding: 2rem 1rem;
+.prediction-header {
+  margin-bottom: 2rem;
   margin-left: 40px;
 }
 
-.header-top {
+.header-top-prediction {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: flex-start;
+  padding: 1rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+    margin-top: 150px; 
 }
 
-.logo-title {
+.logo-title-prediction {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
+  flex-wrap: nowrap;
 }
 
 .trading-logo {
@@ -30,11 +35,11 @@
   height: auto;
 }
 
-.logo-title h1 {
-  font-size: 2.5rem;
+.logo-title-prediction h1 {
+  font-size: 2.25rem;
   font-weight: 600;
-  margin: 0;
-  color: white;
+  margin-top: 10%;
+color: #000000 !important;
 }
 
 .trading-main {
@@ -45,13 +50,16 @@
   min-height: calc(100vh - 200px);
 }
 
-.trading-content {
-  background: rgba(32, 33, 68, 0.9);
-  border-radius: 16px;
-  padding: 3rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+.trading-container {
+  background: rgba(32, 33, 68, 0.95);
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-left: auto;
+  margin-right: auto;
   max-width: 800px;
-  width: 100%;
 }
 
 .trading-content h2 {
@@ -88,16 +96,17 @@
 }
 
 .query-button {
-  background-color: #4e7fff !important;
+  background: #4e7fff;
   color: white;
   border: none;
-  padding: 1rem 2rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
   cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
   transition: all 0.3s ease;
   width: 100%;
+  margin-top: 1rem;
 }
 
 .query-button:hover:not(:disabled) {
@@ -107,7 +116,7 @@
 }
 
 .query-button:disabled {
-  background: rgba(255, 255, 255, 0.2);
+  background: #4e7fff;
   color: #888;
   cursor: not-allowed;
   transform: none;
