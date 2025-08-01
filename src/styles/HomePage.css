@@ -29,7 +29,7 @@ body::before {
   overflow-y: auto;
   margin: 0 auto;
   padding: 2rem 1rem;
-    background-color: rgba(28, 29, 44, 0.2);
+  background-color: rgba(28, 29, 44, 0.2);
   border-radius: 10px;
 }
 

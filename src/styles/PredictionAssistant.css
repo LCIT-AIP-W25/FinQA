@@ -1,11 +1,20 @@
-/* Trading Assistant Styles */
-.trading-assistant-container {
-  min-height: 100vh;
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: url('/public/images/background.jpg') no-repeat center center;
   background-size: cover;
-  background-color: rgba(32, 33, 68, 0.8);
   color: white;
+  overflow-x: hidden;
+}
+
+/* Trading Assistant Styles */
+.prediction-assistant-container {
+  min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: auto;
+  background-color: rgba(28, 29, 44, 0.2);
+  z-index: 1;
+  width: auto;
 }
 
 .prediction-header {
@@ -20,7 +29,6 @@
   padding: 1rem;
   gap: 2rem;
   flex-wrap: wrap;
-    margin-top: 150px; 
 }
 
 .logo-title-prediction {
@@ -28,6 +36,35 @@
   align-items: center;
   gap: 2rem;
   flex-wrap: nowrap;
+}
+
+.top-nav-prediction {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  margin-left: 10px;
+}
+
+.top-nav-prediction a {
+  text-decoration: none;
+  color: #fff8f8;
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  background-color: #03042e;
+   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.top-nav-prediction {
+  display: flex;
+  gap: 1.2rem;
+  align-items: center;
+  margin-left: 1.5rem;  
+  }
+.prediction-spacing{
+  width: 500px;
 }
 
 .trading-logo {

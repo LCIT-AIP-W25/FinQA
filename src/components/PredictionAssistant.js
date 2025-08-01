@@ -95,15 +95,17 @@ function PredictionAssistant() {
   };
 
   return (
-    <div className="trading-assistant-container">
+    <body>
+    <div className="prediction-assistant-container">
       <header className="prediction-header">
         <div className="header-top-prediction">
           <div className="logo-title-prediction">
-            <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
+          <Link to="/home"><img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" /></Link>
             <h1>Prediction Bot</h1>
           </div>
+          <div className="prediction-spacing"></div>
             <div className="top-nav-wrapper">
-              <div className="top-nav">
+              <div className="top-nav-prediction">
                 <Link to="/home">Home</Link>
                 <Link to="/chat">Learning Bot</Link>
                 <Link to="/prediction-assistant">Prediction Bot</Link>
@@ -211,6 +213,7 @@ function PredictionAssistant() {
         </div> {/* Close trading-content */}
       </main>
     </div>  
+    </body>
   );
 }
 

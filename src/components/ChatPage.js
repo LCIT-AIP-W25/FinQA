@@ -463,9 +463,10 @@ return (
   <header className="chatbot-header">
         <div className="header-top-chatbot">
           <div className="logo-title-chatbot">
-            <img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" />
+            <Link to="/home"><img src="/images/Logo.png" alt="FinAnswer Logo" className="home-logo" /></Link>
             <h1>Chat Bot</h1>
           </div>
+          <div className="spacing"></div>
             <div className="top-nav-wrapper">
               <div className="top-nav">
                 <Link to="/home">Home</Link>
@@ -477,7 +478,6 @@ return (
           </div>
         </div>
       </header>
-    <div className="chat-app-wrapper">
         <div className="chat-main-container">
           <div className="static-company-sidebar">
             <CompanyReportPanel
@@ -581,8 +581,6 @@ return (
     />
   </FloatingPanel>
 )}
-
-    </div>
   </section>
 );
 

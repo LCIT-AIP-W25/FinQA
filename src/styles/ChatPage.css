@@ -10,14 +10,21 @@ html, body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: url('/public/images/background.jpg') no-repeat center center;
+    background-size: cover;
+    color: white;
+    overflow-x: hidden;
+  }
+
 /* -------------------- Main Layout -------------------- */
 .chat-app-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
     width: 100vw;
-    background: url('/public/images/background.jpg') no-repeat center center fixed;
-    background-size: cover;
     position: relative;
 }
 
@@ -48,20 +55,37 @@ html, body {
 color: #000000 !important;
 }
 
-.chat-app-wrapper {
-    position: relative;
-    z-index: 2;
-    min-height: 100vh;
+.top-nav {
     display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    margin-top: 0%;
-    padding: 0;
-    background-color: rgba(32, 33, 68, 0.75);
-    backdrop-filter: blur(8px);
-} 
+    gap: 1.2rem;
+    align-items: center;
+  padding-top: 30px;
+    margin-left: 10px;
+  }
+  
+  .top-nav a {
+    text-decoration: none;
+    color: #fff8f8;
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+    background-color: #03042e;
+     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  .top-nav {
+    display: flex;
+    gap: 1.2rem;
+    align-items: center;
+    margin-left: 1.5rem;  
+    margin-top: 0.5rem; 
+    }
+
+    .spacing {
+        width: 650px;
+    }
 
 /* Logo styling */
 .chat-app-logo-img {
@@ -74,7 +98,7 @@ color: #000000 !important;
 .chat-main-container {
     display: block;
     width: 100vw;
-    height: 95%;
+    height: 1040px;
     margin: 0;
     padding: 0;
     position: relative;
@@ -88,7 +112,7 @@ color: #000000 !important;
   right: 0; /* Extend to right edge */
   top: 0; /* Back to original top position */
   bottom: 10; /* Extend to bottom */
-  height: 95%; /* Adds 200px to full viewport height */
+  height: 1040px; /* Adds 200px to full viewport height */
   display: flex;
   flex-direction: column;
   background: rgba(32, 33, 68, 0.9);
@@ -101,8 +125,8 @@ color: #000000 !important;
   overflow-x: hidden;
   margin-top: 0;
   padding-left: 40px;
-  width: 80%; /* Match the messages container width */
-  max-width: 70%; /* Ensure it matches messages container */
+  width: 84%; /* Match the messages container width */
+  /*max-width: 70%; /* Ensure it matches messages container */
 }
 
 /* -------------------- Chat History -------------------- */
@@ -114,6 +138,7 @@ color: #000000 !important;
     text-align: center;
     border-bottom: 1px solid #5c5c5c;
     color: white;
+    width: auto;
 }
 
 .chat-app-chat-history {
@@ -185,18 +210,6 @@ color: #000000 !important;
 }
 
 /* -------------------- Chat Messages -------------------- */
-.chat-app-messages {
-flex:1;    
-    max-width: 80%;
-    padding: 20px;
-    background: rgba(32, 33, 68, 0.8);
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    overflow-y: auto;
-    height: 40%;
-    scroll-padding-bottom: 100px;
-    color: white;
-}
 
 .chat-app-messages.has-messages {
     overflow-y: auto;
@@ -207,7 +220,7 @@ flex:1;
     justify-content: center;
     align-items: center;
     height: 500px;
-    font-size: 1.2rem;
+    font-size: 2rem;
     color: #ccc;
     font-weight: 500;
     text-align: center;
@@ -277,10 +290,10 @@ flex:1;
 
 .chat-app-select-company-message {
     color: #ccc;
-    font-size: 14px;
+    font-size: 24px;
     text-align: center;
     margin-bottom: 0;
-    width:80%;
+    width: auto;
 }
 
 /* -------------------- Chat Input -------------------- */
@@ -288,9 +301,10 @@ flex:1;
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    align-self: center;
     align-items: center;
     justify-content: space-between;
-    position: fixed;
+    /*position: fixed;*/
     left: 400px; /* Offset by sidebar width + padding */
     top: 8px; /* Position it much higher up to be immediately visible */
     padding: 16px;
@@ -301,8 +315,10 @@ flex:1;
     box-sizing: border-box;
     margin-top: 38%;
     z-index: 100;
-    width: calc(80vw - 390px); /* Match the chat window width */
-    max-width: calc(80vw - 390px); /* Ensure it matches chat window */
+    /*width: calc(80vw - 390px); /* Match the chat window width */
+    width: 1100px;
+    /*max-width: calc(80vw - 390px); /* Ensure it matches chat window */
+    height: 100px;
 }
 
 .chat-app-input {
@@ -311,7 +327,7 @@ flex:1;
     border-radius: 8px;
     border: 2px solid #55557a;
     outline: none;
-    font-size: 15px;
+    font-size: 25px;
     background-color: rgba(48, 48, 72, 0.9);
     color: white;
     min-height: 20px;
@@ -347,7 +363,7 @@ flex:1;
     align-items: center;
     justify-content: center;
     padding: 12px 24px;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     border: none;
     border-radius: 8px;
@@ -507,6 +523,8 @@ flex:1;
     .chat-app-selected-label-main {
       flex-direction: column;
       gap: 4px;
+      align-self: center;
+      align-items: center;
       text-align: center;
     }
   
@@ -614,4 +632,5 @@ flex:1;
     margin: 0;
     border-radius: 0;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    height: 1040px;
 }
